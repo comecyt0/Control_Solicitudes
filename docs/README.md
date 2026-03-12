@@ -29,19 +29,6 @@ Ver [README-DOCKER.md](README-DOCKER.md) para instrucciones detalladas y portabi
 
 ---
 
-## 📋 Credenciales por defecto
-
-| Rol | Email | Contraseña |
-|-----|-------|-----------|
-| Super Admin | cmendoza@comecyt.edomex.gob.mx | Admin123! |
-| Admin | lsanchez@comecyt.edomex.gob.mx | Admin123! |
-| Revisor | rflores@comecyt.edomex.gob.mx | Admin123! |
-| Usuario portal | lsanchez@comecyt.edomex.gob.mx | User123! |
-
-> ⚠️ **Cambiar todas las contraseñas en el primer inicio de sesión en producción.**
-
----
-
 ## 🗂️ Estructura del Proyecto
 
 ```
