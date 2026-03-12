@@ -49,6 +49,10 @@ COMECyT_Solicitudes/
 | `GROQ_API_KEY` | tu clave | tu clave | API de IA |
 | `FOLIO_PREFIX` | `CMCT` | `CMCT` | Prefijo de folios |
 | `UPLOAD_DIR_SOLICITUDES` | `/var/www/html/public/uploads/solicitudes/` | `/var/www/html/public/uploads/solicitudes/` | Ruta de archivos |
+| `APP_HTTPS` | `false` | `true` | Activa cookies seguras en producción |
+
+### Manejo de Errores y Depuración
+El sistema utiliza una función centralizada `mostrarError()` en `includes/helpers.php` para evitar fugas de datos técnicos y mantener una UX profesional.
 
 ---
 

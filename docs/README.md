@@ -178,8 +178,8 @@ Los backups se almacenan en `backups/` (excluida de git via `.gitignore`).
 # Exportar backup de BD (con Docker activo)
 make db-export
 
-# Exportar backup de BD (con MAMP)
-/Applications/MAMP/Library/bin/mysql80/bin/mysqldump -u root -proot bd_sisibic > backups/bd_$(date +%Y%m%d).sql
+# Ver historial de cambios (Git)
+git log --oneline -n 10
 ```
 
 ---
