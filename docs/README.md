@@ -174,4 +174,4 @@ git log --oneline -n 10
 ## 📞 Soporte
 
 **Área de TI — COMECyT Estado de México**
-soporte.ti@comecyt.edomex.gob.mx | Ext. 201
+desarrollo.comecyt@edomex.gob.mx | Ext. 114
