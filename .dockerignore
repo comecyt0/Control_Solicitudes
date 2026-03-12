@@ -1,0 +1,15 @@
+# Excluir de la imagen Docker (no se copian al contenedor)
+.git
+.gitignore
+.DS_Store
+.env
+*.log
+*.tar.gz
+node_modules/
+backups/
+docs/
+README*.md
+Makefile
+docker-compose*.yml
+.vscode/
+.idea/

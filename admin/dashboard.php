@@ -77,6 +77,7 @@ $coloresTipo = [
 // -------------------------------------------------------
 $pageTitle  = 'Dashboard';
 $activeMenu = 'dashboard';
+$helpPage   = 'dashboard';
 
 require_once __DIR__ . '/../includes/header_admin.php';
 ?>

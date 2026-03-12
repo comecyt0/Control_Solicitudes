@@ -13,6 +13,23 @@ if (!isset($pageTitle))  $pageTitle  = 'Panel de Administracion';
 if (!isset($activeMenu)) $activeMenu = '';
 
 $adminNombre = getNombreAdmin();
+
+// Cargar preferencia de dark mode del admin
+$darkMode = (int) ($_SESSION['admin_dark_mode'] ?? 0);
+if (!isset($_SESSION['admin_dark_mode'])) {
+    try {
+        $pdoTmp = getConnection();
+        $adminId = (int) ($_SESSION['admin_id'] ?? 0);
+        if ($adminId > 0) {
+            $stmtDM = $pdoTmp->prepare('SELECT COALESCE(dark_mode,0) FROM administradores WHERE id = ?');
+            $stmtDM->execute([$adminId]);
+            $darkMode = (int) $stmtDM->fetchColumn();
+            $_SESSION['admin_dark_mode'] = $darkMode;
+        }
+    } catch (Throwable $e) {
+        $darkMode = 0;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -20,14 +37,17 @@ $adminNombre = getNombreAdmin();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title><?= esc($pageTitle) ?> — COMECyT Control de Solicitudes</title>
+    <title><?= esc($pageTitle) ?>  COMECyT Control de Solicitudes</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin_extra.css">
+    <?php if (isset($extraHead)) echo $extraHead; ?>
 </head>
-<body class="layout-admin">
+<body class="layout-admin<?= $darkMode ? ' dark-mode' : '' ?>" id="bodyRoot">
+<?php require_once __DIR__ . '/loader.php'; ?>
 
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
@@ -74,13 +94,52 @@ $adminNombre = getNombreAdmin();
                 <i class="fa-solid fa-users-gear nav-icon"></i>
                 <span>Administradores</span>
             </a>
+
+            <a href="<?= BASE_URL ?>admin/calendario.php"
+               class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-days nav-icon"></i>
+                <span>Calendario</span>
+            </a>
+            <a href="<?= BASE_URL ?>admin/reportes.php"
+               class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-chart-line nav-icon"></i>
+                <span>Reportes</span>
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group-label">Gestión ERP</span>
+            <a href="<?= BASE_URL ?>admin/personal.php"
+               class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
+                <i class="fa-solid fa-address-card nav-icon"></i>
+                <span>Personal</span>
+            </a>
+            <a href="<?= BASE_URL ?>admin/correos.php"
+               class="nav-link <?= $activeMenu === 'correos' ? 'active' : '' ?>">
+                <i class="fa-solid fa-envelope-open-text nav-icon"></i>
+                <span>Correos Oficiales</span>
+            </a>
+            <a href="<?= BASE_URL ?>admin/equipos.php"
+               class="nav-link <?= $activeMenu === 'equipos' ? 'active' : '' ?>">
+                <i class="fa-solid fa-laptop-code nav-icon"></i>
+                <span>Control de Equipos</span>
+            </a>
+        </div>
+
+        <div class="nav-group">
+            <span class="nav-group-label">Servicio Social</span>
+            <a href="<?= BASE_URL ?>admin/servicio_social.php"
+               class="nav-link <?= $activeMenu === 'servicio_social' ? 'active' : '' ?>">
+                <i class="fa-solid fa-graduation-cap nav-icon"></i>
+                <span>Servicio Social</span>
+            </a>
         </div>
 
         <div class="nav-group">
             <span class="nav-group-label">Acceso Publico</span>
             <a href="<?= BASE_URL ?>public/index.php" target="_blank" class="nav-link">
                 <i class="fa-solid fa-arrow-up-right-from-square nav-icon"></i>
-                <span>Vista Ciudadana</span>
+                <span>Vista Solicitudes</span>
             </a>
         </div>
     </nav>
@@ -104,6 +163,1090 @@ $adminNombre = getNombreAdmin();
 <!-- Overlay para sidebar movil -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+<!-- ==============================================================
+     CHAT PANEL  Equipo TI + Mensajes Directos (DM)
+     Incluye: canal grupal, DMs por admin, avatares con inicial
+     ============================================================== -->
+<div id="chatPanel"
+     aria-hidden="true"
+     style="display:none; position:fixed; top:62px; right:20px;
+            width:580px; height:540px; z-index:9999;
+            background:#ffffff; border:1px solid #e5e7eb;
+            border-radius:16px; box-shadow:0 24px 64px rgba(102,35,49,0.22);
+            flex-direction:row; overflow:hidden;
+            font-family:Inter,'Segoe UI',system-ui,sans-serif;
+            font-size:14px; color:#111827;">
+
+    <!-- --? Panel Izquierdo: Canales / Contactos DM --? -->
+    <div id="chatSidebar"
+         style="width:168px; flex-shrink:0; display:flex; flex-direction:column;
+                background:linear-gradient(180deg,#3d1520 0%,#662331 100%);
+                border-right:1px solid rgba(255,255,255,0.08);">
+
+        <!-- Logo del chat -->
+        <div style="padding:14px 12px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">
+            <span style="font-size:0.8rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-comments" style="font-size:0.85rem;"></i> Equipo TI
+            </span>
+            <span style="font-size:0.64rem; color:rgba(255,255,255,0.55); display:block; margin-top:2px;">COMECyT · Chat Interno</span>
+        </div>
+
+        <!-- Canal Grupal -->
+        <div style="padding:8px 8px 4px;">
+            <span style="font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.4);
+                         text-transform:uppercase; letter-spacing:.08em; padding:0 4px;">
+                Canal
+            </span>
+        </div>
+        <button id="chatBtnGrupal" onclick="chatSeleccionarCanal(null)"
+                style="margin:2px 8px; padding:8px 10px; background:rgba(255,255,255,0.18);
+                       border:none; border-radius:10px; cursor:pointer; text-align:left;
+                       display:flex; align-items:center; gap:8px; color:#fff;
+                       font-family:inherit; font-size:0.78rem; font-weight:600;
+                       transition:background .15s;">
+            <span style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.2);
+                         display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">
+                <i class="fa-solid fa-users"></i>
+            </span>
+            <span style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">General</span>
+        </button>
+
+        <!-- Mensajes Directos -->
+        <div style="padding:10px 8px 4px;">
+            <span style="font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.4);
+                         text-transform:uppercase; letter-spacing:.08em; padding:0 4px;">
+                Mensajes Directos
+            </span>
+        </div>
+        <div id="chatAdminList"
+             style="flex:1; overflow-y:auto; padding:0 8px 8px; display:flex; flex-direction:column; gap:2px;">
+            <!-- Se llena dinámicamente con JS -->
+        </div>
+
+        <!-- Acciones rápidas abajo -->
+        <div style="padding:8px; border-top:1px solid rgba(255,255,255,0.1);
+                    display:flex; gap:6px; flex-shrink:0;">
+            <button id="btnNuevaTarea" title="Nueva tarea Kanban"
+                    style="flex:1; padding:5px; border:1px solid rgba(255,255,255,0.2);
+                           border-radius:7px; background:rgba(255,255,255,0.08);
+                           color:rgba(255,255,255,0.85); font-size:0.65rem; font-weight:600;
+                           cursor:pointer; display:flex; flex-direction:column;
+                           align-items:center; gap:3px; font-family:inherit;">
+                <i class="fa-solid fa-list-check"></i>Tarea
+            </button>
+            <button id="btnNuevoEvento" title="Nuevo evento Calendario"
+                    style="flex:1; padding:5px; border:1px solid rgba(177,154,109,0.35);
+                           border-radius:7px; background:rgba(177,154,109,0.1);
+                           color:rgba(255,205,130,0.9); font-size:0.65rem; font-weight:600;
+                           cursor:pointer; display:flex; flex-direction:column;
+                           align-items:center; gap:3px; font-family:inherit;">
+                <i class="fa-solid fa-calendar-plus"></i>Evento
+            </button>
+        </div>
+    </div>
+
+    <!-- --? Panel Derecho: Mensajes --? -->
+    <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+
+        <!-- Header del canal activo (drag handle) -->
+        <div id="chatPanelHeader"
+             style="display:flex; align-items:center; gap:10px; padding:10px 14px;
+                    background:#f8f9fc; border-bottom:1px solid #e5e7eb;
+                    flex-shrink:0; cursor:grab;">
+            <div id="chatCanalAvatar"
+                 style="width:32px; height:32px; border-radius:50%;
+                        background:linear-gradient(135deg,#662331,#8b2f42);
+                        display:flex; align-items:center; justify-content:center;
+                        font-size:0.75rem; color:#fff; flex-shrink:0; font-weight:700;">
+                <i class="fa-solid fa-users" style="font-size:0.8rem;"></i>
+            </div>
+            <div style="flex:1; min-width:0;">
+                <span id="chatCanalNombre" style="font-size:0.88rem; font-weight:700; color:#1f2937; display:block; line-height:1.2;">General</span>
+                <span id="chatCanalSub" style="font-size:0.68rem; color:#9ca3af;">Canal grupal · Todos los administradores</span>
+            </div>
+            <button onclick="toggleChat()" title="Cerrar"
+                    style="background:#f3f4f6; border:none; color:#6b7280;
+                           width:26px; height:26px; border-radius:50%; cursor:pointer;
+                           display:flex; align-items:center; justify-content:center;
+                           font-size:0.8rem; flex-shrink:0; transition:background .15s;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Zona de mensajes -->
+        <div id="chatMessages"
+             style="flex:1; overflow-y:auto; padding:12px 12px 4px;
+                    display:flex; flex-direction:column; gap:6px;
+                    scroll-behavior:smooth; background:#f9fafb;">
+            <div id="chatLoadingState"
+                 style="color:#9ca3af; font-size:0.8rem; text-align:center; padding:24px 0;">
+                <i class="fa-solid fa-spinner fa-spin"></i> Cargando mensajes...
+            </div>
+        </div>
+
+        <!-- Input de envío -->
+        <div style="display:flex; align-items:flex-end; gap:8px;
+                    padding:10px 12px; border-top:1px solid #e5e7eb;
+                    background:#fdf8f5; flex-shrink:0;">
+            <textarea id="chatInput"
+                      placeholder="Escribe un mensaje..."
+                      rows="1" maxlength="2000"
+                      onkeydown="chatKeyDown(event)"
+                      style="flex:1; resize:none; border:1px solid #e5e7eb;
+                             border-radius:12px; background:#ffffff;
+                             color:#111827; padding:8px 12px;
+                             font-size:0.83rem; line-height:1.4; max-height:90px;
+                             outline:none; font-family:inherit;"></textarea>
+            <button onclick="enviarMensaje()" title="Enviar"
+                    style="width:36px; height:36px; border-radius:50%;
+                           background:linear-gradient(135deg,#662331,#8b2f42);
+                           color:#fff; border:none; cursor:pointer; font-size:0.9rem;
+                           display:flex; align-items:center; justify-content:center;
+                           flex-shrink:0;">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- ================================================================
+     MODAL: Nueva Tarea Kanban desde Chat
+     CRÍTICO: position:fixed inline para no depender de clases CSS
+     ================================================================ -->
+<div id="modalTareaOverlay"
+     onclick="cerrarModalTarea()"
+     style="display:none; position:fixed; inset:0; z-index:99999;
+            background:rgba(102,35,49,0.35); backdrop-filter:blur(3px);
+            align-items:center; justify-content:center; padding:20px;">
+    <div onclick="event.stopPropagation()"
+         style="background:#ffffff; border:1px solid #e5e7eb;
+                border-radius:14px; padding:24px; width:100%; max-width:420px;
+                box-shadow:0 24px 64px rgba(102,35,49,0.25);
+                font-family:Inter,'Segoe UI',system-ui,sans-serif;">
+        <h3 style="margin:0 0 18px; font-size:1rem; color:#662331; font-weight:700; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-list-check"></i> Nueva Tarea Kanban
+        </h3>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Título *</label>
+            <input type="text" id="chatTareaTitulo" placeholder="¿Qué hay que hacer?" maxlength="255"
+                   style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                          background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Descripción</label>
+            <textarea id="chatTareaDesc" rows="2" placeholder="Detalle opcional..."
+                      style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                             background:#f9fafb; color:#111827; font-size:0.85rem; outline:none;
+                             resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Asignar a</label>
+            <select id="chatTareaAsignado"
+                    style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                           background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
+                <option value="">-- Sin asignar -</option>
+            </select>
+        </div>
+        <div style="margin-bottom:18px; display:flex; align-items:center; gap:10px;">
+            <label style="font-size:0.8rem; font-weight:600; color:#374151;">Color</label>
+            <input type="color" id="chatTareaColor" value="#662331"
+                   style="height:34px; width:56px; border-radius:6px; border:1px solid #d1d5db; cursor:pointer; padding:2px;">
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="confirmarTarea()"
+                    style="flex:1; padding:9px 16px; background:linear-gradient(135deg,#662331,#8b2f42);
+                           color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600;
+                           cursor:pointer; font-family:inherit;">Crear Tarea</button>
+            <button onclick="cerrarModalTarea()"
+                    style="padding:9px 16px; background:#f3f4f6;
+                           color:#374151; border:1px solid #d1d5db; border-radius:8px; font-size:0.85rem;
+                           cursor:pointer; font-family:inherit;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     MODAL: Nuevo Evento de Calendario desde Chat
+     CRÍTICO: position:fixed inline para no depender de clases CSS
+     ================================================================ -->
+<div id="modalEventoOverlay"
+     onclick="cerrarModalEvento()"
+     style="display:none; position:fixed; inset:0; z-index:99999;
+            background:rgba(102,35,49,0.35); backdrop-filter:blur(3px);
+            align-items:center; justify-content:center; padding:20px;">
+    <div onclick="event.stopPropagation()"
+         style="background:#ffffff; border:1px solid #e5e7eb;
+                border-radius:14px; padding:24px; width:100%; max-width:420px;
+                box-shadow:0 24px 64px rgba(177,154,109,0.3);
+                font-family:Inter,'Segoe UI',system-ui,sans-serif;">
+        <h3 style="margin:0 0 18px; font-size:1rem; color:#7d6535; font-weight:700; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-calendar-plus"></i> Nuevo Evento
+        </h3>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Título *</label>
+            <input type="text" id="chatEventoTitulo" placeholder="Nombre del evento" maxlength="255"
+                   style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                          background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Descripción</label>
+            <textarea id="chatEventoDesc" rows="2" placeholder="Descripción opcional..."
+                      style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                             background:#f9fafb; color:#111827; font-size:0.85rem; outline:none;
+                             resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Fecha inicio *</label>
+                <input type="datetime-local" id="chatEventoInicio"
+                       style="width:100%; padding:7px 10px; border:1px solid #d1d5db; border-radius:8px;
+                              background:#f9fafb; color:#111827; font-size:0.8rem; outline:none; box-sizing:border-box;">
+            </div>
+            <div>
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Fecha fin</label>
+                <input type="datetime-local" id="chatEventoFin"
+                       style="width:100%; padding:7px 10px; border:1px solid #d1d5db; border-radius:8px;
+                              background:#f9fafb; color:#111827; font-size:0.8rem; outline:none; box-sizing:border-box;">
+            </div>
+        </div>
+        <div style="margin-bottom:18px; display:flex; align-items:center; gap:10px;">
+            <label style="font-size:0.8rem; font-weight:600; color:#374151;">Color</label>
+            <input type="color" id="chatEventoColor" value="#B19A6D"
+                   style="height:34px; width:56px; border-radius:6px; border:1px solid #d1d5db; cursor:pointer; padding:2px;">
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="confirmarEvento()"
+                    style="flex:1; padding:9px 16px; background:linear-gradient(135deg,#9b865f,#B19A6D);
+                           color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600;
+                           cursor:pointer; font-family:inherit;">Agendar Evento</button>
+            <button onclick="cerrarModalEvento()"
+                    style="padding:9px 16px; background:#f3f4f6;
+                           color:#374151; border:1px solid #d1d5db; border-radius:8px; font-size:0.85rem;
+                           cursor:pointer; font-family:inherit;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- =========================================================
+     PANEL DERECHO: Chat del Equipo TI (chatPanel)
+     ========================================================= -->
+<div id="chatPanel" style="display:none; position:fixed; right:0; top:60px; width:340px; height:calc(100vh - 60px); background:#fff; z-index:9999; border-left:1px solid #e5e7eb; box-shadow:-4px 0 15px rgba(0,0,0,0.05); flex-direction:column; font-family:Inter,sans-serif;">
+    <div id="chatPanelHeader" style="padding:12px 15px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; gap:10px; cursor:grab; background:#f9fafb;">
+        <div id="chatCanalAvatar" style="width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg,#662331,#8b2f42);">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
+            <span id="chatCanalNombre" style="font-size:0.9rem; font-weight:700; color:#111827;">General</span>
+            <span id="chatCanalSub" style="font-size:0.7rem; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Canal grupal · Todos los administradores</span>
+        </div>
+        <button onclick="toggleChat()" style="background:none; border:none; color:#6b7280; cursor:pointer; padding:4px;">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+    <div id="chatMessages" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; background:#fdf8f5;"></div>
+    <div style="padding:10px 15px; border-top:1px solid #e5e7eb; background:#fff; display:flex; gap:8px;">
+        <input type="text" id="chatInput" placeholder="Escribe al equipo..." style="flex:1; border:1px solid #d1d5db; border-radius:20px; padding:8px 15px; outline:none; font-size:0.85rem;" onkeydown="chatKeyDown(event)">
+        <button onclick="enviarMensaje()" style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#662331,#8b2f42); color:#fff; border:none; cursor:pointer; flex-shrink:0;">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ================================================================
+     PANEL DERECHO: Asistente IA COMECyT (iaPanel)
+     ================================================================ -->
+<div id="iaPanel" style="display:none; position:fixed; right:350px; top:60px; width:340px; height:500px; background:#fff; z-index:9998; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); flex-direction:column; font-family:Inter,sans-serif;">
+    <div id="iaPanelHeader" style="padding:12px 15px; background:linear-gradient(135deg,#9b865f,#B19A6D); border-radius:12px 12px 0 0; display:flex; align-items:center; gap:10px; cursor:grab;">
+        <div style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; color:#fff;">
+            <i class="fa-solid fa-robot"></i>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column;">
+            <span style="font-size:0.9rem; font-weight:700; color:#fff;">Asistente IA COMECyT</span>
+            <span style="font-size:0.7rem; color:rgba(255,255,255,0.8);">Powered by Groq · LLaMA 3</span>
+        </div>
+        <button onclick="toggleAsistenteIA()" style="background:rgba(255,255,255,0.15); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer;">
+            <i class="fa-solid fa-xmark" style="font-size:0.8rem;"></i>
+        </button>
+    </div>
+    <div id="iaMessages" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; background:#f9fafb;"></div>
+    <div id="iaTyping" style="display:none; padding:8px 15px; font-size:0.75rem; color:#6b7280; background:#f9fafb; font-style:italic;">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Escribiendo...
+    </div>
+    <div style="padding:10px 15px; border-top:1px solid #e5e7eb; background:#fff; display:flex; gap:8px;">
+        <textarea id="iaInput" placeholder="Pregunta algo..." rows="1" style="flex:1; border:1px solid #d1d5db; border-radius:12px; padding:8px 12px; outline:none; font-size:0.85rem; resize:none;" onkeydown="iaKeyDown(event)"></textarea>
+        <button onclick="iaEnviar()" style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#9b865f,#B19A6D); color:#fff; border:none; cursor:pointer; align-self:flex-end;">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+
+
+
+
+<script>
+/**
+ * COMECyT  Chat Grupal + Mensajes Directos (DM) de Administradores
+ * ----------------------------------------------------------------?
+ * Features:
+ *   · Canal grupal y canales DM por administrador
+ *   · Avatares con inicial de nombre para cada admin
+ *   · Polling activo en panel abierto, polling de fondo silencioso
+ *   · Badge de no leídos + divisor visual de mensajes nuevos
+ *   · Drag & drop del panel
+ *   · Compatible 100% con PostgreSQL 15+ (timestamps via TO_CHAR backend)
+ */
+(function () {
+    const ADMIN_ID   = <?= (int) $_SESSION['admin_id'] ?>;
+    const API        = '<?= BASE_URL ?>admin/api/chat.php';
+    const POLL_MS    = 7000;   // Intervalo de polling activo (panel abierto)
+    const BG_POLL_MS = 30000;  // Intervalo de polling de fondo (panel cerrado)
+
+    // --? Estado del módulo ---------------------------------------?
+    let chatOpen          = false;
+    let iaOpen            = false;
+    let canalActual       = null;          // null = grupal, N = ID admin DM
+    let canalNombreActual = 'General';
+    let ultimoId          = 0;
+    let ultimoIdDM        = {};            // { adminId: lastMsgId }
+    let primerIdNoLeido   = 0;
+    let noLeidosCnt       = 0;
+    let pollingTimer      = null;
+    let bgPollingTimer    = null;
+    let listaAdmins       = [];
+    let csrfToken         = '<?= $_SESSION["csrf_token"] ?? "" ?>';
+
+    // Paleta de colores para los avatares (circular rotatoria)
+    const AVATAR_COLORS = [
+        '#662331','#7c3aed','#059669','#b45309','#0369a1',
+        '#be185d','#15803d','#c2410c','#1d4ed8','#6b21a8',
+    ];
+
+    // -? Inyectar estilos de animaciones -------------------------?
+    (function injectStyles() {
+        const s = document.createElement('style');
+        s.textContent = `
+            @keyframes chatBadgePulse {
+                0%,100% { transform:scale(1); }
+                50%      { transform:scale(1.25); }
+            }
+            #chatBadge { animation:chatBadgePulse 1.8s ease-in-out infinite; }
+            .chat-dm-btn { transition:background .15s, opacity .15s; }
+            .chat-dm-btn:hover { background:rgba(255,255,255,0.13) !important; }
+            .chat-dm-btn.activo { background:rgba(255,255,255,0.22) !important; }
+            #chatBtnGrupal.activo { background:rgba(255,255,255,0.3) !important; }
+        `;
+        document.head.appendChild(s);
+    })();
+
+    // -? Helpers de badge ----------------------------------------?
+    function mostrarBadge(n) {
+        const b = document.getElementById('chatBadge');
+        if (!b) return;
+        b.textContent   = n > 99 ? '99+' : n;
+        b.style.display = 'flex';
+    }
+    function ocultarBadge() {
+        const b = document.getElementById('chatBadge');
+        if (b) { b.style.display = 'none'; b.textContent = '0'; }
+    }
+
+    // -? Color determinístico por ID de admin --------------------?
+    function colorAdmin(id) {
+        return AVATAR_COLORS[(id + 1) % AVATAR_COLORS.length];
+    }
+
+    // -? Crear chip de avatar con inicial ------------------------?
+    function crearAvatar(nombre, adminId, size = 28) {
+        const inicial = nombre ? nombre.trim().charAt(0).toUpperCase() : '?';
+        const bg      = colorAdmin(adminId);
+        const span    = document.createElement('span');
+        span.style.cssText = [
+            `width:${size}px`, `height:${size}px`, 'border-radius:50%',
+            `background:${bg}`, 'display:flex', 'align-items:center',
+            'justify-content:center', 'flex-shrink:0',
+            `font-size:${Math.round(size * 0.42)}px`, 'color:#fff',
+            'font-weight:700', 'user-select:none',
+        ].join(';');
+        span.textContent = inicial;
+        return span;
+    }
+
+    // -? Abrir/cerrar el panel ------------------------------------?
+    window.toggleChat = function () {
+        chatOpen = !chatOpen;
+        const panel = document.getElementById('chatPanel');
+        panel.style.display = chatOpen ? 'flex' : 'none';
+        panel.setAttribute('aria-hidden', String(!chatOpen));
+
+        if (chatOpen) {
+            detenerBgPolling();
+            cargarAdmins();
+            limpiarMensajes();
+            cargarMensajes(true, true);
+            iniciarPolling();
+            ocultarBadge();
+            noLeidosCnt = 0;
+            setTimeout(() => document.getElementById('chatInput')?.focus(), 200);
+        } else {
+            detenerPolling();
+            primerIdNoLeido = 0;
+            iniciarBgPolling();
+        }
+    };
+
+    // -? Seleccionar canal (null = grupal, N = DM con admin N) ---?
+    window.chatSeleccionarCanal = function (adminId) {
+        canalActual = adminId;
+        ultimoId    = 0;       // Reiniciar cursor de paginación al cambiar canal
+
+        // Actualizar header del canal activo
+        const avatar  = document.getElementById('chatCanalAvatar');
+        const nombre  = document.getElementById('chatCanalNombre');
+        const sub     = document.getElementById('chatCanalSub');
+
+        if (adminId === null) {
+            // Canal grupal
+            canalNombreActual = 'General';
+            avatar.innerHTML  = '<i class="fa-solid fa-users" style="font-size:0.8rem;"></i>';
+            avatar.style.background = 'linear-gradient(135deg,#662331,#8b2f42)';
+            nombre.textContent = 'General';
+            sub.textContent    = 'Canal grupal · Todos los administradores';
+            document.getElementById('chatInput').placeholder = 'Escribe al equipo--';
+        } else {
+            const admin = listaAdmins.find(a => parseInt(a.id) === adminId);
+            canalNombreActual = admin ? admin.nombre.split(' ')[0] : 'Mensaje Directo';
+            avatar.innerHTML  = '';
+            avatar.style.background = 'transparent';
+            avatar.appendChild(crearAvatar(admin ? admin.nombre : '?', adminId, 32));
+            nombre.textContent = admin ? admin.nombre : 'DM';
+            sub.textContent    = 'Mensaje directo · Solo visible para ustedes dos';
+            document.getElementById('chatInput').placeholder = `Mensaje privado a ${canalNombreActual}--`;
+        }
+
+        // Resaltar botón activo en el sidebar
+        document.querySelectorAll('.chat-dm-btn').forEach(b => b.classList.remove('activo'));
+        const btnGrupal = document.getElementById('chatBtnGrupal');
+        if (adminId === null) {
+            btnGrupal.classList.add('activo');
+        } else {
+            const btn = document.getElementById(`chatDMbtn_${adminId}`);
+            if (btn) btn.classList.add('activo');
+            btnGrupal.classList.remove('activo');
+        }
+
+        limpiarMensajes();
+        cargarMensajes(true, false);
+    };
+
+    function limpiarMensajes() {
+        const zona = document.getElementById('chatMessages');
+        zona.innerHTML = '<div id="chatLoadingState" style="color:#9ca3af;font-size:0.8rem;text-align:center;padding:24px 0;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando mensajes...</div>';
+    }
+
+    // -? Polling activo -------------------------------------------?
+    function iniciarPolling() {
+        detenerPolling();
+        pollingTimer = setInterval(() => cargarMensajes(false, false), POLL_MS);
+    }
+    function detenerPolling() {
+        if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
+    }
+
+    // -? Polling de fondo -----------------------------------------?
+    function iniciarBgPolling() {
+        detenerBgPolling();
+        bgPollingTimer = setInterval(verificarNoLeidos, BG_POLL_MS);
+    }
+    function detenerBgPolling() {
+        if (bgPollingTimer) { clearInterval(bgPollingTimer); bgPollingTimer = null; }
+    }
+
+    function verificarNoLeidos() {
+        fetch(API + '?accion=listar&desde=' + ultimoId)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok || !data.mensajes.length) return;
+                data.mensajes.forEach(m => {
+                    const mid = parseInt(m.id);
+                    if (primerIdNoLeido === 0) primerIdNoLeido = mid;
+                    ultimoId = Math.max(ultimoId, mid);
+                });
+                noLeidosCnt += data.mensajes.length;
+                mostrarBadge(noLeidosCnt);
+            })
+            .catch(() => {});
+    }
+
+    // -? Cargar y renderizar mensajes ----------------------------?
+    function cargarMensajes(scroll, insertDivider) {
+        let url = API + '?accion=listar&desde=' + ultimoId;
+        if (canalActual !== null) url += '&destinatario=' + canalActual;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return;
+
+                const zona = document.getElementById('chatMessages');
+                const loadingEl = document.getElementById('chatLoadingState');
+                if (loadingEl) loadingEl.remove();
+
+                if (!data.mensajes.length) {
+                    if (!zona.children.length) {
+                        zona.innerHTML = '<div style="color:#9ca3af;font-size:0.8rem;text-align:center;padding:24px 0;"><i class="fa-solid fa-comment-slash" style="display:block;font-size:1.5rem;margin-bottom:8px;"></i>Sin mensajes aún</div>';
+                    }
+                    if (scroll) zona.scrollTop = zona.scrollHeight;
+                    return;
+                }
+
+                let dividerInyectado = false;
+                data.mensajes.forEach(m => {
+                    const mid = parseInt(m.id);
+                    if (insertDivider && !dividerInyectado && primerIdNoLeido > 0 && mid >= primerIdNoLeido) {
+                        zona.appendChild(crearDivisorNoLeidos(noLeidosCnt));
+                        dividerInyectado = true;
+                    }
+                    zona.appendChild(renderBurbuja(m));
+                    ultimoId = Math.max(ultimoId, mid);
+                });
+
+                if (scroll) {
+                    const div = document.getElementById('chatDivisorNoLeidos');
+                    if (div) div.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    else zona.scrollTop = zona.scrollHeight;
+                }
+
+                primerIdNoLeido = 0;
+            })
+            .catch(() => {});
+    }
+
+    function crearDivisorNoLeidos(n) {
+        const el  = document.createElement('div');
+        el.id     = 'chatDivisorNoLeidos';
+        el.style.cssText = 'display:flex;align-items:center;gap:8px;margin:8px 0;flex-shrink:0;';
+        const txt = n > 0 ? `${n} mensaje${n > 1 ? 's' : ''} nuevo${n > 1 ? 's' : ''}` : 'Nuevos';
+        el.innerHTML = `
+            <div style="flex:1;height:1px;background:rgba(102,35,49,0.25);"></div>
+            <span style="font-size:0.68rem;font-weight:700;color:#662331;white-space:nowrap;
+                         background:#fff;padding:2px 8px;border-radius:20px;
+                         border:1px solid rgba(102,35,49,0.25);">${txt} </span>
+            <div style="flex:1;height:1px;background:rgba(102,35,49,0.25);"></div>`;
+        return el;
+    }
+
+    // -? Renderizar burbuja de mensaje ---------------------------?
+    function renderBurbuja(m) {
+        const propio = parseInt(m.admin_id) === ADMIN_ID;
+        const wrap   = document.createElement('div');
+        wrap.style.cssText = [
+            'display:flex', 'gap:6px', 'max-width:88%',
+            propio ? 'align-self:flex-end;flex-direction:row-reverse' : 'align-self:flex-start;flex-direction:row',
+        ].join(';');
+
+        // Avatar del remitente (solo si no es propio)
+        if (!propio) {
+            const av = crearAvatar(m.admin_nombre, parseInt(m.admin_id), 26);
+            av.title = m.admin_nombre;
+            wrap.appendChild(av);
+        }
+
+        // Contenedor de la burbuja + metadata
+        const col  = document.createElement('div');
+        col.style.cssText = 'display:flex;flex-direction:column;' + (propio ? 'align-items:flex-end;' : 'align-items:flex-start;');
+
+        let burbuja = '';
+
+        if (m.tipo === 'tarea') {
+            burbuja = `<a href="<?= BASE_URL ?>admin/calendario.php#kanban" target="_blank"
+              style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;
+                     background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);
+                     border-radius:10px;color:#6366f1;font-size:0.8rem;font-weight:600;
+                     text-decoration:none;max-width:100%;word-break:break-word;">
+                <i class="fa-solid fa-list-check" style="font-size:0.75rem;flex-shrink:0;"></i>
+                ${escapeHtml(m.ref_titulo || m.mensaje)}
+            </a>`;
+        } else if (m.tipo === 'evento') {
+            burbuja = `<a href="<?= BASE_URL ?>admin/calendario.php" target="_blank"
+              style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;
+                     background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.4);
+                     border-radius:10px;color:#0891b2;font-size:0.8rem;font-weight:600;
+                     text-decoration:none;max-width:100%;word-break:break-word;">
+                <i class="fa-solid fa-calendar-days" style="font-size:0.75rem;flex-shrink:0;"></i>
+                ${escapeHtml(m.ref_titulo || m.mensaje)}
+            </a>`;
+        } else {
+            const radiusPropio = '14px 14px 3px 14px';
+            const radiusOtro   = '14px 14px 14px 3px';
+            burbuja = `<span style="display:inline-block;padding:8px 12px;
+                     background:${propio ? 'linear-gradient(135deg,#662331,#8b2f42)' : '#f0ece8'};
+                     border-radius:${propio ? radiusPropio : radiusOtro};
+                     color:${propio ? '#ffffff' : '#111827'};font-size:0.83rem;
+                     line-height:1.45;word-break:break-word;white-space:pre-wrap;">
+                ${escapeHtml(m.mensaje)}
+            </span>`;
+        }
+
+        // Metadatos: nombre + hora
+        const meta = propio
+            ? `<span style="font-size:0.64rem;color:#9ca3af;padding:2px 2px 0;">${m.hora}</span>`
+            : `<span style="font-size:0.64rem;color:#9ca3af;padding:2px 2px 0;">${escapeHtml(m.admin_nombre)} · ${m.hora}</span>`;
+
+        col.innerHTML = burbuja + meta;
+        wrap.appendChild(col);
+        return wrap;
+    }
+
+    function escapeHtml(s) {
+        return String(s || '')
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // -? Enviar mensaje -------------------------------------------?
+    window.enviarMensaje = function () {
+        const input = document.getElementById('chatInput');
+        const texto = input.value.trim();
+        if (!texto) return;
+
+        const fd = new FormData();
+        fd.append('csrf_token', csrfToken);
+        fd.append('accion',    'enviar');
+        fd.append('mensaje',   texto);
+        if (canalActual !== null) fd.append('destinatario', canalActual);
+
+        input.value        = '';
+        input.style.height = '';
+
+        fetch(API, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(d => { if (d.ok) cargarMensajes(true, false); })
+            .catch(() => {});
+    };
+
+    window.chatKeyDown = function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            enviarMensaje();
+        }
+    };
+
+    // -? Cargar lista de admins y construir el sidebar de DMs ----?
+    function cargarAdmins() {
+        if (listaAdmins.length) return; // cache
+        fetch(API + '?accion=admins')
+            .then(r => r.json())
+            .then(d => {
+                listaAdmins = d.admins || [];
+                const lista = document.getElementById('chatAdminList');
+                const sel   = document.getElementById('chatTareaAsignado');
+                lista.innerHTML = '';
+
+                listaAdmins.forEach(a => {
+                    const aid = parseInt(a.id);
+
+                    // Botón DM en el sidebar
+                    const btn = document.createElement('button');
+                    btn.id    = `chatDMbtn_${aid}`;
+                    btn.className = 'chat-dm-btn';
+                    btn.title  = `Mensaje directo a ${a.nombre}`;
+                    btn.style.cssText = [
+                        'padding:7px 10px', 'background:rgba(255,255,255,0.06)',
+                        'border:none', 'border-radius:10px', 'cursor:pointer',
+                        'text-align:left', 'display:flex', 'align-items:center',
+                        'gap:8px', 'color:rgba(255,255,255,0.9)',
+                        'font-family:inherit', 'font-size:0.75rem', 'font-weight:500',
+                        'width:100%',
+                    ].join(';');
+
+                    // Avatar con inicial + badge de rol
+                    const av = crearAvatar(a.nombre, aid, 28);
+                    const info = document.createElement('span');
+                    info.style.cssText = 'min-width:0;flex:1;overflow:hidden;';
+                    info.innerHTML = `
+                        <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            ${escapeHtml(a.nombre.split(' ')[0])}
+                        </span>
+                        <span style="font-size:0.6rem;color:rgba(255,255,255,0.45);display:block;line-height:1.2;">
+                            ${escapeHtml(a.rol || '')}
+                        </span>`;
+
+                    btn.appendChild(av);
+                    btn.appendChild(info);
+                    btn.addEventListener('click', () => chatSeleccionarCanal(aid));
+
+                    // Ocultar el propio admin en la lista DM
+                    if (aid !== ADMIN_ID) lista.appendChild(btn);
+
+                    // Llenar select de asignación de tareas
+                    if (sel) {
+                        const opt = document.createElement('option');
+                        opt.value = aid;
+                        opt.textContent = a.nombre;
+                        sel.appendChild(opt);
+                    }
+                });
+
+                // Marcar grupal como activo por defecto
+                document.getElementById('chatBtnGrupal')?.classList.add('activo');
+            })
+            .catch(() => {});
+    }
+
+    // -? Modal: Nueva Tarea Kanban --------------------------------?
+    document.getElementById('btnNuevaTarea').addEventListener('click', () => {
+        document.getElementById('chatTareaTitulo').value = '';
+        document.getElementById('chatTareaDesc').value   = '';
+        document.getElementById('chatTareaAsignado').value = '';
+        document.getElementById('chatTareaColor').value  = '#662331';
+        document.getElementById('modalTareaOverlay').style.display = 'flex';
+        setTimeout(() => document.getElementById('chatTareaTitulo').focus(), 100);
+    });
+    window.cerrarModalTarea = () => {
+        document.getElementById('modalTareaOverlay').style.display = 'none';
+    };
+    window.confirmarTarea = function () {
+        const titulo = document.getElementById('chatTareaTitulo').value.trim();
+        if (!titulo) { alert('El título es obligatorio.'); return; }
+        const fd = new FormData();
+        fd.append('csrf_token', csrfToken);
+        fd.append('accion',      'crear_tarea');
+        fd.append('titulo',      titulo);
+        fd.append('descripcion', document.getElementById('chatTareaDesc').value.trim());
+        fd.append('color',       document.getElementById('chatTareaColor').value);
+        const asig = document.getElementById('chatTareaAsignado').value;
+        if (asig) fd.append('asignado_a', asig);
+        fetch(API, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(d => { if (d.ok) { cerrarModalTarea(); cargarMensajes(true, false); } else alert('Error: ' + (d.error || 'Desconocido')); })
+            .catch(() => alert('Error de conexión'));
+    };
+
+    // -? Modal: Nuevo Evento --------------------------------------?
+    document.getElementById('btnNuevoEvento').addEventListener('click', () => {
+        document.getElementById('chatEventoTitulo').value  = '';
+        document.getElementById('chatEventoDesc').value    = '';
+        document.getElementById('chatEventoColor').value   = '#B19A6D';
+        const ahora = new Date(); ahora.setMinutes(0,0,0);
+        const iso   = ahora.toISOString().slice(0,16);
+        document.getElementById('chatEventoInicio').value  = iso;
+        document.getElementById('chatEventoFin').value     = iso;
+        document.getElementById('modalEventoOverlay').style.display = 'flex';
+        setTimeout(() => document.getElementById('chatEventoTitulo').focus(), 100);
+    });
+    window.cerrarModalEvento = () => {
+        document.getElementById('modalEventoOverlay').style.display = 'none';
+    };
+    window.confirmarEvento = function () {
+        const titulo = document.getElementById('chatEventoTitulo').value.trim();
+        const inicio = document.getElementById('chatEventoInicio').value;
+        if (!titulo || !inicio) { alert('Título y fecha inicio son obligatorios.'); return; }
+        const fd = new FormData();
+        fd.append('csrf_token',   csrfToken);
+        fd.append('accion',       'crear_evento');
+        fd.append('titulo',       titulo);
+        fd.append('descripcion',  document.getElementById('chatEventoDesc').value.trim());
+        fd.append('fecha_inicio', inicio);
+        fd.append('fecha_fin',    document.getElementById('chatEventoFin').value || inicio);
+        fd.append('color',        document.getElementById('chatEventoColor').value);
+        fetch(API, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(d => { if (d.ok) { cerrarModalEvento(); cargarMensajes(true, false); } else alert('Error: ' + (d.error || 'Desconocido')); })
+            .catch(() => alert('Error de conexión'));
+    };
+
+    // -? Drag & Drop del panel ------------------------------------?
+    (function initDrag() {
+        const panel  = document.getElementById('chatPanel');
+        const handle = document.getElementById('chatPanelHeader');
+        if (!panel || !handle) return;
+        let dragActive = false, startX, startY, origLeft, origTop;
+
+        handle.addEventListener('mousedown', function (e) {
+            // No iniciar drag si el clic fue en el botón cerrar
+            if (e.target.closest('button')) return;
+
+            dragActive = true;
+            handle.style.cursor = 'grabbing';
+
+            const rect = panel.getBoundingClientRect();
+            startX   = e.clientX;
+            startY   = e.clientY;
+            origLeft = rect.left;
+            origTop  = rect.top;
+
+            // Asegurar posicionamiento absoluto basado en top/left
+            panel.style.right  = 'auto';
+            panel.style.bottom = 'auto';
+            panel.style.left   = origLeft + 'px';
+            panel.style.top    = origTop  + 'px';
+
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!dragActive) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            let newLeft = origLeft + dx;
+            let newTop  = origTop  + dy;
+
+            // Mantener dentro del viewport
+            const pw = panel.offsetWidth;
+            const ph = panel.offsetHeight;
+            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - pw));
+            newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - ph));
+
+            panel.style.left = newLeft + 'px';
+            panel.style.top  = newTop  + 'px';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!dragActive) return;
+            dragActive = false;
+            handle.style.cursor = 'grab';
+        });
+    })();
+
+    // -? Iniciar polling de fondo al cargar la página ---------------?
+    // Detecta mensajes nuevos incluso antes de abrir el chat por primera vez
+    iniciarBgPolling();
+
+})();
+
+// ====================================================================
+// ASISTENTE IA COMECyT  Groq / LLaMA 3
+// ====================================================================
+(function () {
+    const IA_API      = '<?= BASE_URL ?>admin/api/agente_ia.php';
+    const CSRF_TOKEN  = '<?= $_SESSION["csrf_token"] ?? "" ?>';
+    const PAGINA_CTX  = '<?= esc($activeMenu ?: "general") ?>';
+
+    let iaOpen    = false;
+    let iaBusy    = false;
+    let iaHistory = [];  // [{ role: 'user'|'assistant', content: '...' }]
+
+    // -? Toggle del panel --------------------------------------------?
+    window.toggleAsistenteIA = function () {
+        iaOpen = !iaOpen;
+        const panel = document.getElementById('iaPanel');
+        panel.style.display       = iaOpen ? 'flex' : 'none';
+        panel.style.flexDirection = 'column';
+        panel.setAttribute('aria-hidden', String(!iaOpen));
+
+        if (iaOpen) {
+            if (iaHistory.length === 0) iaMostrarBienvenida();
+            setTimeout(() => document.getElementById('iaInput').focus(), 200);
+        }
+    };
+
+    // -? Mensaje de bienvenida ----------------------------------------?
+    function iaMostrarBienvenida() {
+        iaAgregarBurbuja('assistant',
+            '¡Hola! Soy el Asistente IA de COMECyT.\n\nPuedo ayudarte con dudas sobre el sistema: módulos, estatus de solicitudes, flujos de trabajo y más.\n\n¿En qué te puedo ayudar?'
+        );
+    }
+
+    // -? Enviar mensaje -----------------------------------------------?
+    window.iaEnviar = function () {
+        if (iaBusy) return;
+        const input  = document.getElementById('iaInput');
+        const texto  = input.value.trim();
+        if (!texto) return;
+
+        input.value = '';
+        input.style.height = '';
+
+        iaAgregarBurbuja('user', texto);
+        iaHistory.push({ role: 'user', content: texto });
+
+        iaBusy = true;
+        document.getElementById('iaTyping').style.display = 'block';
+        iaMostrarScroll();
+
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF_TOKEN);
+        fd.append('mensaje',    texto);
+        fd.append('pagina',     PAGINA_CTX);
+        fd.append('historial',  JSON.stringify(iaHistory.slice(0, 1))); // historial previo
+
+        fetch(IA_API, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('iaTyping').style.display = 'none';
+                iaBusy = false;
+
+                if (!data.ok) {
+                    if (data.no_key) {
+                        iaAgregarBurbuja('assistant',
+                            '-sT️ **API Key no configurada**\n\n' +
+                            'Para usar el Asistente IA, el administrador del servidor debe:\n' +
+                            '1. Ir a https://console.groq.com y crear una cuenta gratuita\n' +
+                            '2. Generar un API Key\n' +
+                            '3. Editar el archivo `.env` del sistema y reemplazar `TU_API_KEY_AQUI` con el key obtenido'
+                        );
+                    } else {
+                        iaAgregarBurbuja('assistant', '-s-️ ' + (data.error || 'Error desconocido. Intenta de nuevo.'));
+                    }
+                    return;
+                }
+
+                const respuesta = data.respuesta || '';
+                iaAgregarBurbuja('assistant', respuesta);
+                iaHistory.push({ role: 'assistant', content: respuesta });
+
+                // Limitar historial local
+                if (iaHistory.length > 30) iaHistory = iaHistory.slice(-30);
+            })
+            .catch(() => {
+                document.getElementById('iaTyping').style.display = 'none';
+                iaBusy = false;
+                iaAgregarBurbuja('assistant', '-s-️ Error de conexión. Verifica que el servidor esté activo.');
+            });
+    };
+
+    // -? Enter para enviar --------------------------------------------?
+    window.iaKeyDown = function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            iaEnviar();
+        }
+    };
+
+    // -? Renderizar burbuja -------------------------------------------?
+    function iaAgregarBurbuja(role, texto) {
+        const zona  = document.getElementById('iaMessages');
+        const propio = role === 'user';
+
+        const wrap = document.createElement('div');
+        wrap.style.cssText = [
+            'display:flex', 'flex-direction:column', 'max-width:86%',
+            propio
+                ? 'align-self:flex-end; align-items:flex-end'
+                : 'align-self:flex-start; align-items:flex-start'
+        ].join(';');
+
+        // Avatar IA
+        let inner = '';
+        if (!propio) {
+            inner += `<div style="width:22px;height:22px;border-radius:50%;
+                         background:linear-gradient(135deg,#9b865f,#B19A6D);
+                         display:flex;align-items:center;justify-content:center;
+                         font-size:0.65rem;color:#fff;margin-bottom:3px;flex-shrink:0;">
+                         <i class="fa-solid fa-robot"></i></div>`;
+        }
+
+        const bgOwn   = 'linear-gradient(135deg,#662331,#8b2f42)';
+        const bgOther = '#f0ece8';
+        const clrOther = '#111827';
+        const radOwn   = '14px 14px 3px 14px';
+        const radOther = '14px 14px 14px 3px';
+
+        // Formato básico de markdown: **negrita**, saltos de línea, numeración
+        const formatted = iaFormatText(texto);
+
+        inner += `<div style="padding:9px 13px;
+                     background:${propio ? bgOwn : bgOther};
+                     border-radius:${propio ? radOwn : radOther};
+                     color:${propio ? '#fff' : clrOther};
+                     font-size:0.82rem; line-height:1.5;
+                     word-break:break-word;">${formatted}</div>`;
+
+        // Hora
+        const hora = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+        inner += `<span style="font-size:0.63rem;color:#9ca3af;padding:2px 2px 0;">${hora}</span>`;
+
+        wrap.innerHTML = inner;
+        zona.appendChild(wrap);
+        iaMostrarScroll();
+    }
+
+    // -? Formato básico de texto --------------------------------------?
+    function iaFormatText(texto) {
+        let s = iaEscape(texto);
+        // **negrita**
+        s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        // Saltos de línea
+        s = s.replace(/\n/g, '<br>');
+        return s;
+    }
+
+    function iaEscape(s) {
+        return String(s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function iaMostrarScroll() {
+        const zona = document.getElementById('iaMessages');
+        if (zona) zona.scrollTop = zona.scrollHeight;
+    }
+
+    // -? Drag & Drop --------------------------------------------------?
+    (function initIaDrag() {
+        const panel  = document.getElementById('iaPanel');
+        const handle = document.getElementById('iaPanelHeader');
+        if (!panel || !handle) return;
+
+        let dragActive = false;
+        let startX, startY, origLeft, origTop;
+
+        handle.addEventListener('mousedown', function (e) {
+            if (e.target.closest('button')) return;
+            dragActive = true;
+            handle.style.cursor = 'grabbing';
+            const rect = panel.getBoundingClientRect();
+            startX = e.clientX; startY = e.clientY;
+            origLeft = rect.left; origTop = rect.top;
+            panel.style.right  = 'auto';
+            panel.style.bottom = 'auto';
+            panel.style.left   = origLeft + 'px';
+            panel.style.top    = origTop  + 'px';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function (e) {
+            if (!dragActive) return;
+            let newLeft = origLeft + (e.clientX - startX);
+            let newTop  = origTop  + (e.clientY - startY);
+            const pw = panel.offsetWidth;
+            const ph = panel.offsetHeight;
+            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - pw));
+            newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - ph));
+            panel.style.left = newLeft + 'px';
+            panel.style.top  = newTop  + 'px';
+        });
+
+        document.addEventListener('mouseup', function () {
+            if (!dragActive) return;
+            dragActive = false;
+            handle.style.cursor = 'grab';
+        });
+    })();
+
+})();
+
+    // -? Ocultar Loader al cargar la página ---------------------------?
+    window.addEventListener('load', function () {
+        const loader = document.getElementById('globalLoader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 300);
+        }
+    });
+
+// -? Dark Mode -----------------------------------------------------?
+</script>
+
+<?php require_once __DIR__ . '/help_widget.php'; ?>
+
 <!-- Contenido principal -->
 <div class="main-wrapper">
     <!-- Topbar -->
@@ -115,15 +1258,151 @@ $adminNombre = getNombreAdmin();
             <h1><?= esc($pageTitle) ?></h1>
         </div>
         <div class="topbar-actions">
+            <!-- Búsqueda Global -->
+            <div id="globalSearchWrapper" style="position:relative;">
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <input type="text" id="globalSearchInput"
+                           placeholder="Buscar solicitud, persona, equipo..."
+                           autocomplete="off"
+                           style="width:0;opacity:0;transition:width var(--transition-base),opacity var(--transition-base);border:0;padding:0;background:transparent;font-family:inherit;font-size:0.85rem;"
+                           oninput="buscarGlobal(this.value)" onfocus="expandirBuscador()" onblur="setTimeout(()=>contraerBuscador(),200)">
+                    <button id="btnBuscadorGlobal" class="topbar-btn" title="Búsqueda global" onclick="toggleBuscador()" style="flex-shrink:0;">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <!-- Panel de resultados -->
+                <div id="globalSearchResults"
+                     style="display:none;position:absolute;right:0;top:calc(100% + 8px);width:340px;
+                            background:var(--bg-card);border:1px solid var(--border-color);
+                            border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:9998;
+                            max-height:400px;overflow-y:auto;">
+                </div>
+            </div>
+            <!-- Dark Mode Toggle -->
+            <button id="darkModeToggle" class="topbar-btn" title="Cambiar tema"
+                    onclick="toggleDarkMode()" style="flex-shrink:0;">
+                <i class="fa-solid <?= $darkMode ? 'fa-sun' : 'fa-moon' ?>"></i>
+            </button>
             <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=pendiente" class="topbar-btn" title="Solicitudes pendientes">
                 <i class="fa-solid fa-bell"></i>
             </a>
-            <a href="<?= BASE_URL ?>public/index.php" target="_blank" class="btn btn-primary btn-sm">
-                <i class="fa-solid fa-plus"></i>
-                <span>Nueva Solicitud</span>
-            </a>
+            <!-- Botón Chat Equipo TI -->
+            <button class="topbar-btn" id="chatToggleBtn" onclick="toggleChat()" title="Chat del equipo"
+                    style="position:relative; border:none; cursor:pointer;">
+                <i class="fa-solid fa-comments"></i>
+                <span id="chatBadge" style="display:none; position:absolute; top:-5px; right:-5px;
+                      min-width:16px; height:16px; border-radius:999px; background:#ef4444;
+                      color:#fff; font-size:0.6rem; font-weight:700;
+                      align-items:center; justify-content:center; padding:0 3px;
+                      border:2px solid var(--bg-base,#0f0f1a);">0</span>
+            </button>
+            <!-- Botón Asistente IA -->
+            <button class="topbar-btn" id="iaToggleBtn" onclick="toggleAsistenteIA()" title="Asistente IA COMECyT"
+                    style="position:relative; border:none; cursor:pointer; background:rgba(177,154,109,0.12); border-radius:8px; color:#B19A6D;">
+                <i class="fa-solid fa-robot"></i>
+                <span id="iaBadgeOnline"
+                      style="display:inline-block; position:absolute; top:-3px; right:-3px;
+                             width:8px; height:8px; border-radius:50%; background:#22c55e;
+                             border:2px solid var(--bg-base,#0f0f1a);"></span>
+            </button>
+
         </div>
     </header>
 
     <!-- Contenido de la pagina -->
     <main class="page-content">
+
+<script>
+const CSRF_HEADER_TOKEN = '<?= htmlspecialchars($_SESSION["csrf_token"] ?? "", ENT_QUOTES) ?>';
+const BASE_URL_JS       = '<?= BASE_URL ?>';
+
+function toggleDarkMode() {
+    const body      = document.getElementById('bodyRoot');
+    const isDark    = body.classList.toggle('dark-mode');
+    const icon      = document.querySelector('#darkModeToggle i');
+    if (icon) { icon.className = 'fa-solid ' + (isDark ? 'fa-sun' : 'fa-moon'); }
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF_HEADER_TOKEN);
+    fd.append('dark_mode', isDark ? '1' : '0');
+    fetch(BASE_URL_JS + 'admin/api/toggle_darkmode.php', { method:'POST', body:fd }).catch(()=>{});
+}
+
+// -? Búsqueda Global -----------------------------------------------?
+let _searchTimeout = null;
+let _buscadorExpanded = false;
+
+function toggleBuscador() {
+    if (_buscadorExpanded) contraerBuscador(); else expandirBuscador();
+}
+
+function expandirBuscador() {
+    const inp    = document.getElementById('globalSearchInput');
+    const res    = document.getElementById('globalSearchResults');
+    _buscadorExpanded = true;
+    inp.style.width   = '220px';
+    inp.style.opacity = '1';
+    inp.style.border  = '1px solid var(--border-accent)';
+    inp.style.borderRadius = '6px';
+    inp.style.padding = '6px 10px';
+    inp.style.background = 'var(--bg-card)';
+    inp.style.color  = 'var(--text-primary)';
+    inp.focus();
+}
+
+function contraerBuscador() {
+    const inp = document.getElementById('globalSearchInput');
+    const res = document.getElementById('globalSearchResults');
+    if (inp.value.trim() === '') {
+        _buscadorExpanded = false;
+        inp.style.width   = '0';
+        inp.style.opacity = '0';
+        inp.style.border  = '0';
+        inp.style.padding = '0';
+        inp.style.background = 'transparent';
+    }
+    res.style.display = 'none';
+}
+
+const ICONOS_TIPO = { solicitud:'fa-file-lines', personal:'fa-id-card', equipo:'fa-laptop' };
+const LABEL_TIPO  = { solicitud:'Solicitud', personal:'Personal', equipo:'Equipo' };
+
+function buscarGlobal(q) {
+    clearTimeout(_searchTimeout);
+    const res = document.getElementById('globalSearchResults');
+    if (q.trim().length < 2) { res.style.display = 'none'; return; }
+    _searchTimeout = setTimeout(() => {
+        fetch(BASE_URL_JS + 'admin/api/busqueda_global.php?q=' + encodeURIComponent(q))
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok || !data.resultados.length) {
+                    res.innerHTML = '<p style="padding:16px;color:var(--text-muted);font-size:0.85rem;">Sin resultados para "' + q + '"</p>';
+                    res.style.display = 'block';
+                    return;
+                }
+                const grupos = {};
+                data.resultados.forEach(r => {
+                    if (!grupos[r.tipo_res]) grupos[r.tipo_res] = [];
+                    grupos[r.tipo_res].push(r);
+                });
+                let html = '';
+                Object.keys(grupos).forEach(tipo => {
+                    html += `<div style="padding:8px 14px 4px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--border-color);">${LABEL_TIPO[tipo] || tipo}</div>`;
+                    grupos[tipo].forEach(item => {
+                        html += `<a href="${item.url}" style="display:flex;align-items:center;gap:10px;padding:10px 14px;text-decoration:none;border-bottom:1px solid var(--border-color-light);transition:background var(--transition-fast);" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background=''">
+                            <i class="fa-solid ${item.icono}" style="color:var(--color-accent);width:16px;text-align:center;flex-shrink:0;"></i>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:0.85rem;font-weight:600;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.label}</div>
+                                <div style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.sub}</div>
+                            </div>
+                        </a>`;
+                    });
+                });
+                res.innerHTML = html;
+                res.style.display = 'block';
+            }).catch(() => { res.style.display = 'none'; });
+    }, 300);
+}
+
+
+</script>
+

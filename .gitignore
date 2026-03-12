@@ -1,0 +1,24 @@
+# Archivos de entorno
+.env
+.env.local
+
+# Backups (no versionar dumps de BD)
+backups/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+/var/log/
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporales
+*.tmp
+*.bak

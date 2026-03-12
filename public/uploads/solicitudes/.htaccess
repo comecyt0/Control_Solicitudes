@@ -1,0 +1,31 @@
+# ==============================================================================
+# COMECyT Solicitudes - Politica de Seguridad de Directorio
+# ==============================================================================
+
+# 1. Deshabilitar ejecucion de scripts PHP (mod_php)
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php5.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+
+# 2. Deshabilitar visibilidad del indice del directorio
+Options -Indexes
+
+# 3. Forzar archivos sospechosos a texto plano (por si FastCGI esta activo)
+AddType text/plain .php .phtml .php3 .php4 .php5 .php7 .phps .cgi .pl .asp .aspx .shtml .sh .bash
+
+# 4. Prevenir ejecucion forzando encabezados de descarga
+<FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|cgi|pl|asp|aspx|shtml|sh|bash)$">
+    ForceType text/plain
+</FilesMatch>
+
+# 5. Bloquear acceso a archivos ocultos (como este .htaccess)
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

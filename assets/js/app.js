@@ -139,20 +139,83 @@ function mostrarToast(mensaje, tipo = 'success', duracion = 3500) {
 }
 
 /* ==============================================================
-   Confirmacion antes de acciones criticas
+   Confirmaciones Globales Personalizadas (Custom Modal UI)
    ============================================================== */
-/**
- * Agregar dialogo de confirmacion nativo a botones con data-confirm.
- * Uso en HTML: <button data-confirm="¿Desea cancelar esta solicitud?">Cancelar</button>
- */
+let confirmCallback = null;
+
+function mostrarConfirmacionPersonalizada(titulo, mensaje, onConfirmCallback, isDanger = true) {
+    const modal = document.getElementById('modalConfirmacionGlobal');
+    if (!modal) return;
+
+    document.getElementById('confirmTitle').textContent = titulo;
+    document.getElementById('confirmMessage').textContent = mensaje;
+
+    const icon = document.getElementById('confirmIcon');
+    const btnAccept = document.getElementById('btnConfirmAccept');
+
+    if (isDanger) {
+        icon.className = 'fa-solid fa-triangle-exclamation';
+        icon.parentElement.style.color = '#DC2626';
+        btnAccept.style.backgroundColor = '#DC2626';
+        btnAccept.style.borderColor = '#DC2626';
+        btnAccept.innerHTML = 'Sí, continuar';
+    } else {
+        icon.className = 'fa-solid fa-circle-question';
+        icon.parentElement.style.color = 'var(--color-primary)';
+        btnAccept.style.backgroundColor = 'var(--color-primary)';
+        btnAccept.style.borderColor = 'var(--color-primary)';
+        btnAccept.innerHTML = 'Confirmar';
+    }
+
+    confirmCallback = onConfirmCallback;
+    abrirModal('modalConfirmacionGlobal');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btnCancel = document.getElementById('btnConfirmCancel');
+    const btnAccept = document.getElementById('btnConfirmAccept');
+
+    if (btnCancel) {
+        btnCancel.addEventListener('click', () => {
+            cerrarModal('modalConfirmacionGlobal');
+            confirmCallback = null;
+        });
+    }
+
+    if (btnAccept) {
+        btnAccept.addEventListener('click', () => {
+            cerrarModal('modalConfirmacionGlobal');
+            if (typeof confirmCallback === 'function') {
+                confirmCallback();
+            }
+            confirmCallback = null;
+        });
+    }
+});
+
+/* ==============================================================
+   Interceptar data-confirm
+   ============================================================== */
 document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-confirm]');
     if (!btn) return;
-    const msj = btn.getAttribute('data-confirm');
-    if (msj && !window.confirm(msj)) {
-        e.preventDefault();
-        e.stopPropagation();
+
+    // Si ya fue confirmado desde el modal, permitimos el evento nativo
+    if (btn.dataset.confirmed === "true") {
+        btn.dataset.confirmed = "false";
+        return;
     }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const msj = btn.getAttribute('data-confirm');
+    const dngr = btn.classList.contains('btn-danger') || btn.innerHTML.includes('fa-trash') || btn.innerHTML.includes('fa-xmark');
+
+    mostrarConfirmacionPersonalizada("Confirmación Requerida", msj, () => {
+        btn.dataset.confirmed = "true";
+        btn.click();
+    }, dngr);
 });
 
 /* ==============================================================
@@ -166,3 +229,19 @@ document.querySelectorAll('[data-auto-close]').forEach((el) => {
         setTimeout(() => el.remove(), 300);
     }, ms);
 });
+
+/* ==============================================================
+   Confirmación Doble Asíncrona (Prevención de bloqueo en Chrome)
+   ============================================================== */
+/**
+ * Ejecuta una doble confirmacion asincrona encadenando modales UI.
+ */
+window.confirmarAccionDoble = function (boton, msj1, msj2) {
+    mostrarConfirmacionPersonalizada("Confirmación", msj1, () => {
+        setTimeout(() => {
+            mostrarConfirmacionPersonalizada("⚠️ Acción Irreversible", msj2, () => {
+                boton.closest('form').submit();
+            }, true);
+        }, 150);
+    }, false);
+};

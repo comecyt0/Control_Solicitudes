@@ -23,6 +23,7 @@ $mensajeFlash = '';
 $tipoFlash    = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion']) && $_POST['_accion'] === 'cambiar_estatus') {
+    validarCsrfPost();
     $idSol          = (int) ($_POST['solicitud_id'] ?? 0);
     $estatusNuevo   = postParam('estatus_nuevo');
     $comentario     = postParam('comentario');
@@ -161,6 +162,7 @@ $pageTitle  = 'Solicitudes';
 $activeMenu = $filtroEst === 'pendiente' ? 'pendientes'
             : ($filtroEst === 'en_proceso' ? 'en_proceso'
             : ($filtroEst === 'completada' ? 'completadas' : 'solicitudes'));
+$helpPage   = 'solicitudes';
 
 require_once __DIR__ . '/../includes/header_admin.php';
 ?>
@@ -305,13 +307,13 @@ require_once __DIR__ . '/../includes/header_admin.php';
 
                         <!-- Boton de eliminar -->
                         <form method="POST" action=""
-                              style="display:inline-block; margin:0;"
-                              onsubmit="return confirm('¿Esta seguro de eliminar permanentemente esta solicitud y todo su historial? Esta accion no se puede deshacer.');">
+                              style="display:inline-block; margin:0;">
                             <input type="hidden" name="_accion" value="eliminar_solicitud">
                             <input type="hidden" name="solicitud_id" value="<?= $sol['id'] ?>">
-                            <button type="submit" class="btn btn-outline btn-icon"
+                            <button type="button" class="btn btn-outline btn-icon"
                                     title="Eliminar solicitud"
-                                    style="color: #F87171; border-color: transparent;">
+                                    style="color: #F87171; border-color: transparent;"
+                                    onclick="confirmarAccionDoble(this, '¿Quieres borrar esta solicitud?', '¿Estás SEGURO? Esta acción eliminará permanentemente la solicitud y todo su historial. No se puede deshacer.')">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </form>
@@ -371,6 +373,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
             </button>
         </div>
         <form method="POST" action="">
+            <?= csrfField() ?>
             <input type="hidden" name="_accion"      value="cambiar_estatus">
             <input type="hidden" name="solicitud_id" id="modalSolicitudId">
             <div class="modal-body">

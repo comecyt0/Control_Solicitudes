@@ -22,6 +22,7 @@ $mensajeFlash = '';
 $tipoFlash    = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
+    validarCsrfPost();
     $accion = $_POST['_accion'];
 
     // Solo el administrador principal o sesion activa puede gestionar
@@ -38,8 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                 $tipoFlash = "error";
             } else {
                 $hash = password_hash($pass, PASSWORD_BCRYPT);
-                $stmtI = $pdo->prepare("INSERT INTO administradores (nombre, email, password_hash) VALUES (?, ?, ?)");
-                $stmtI->execute([$nombre, $email, $hash]);
+                $rol  = in_array(postParam('rol'), ['superadmin','admin','revisor'], true) ? postParam('rol') : 'admin';
+                $stmtI = $pdo->prepare("INSERT INTO administradores (nombre, email, password_hash, rol) VALUES (?, ?, ?, ?)");
+                $stmtI->execute([$nombre, $email, $hash, $rol]);
                 header('Location: ' . BASE_URL . 'admin/administradores.php?flash=admin_creado');
                 exit;
             }
@@ -61,13 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                 $mensajeFlash = "Error: El correo '$email' ya pertenece a otro usuario.";
                 $tipoFlash = "error";
             } else {
+                $rol = in_array(postParam('rol'), ['superadmin','admin','revisor'], true) ? postParam('rol') : 'admin';
                 if (!empty($pass)) {
                     $hash = password_hash($pass, PASSWORD_BCRYPT);
-                    $stmtU = $pdo->prepare("UPDATE administradores SET nombre = ?, email = ?, password_hash = ? WHERE id = ?");
-                    $stmtU->execute([$nombre, $email, $hash, $idAdmin]);
+                    $stmtU = $pdo->prepare("UPDATE administradores SET nombre = ?, email = ?, password_hash = ?, rol = ? WHERE id = ?");
+                    $stmtU->execute([$nombre, $email, $hash, $rol, $idAdmin]);
                 } else {
-                    $stmtU = $pdo->prepare("UPDATE administradores SET nombre = ?, email = ? WHERE id = ?");
-                    $stmtU->execute([$nombre, $email, $idAdmin]);
+                    $stmtU = $pdo->prepare("UPDATE administradores SET nombre = ?, email = ?, rol = ? WHERE id = ?");
+                    $stmtU->execute([$nombre, $email, $rol, $idAdmin]);
                 }
                 header('Location: ' . BASE_URL . 'admin/administradores.php?flash=admin_editado');
                 exit;
@@ -106,7 +109,11 @@ if ($flashCode === 'admin_creado') {
 }
 
 // Obtener lista de administradores
-$stmtAdmin = $pdo->query("SELECT id, nombre, email, activo, ultimo_login, fecha_creacion FROM administradores ORDER BY nombre ASC");
+$stmtAdmin = $pdo->query(
+    "SELECT id, nombre, email, activo, ultimo_login, fecha_creacion,
+            COALESCE(rol, 'admin') AS rol
+     FROM administradores ORDER BY nombre ASC"
+);
 $listaAdmins = $stmtAdmin->fetchAll();
 
 // -------------------------------------------------------
@@ -114,6 +121,7 @@ $listaAdmins = $stmtAdmin->fetchAll();
 // -------------------------------------------------------
 $pageTitle  = 'Gestión de Administradores';
 $activeMenu = 'administradores';
+$helpPage   = 'administradores';
 
 require_once __DIR__ . '/../includes/header_admin.php';
 ?>
@@ -146,6 +154,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
                 <tr>
                     <th>Nombre</th>
                     <th>Email</th>
+                    <th>Rol</th>
                     <th>Estatus</th>
                     <th>Último Acceso</th>
                     <th>Registro</th>
@@ -157,6 +166,16 @@ require_once __DIR__ . '/../includes/header_admin.php';
                 <tr>
                     <td class="fw-600"><?= esc($adm['nombre']) ?></td>
                     <td><?= esc($adm['email']) ?></td>
+                    <td>
+                        <?php
+                        $rolColors = ['superadmin'=>['#662331','rgba(102,35,49,0.1)'],'admin'=>['#B19A6D','rgba(177,154,109,0.1)'],'revisor'=>['#2563EB','rgba(37,99,235,0.1)']];
+                        [$rolColor, $rolBg] = $rolColors[$adm['rol']] ?? ['#6B7280','rgba(107,114,128,0.1)'];
+                        $rolLabels = ['superadmin'=>'Super Admin','admin'=>'Administrador','revisor'=>'Revisor'];
+                        ?>
+                        <span class="badge" style="background:<?= $rolBg ?>;color:<?= $rolColor ?>;border:1px solid <?= $rolColor ?>40;">
+                            <?= $rolLabels[$adm['rol']] ?? 'Administrador' ?>
+                        </span>
+                    </td>
                     <td>
                         <?php if ($adm['activo']): ?>
                             <span class="badge" style="background: rgba(22, 163, 74, 0.1); color: #16A34A; border: 1px solid rgba(22, 163, 74, 0.2);">
@@ -174,20 +193,21 @@ require_once __DIR__ . '/../includes/header_admin.php';
                     <td class="text-muted fs-sm"><?= formatearFecha($adm['fecha_creacion']) ?></td>
                     <td class="td-actions">
                         <button type="button" class="btn btn-outline btn-icon" title="Editar"
-                                onclick="abrirModalEditarAdmin(<?= $adm['id'] ?>, '<?= esc(addslashes($adm['nombre'])) ?>', '<?= esc(addslashes($adm['email'])) ?>')">
+                                onclick="abrirModalEditarAdmin(<?= $adm['id'] ?>, '<?= esc(addslashes($adm['nombre'])) ?>', '<?= esc(addslashes($adm['email'])) ?>', '<?= esc($adm['rol']) ?>')">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
                         
                         <!-- Toggle Activo/Inactivo -->
                         <?php if ($adm['id'] !== (int) $_SESSION['admin_id']): ?>
-                        <form method="POST" action="" style="display:inline-block; margin:0;"
-                              onsubmit="return confirm('¿Seguro que deseas <?= $adm['activo'] ? 'desactivar' : 'activar' ?> este administrador?');">
+                        <form method="POST" action="" style="display:inline-block; margin:0;">
+                            <?= csrfField() ?>
                             <input type="hidden" name="_accion" value="toggle_admin">
                             <input type="hidden" name="admin_id" value="<?= $adm['id'] ?>">
                             <input type="hidden" name="activo" value="<?= $adm['activo'] ? '0' : '1' ?>">
-                            <button type="submit" class="btn btn-outline btn-icon" 
+                            <button type="button" class="btn btn-outline btn-icon" 
                                     title="<?= $adm['activo'] ? 'Desactivar acceso' : 'Permitir acceso' ?>"
-                                    style="color: <?= $adm['activo'] ? '#F87171' : '#4ADE80' ?>; border-color: transparent;">
+                                    style="color: <?= $adm['activo'] ? '#F87171' : '#4ADE80' ?>; border-color: transparent;"
+                                    onclick="mostrarConfirmacionPersonalizada('Confirmación de Accesos', '¿Seguro que deseas <?= $adm['activo'] ? 'desactivar' : 'activar' ?> este administrador?', () => { this.closest('form').submit(); }, <?= $adm['activo'] ? 'true' : 'false' ?>)">
                                 <i class="fa-solid <?= $adm['activo'] ? 'fa-user-slash' : 'fa-user-check' ?>"></i>
                             </button>
                         </form>
@@ -217,6 +237,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
             </button>
         </div>
         <form method="POST" action="" autocomplete="off">
+            <?= csrfField() ?>
             <input type="hidden" name="_accion" value="crear_admin">
             <div class="modal-body">
                 <div class="form-group">
@@ -228,9 +249,17 @@ require_once __DIR__ . '/../includes/header_admin.php';
                     <input type="email" name="email" id="c_email" class="form-control" required placeholder="correo@comecyt.gob.mx">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="c_password">Contraseña Provisional <span class="required">*</span></label>
+                    <label class="form-label" for="c_pass_display">Contraseña Provisional <span class="required">*</span></label>
                     <input type="text" name="password" id="c_password" class="form-control" required value="Admin2026!" minlength="6">
                     <small class="text-muted" style="display:block; margin-top:4px;">El usuario usará esta contraseña para su primer ingreso.</small>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="c_rol">Rol de Acceso <span class="required">*</span></label>
+                    <select name="rol" id="c_rol" class="form-control">
+                        <option value="admin">Administrador</option>
+                        <option value="revisor">Revisor (solo lectura)</option>
+                        <option value="superadmin">Super Administrador</option>
+                    </select>
                 </div>
             </div>
             <div class="modal-footer">
@@ -253,6 +282,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
             </button>
         </div>
         <form method="POST" action="" autocomplete="off">
+            <?= csrfField() ?>
             <input type="hidden" name="_accion" value="editar_admin">
             <input type="hidden" name="admin_id" id="e_admin_id">
             <div class="modal-body">
@@ -269,6 +299,14 @@ require_once __DIR__ . '/../includes/header_admin.php';
                     <input type="text" name="password" id="e_password" class="form-control" placeholder="Dejar en blanco para conservar actual" minlength="6">
                     <small class="text-muted" style="display:block; margin-top:4px;">Si escribes una nueva, reemplazará a la existente de forma permanente.</small>
                 </div>
+                <div class="form-group">
+                    <label class="form-label" for="e_rol">Rol de Acceso</label>
+                    <select name="rol" id="e_rol" class="form-control">
+                        <option value="admin">Administrador</option>
+                        <option value="revisor">Revisor (solo lectura)</option>
+                        <option value="superadmin">Super Administrador</option>
+                    </select>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="cerrarModal('modalEditarAdmin')">Cancelar</button>
@@ -279,11 +317,13 @@ require_once __DIR__ . '/../includes/header_admin.php';
 </div>
 
 <script>
-function abrirModalEditarAdmin(id, nombre, email) {
+function abrirModalEditarAdmin(id, nombre, email, rol) {
     document.getElementById('e_admin_id').value = id;
-    document.getElementById('e_nombre').value = nombre;
-    document.getElementById('e_email').value = email;
-    document.getElementById('e_password').value = ''; // Limpiar siempre password opcional
+    document.getElementById('e_nombre').value   = nombre;
+    document.getElementById('e_email').value     = email;
+    document.getElementById('e_password').value  = '';
+    const rolSel = document.getElementById('e_rol');
+    if (rolSel) rolSel.value = rol || 'admin';
     abrirModal('modalEditarAdmin');
 }
 </script>

@@ -1,0 +1,25 @@
+<?php
+/**
+ * COMECyT Control de Solicitudes
+ * CSS Administrativo Refactorizado
+ * 
+ * Este archivo contiene los estilos del panel administrativo extraídos
+ * para mejorar la carga y organización.
+ */
+
+/* Chat Panel Specific */
+#chatPanel {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-bubble-propio {
+    background: linear-gradient(135deg, var(--color-primary), #8b2f42);
+    color: #fff;
+    border-radius: 14px 14px 3px 14px;
+}
+
+.chat-bubble-otro {
+    background: #f0ece8;
+    color: #111827;
+    border-radius: 14px 14px 14px 3px;
+}

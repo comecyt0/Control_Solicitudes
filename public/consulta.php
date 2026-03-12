@@ -10,7 +10,9 @@
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/helpers.php';
+require_once __DIR__ . '/../config/auth.php';
 
+inicializarSesion();
 $pdo = getConnection();
 
 $busqueda  = trim(getParam('folio') ?: getParam('busqueda'));
@@ -21,9 +23,11 @@ $sinResultado = false;
 if ($busqueda !== '') {
     // Buscar por folio exacto o por correo (puede retornar multiples)
     $stmt = $pdo->prepare(
-        "SELECT * FROM solicitudes
-         WHERE folio = ? OR (email_solicitante != '' AND email_solicitante = ?)
-         ORDER BY fecha_creacion DESC
+        "SELECT s.*, b.marca, b.modelo, b.num_serie, b.num_inventario, b.estatus_alta
+         FROM solicitudes s
+         LEFT JOIN sb_bienes b ON s.equipo_id = b.cve_bienes
+         WHERE s.folio = ? OR (s.email_solicitante != '' AND s.email_solicitante = ?)
+         ORDER BY s.fecha_creacion DESC
          LIMIT 10"
     );
     $stmt->execute([$busqueda, $busqueda]);
@@ -48,6 +52,17 @@ if ($busqueda !== '') {
     }
 }
 ?>
+<?php
+$usuariologueado = !empty($_SESSION['user_id']) || !empty($_SESSION['admin_id']);
+$pageTitle  = 'Consulta de Solicitud';
+$activeMenu = 'historial';
+$helpPage   = 'consulta';
+
+if ($usuariologueado) {
+    // Layout de Dashboard para Usuario Regular (o admin en vista publica)
+    require_once __DIR__ . '/../includes/header_user.php';
+} else {
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -59,15 +74,17 @@ if ($busqueda !== '') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css?v=2.0">
 </head>
 <body class="layout-public">
+<?php require_once __DIR__ . '/../includes/loader.php'; ?>
+<?php } ?>
 
-<header class="public-header">
+<div class="<?= $usuariologueado ? '' : 'public-main' ?>" <?= $usuariologueado ? 'style="margin: 24px;"' : '' ?>>
+
+<?php if (!$usuariologueado): ?>
+<header class="public-header" style="margin-bottom: 24px;">
     <div class="public-brand">
-        <div class="public-logo">
-            <img src="<?= BASE_URL ?>assets/MARCA.png" alt="Logo COMECyT">
-        </div>
         <div class="public-brand-text">
             <span class="brand-name">COMECyT</span>
             <span class="brand-sub">Control de Solicitudes</span>
@@ -84,8 +101,7 @@ if ($busqueda !== '') {
         </a>
     </nav>
 </header>
-
-<div class="public-main">
+<?php endif; ?>
     <div class="public-hero" style="text-align: center; padding: 40px 20px 20px;">
         <img src="<?= BASE_URL ?>assets/MARCA.png" alt="Logo COMECyT" style="max-width: 450px; width: 100%; height: auto; margin: 0 auto 24px; display: block; filter: drop-shadow(0 0 30px rgba(177, 154, 109, 0.15));">
         <h2>Consultar Solicitud</h2>
@@ -206,6 +222,16 @@ if ($busqueda !== '') {
                 <div class="detail-field-label">Ultima actualizacion</div>
                 <div class="detail-field-value"><?= formatearFecha($resultado['fecha_actualizacion']) ?></div>
             </div>
+            <?php if (!empty($resultado['subtipo_sistemas'])): ?>
+            <div class="detail-field" style="grid-column: 1 / -1; background: rgba(139, 92, 246, 0.05); padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(139, 92, 246, 0.2); margin-top: 8px;">
+                <div class="detail-field-label" style="color: #8b5cf6;">
+                    <i class="fa-solid fa-code-branch"></i> Requerimiento Web / Sistema Solicitado
+                </div>
+                <div class="detail-field-value" style="font-weight: 600; color: #6d28d9;">
+                    <?= esc(ETIQUETAS_SUBTIPO_SISTEMAS[$resultado['subtipo_sistemas']] ?? $resultado['subtipo_sistemas']) ?>
+                </div>
+            </div>
+            <?php endif; ?>
             <?php if ($resultado['estatus'] === 'completada' && $resultado['resuelto_por']): ?>
             <div class="detail-field" style="grid-column: 1 / -1; background: rgba(22, 163, 74, 0.05); padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(22, 163, 74, 0.2); margin-top: 8px;">
                 <div class="detail-field-label" style="color: var(--color-completada);">
@@ -221,6 +247,80 @@ if ($busqueda !== '') {
         <div style="margin-top: 16px;">
             <div class="detail-field-label" style="margin-bottom: 8px;">Descripcion</div>
             <div class="detail-description"><?= nl2br(esc($resultado['descripcion'])) ?></div>
+        </div>
+        <?php endif; ?>
+
+        <?php
+        $adjuntosRaw  = $resultado['archivos_adjuntos'] ?? null;
+        $adjuntosArr  = $adjuntosRaw ? json_decode($adjuntosRaw, true) : null;
+        if (empty($adjuntosArr) && !empty($resultado['archivo_adjunto'])) {
+            $adjuntosArr = [$resultado['archivo_adjunto']];
+        }
+        $subtipoLabel = !empty($resultado['subtipo_sistemas'])
+            ? (ETIQUETAS_SUBTIPO_SISTEMAS[$resultado['subtipo_sistemas']] ?? $resultado['subtipo_sistemas'])
+            : null;
+        ?>
+        <?php if (!empty($adjuntosArr)): ?>
+        <div class="card mb-16" style="margin-top: 20px; border: 1px solid var(--border-color); border-left: 4px solid #8b5cf6; box-shadow: none;">
+            <div class="card-header" style="padding-bottom: 4px;">
+                <h3 class="card-title" style="color: #8b5cf6; font-size: 1rem;">
+                    <i class="fa-solid fa-paperclip"></i>
+                    Archivos Sistemas / Web
+                </h3>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+                <p class="text-muted" style="margin-bottom: 12px; font-size: 0.85rem;">Archivos adjuntados con la solicitud:</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    <?php foreach ($adjuntosArr as $idx => $archivo): ?>
+                    <?php 
+                        // Extraer nombre original quitando el prefijo req_sys_xxxxxxxxxxxxx_
+                        $nombreRef = preg_replace('/^req_sys_[^_]+_/', '', $archivo);
+                    ?>
+                    <a href="<?= BASE_URL ?>public/uploads/solicitudes/<?= esc($archivo) ?>"
+                       target="_blank"
+                       class="btn btn-outline btn-sm"
+                       style="border-color: #8b5cf6; color: #8b5cf6;"
+                       download="<?= esc($nombreRef) ?>">
+                        <i class="fa-solid fa-download"></i> <?= esc($nombreRef) ?>
+                    </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (!empty($resultado['equipo_id'])): ?>
+        <!-- Tarjeta de Equipo Vinculado -->
+        <div class="card mb-16" style="margin-top: 20px; border: 1px solid var(--border-color); border-left: 4px solid var(--color-accent); box-shadow: none;">
+            <div class="card-header" style="padding-bottom: 4px;">
+                <h3 class="card-title" style="color: var(--color-accent); font-size: 1rem;">
+                    <i class="fa-solid fa-laptop-medical"></i>
+                    Equipo Informático Vinculado
+                </h3>
+                <?php if ($resultado['estatus_alta'] === 'pendiente'): ?>
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #D97706; border: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.75rem;">
+                        <i class="fa-solid fa-clock"></i> Análisis en Proceso
+                    </span>
+                <?php endif; ?>
+            </div>
+            <div class="detail-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); padding-top: 5px;">
+                <div class="detail-field">
+                    <div class="detail-field-label">Marca</div>
+                    <div class="detail-field-value" style="font-weight: 600;"><?= esc($resultado['marca']) ?></div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-field-label">Modelo</div>
+                    <div class="detail-field-value"><?= esc($resultado['modelo']) ?></div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-field-label">No. Serie</div>
+                    <div class="detail-field-value"><?= !empty($resultado['num_serie']) ? esc($resultado['num_serie']) : '<span class="text-muted">N/D</span>' ?></div>
+                </div>
+                <div class="detail-field">
+                    <div class="detail-field-label">Inventario COMECyT</div>
+                    <div class="detail-field-value"><?= !empty($resultado['num_inventario']) ? esc($resultado['num_inventario']) : '<span class="text-muted">En validación</span>' ?></div>
+                </div>
+            </div>
         </div>
         <?php endif; ?>
     </div>
@@ -272,7 +372,12 @@ if ($busqueda !== '') {
     <?php endif; ?>
     <?php endif; ?>
 
-</div><!-- /.public-main -->
+</div>
 <script src="<?= BASE_URL ?>assets/js/app.js"></script>
-</body>
-</html>
+
+<?php if ($usuariologueado): ?>
+    <?php require_once __DIR__ . '/../includes/footer_user.php'; ?>
+<?php else: ?>
+    </body>
+    </html>
+<?php endif; ?>

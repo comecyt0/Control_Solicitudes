@@ -1,0 +1,95 @@
+services:
+  # ─────────────────────────────────────────────
+  # Aplicación: PHP 8.1 + Apache
+  # ─────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: comecyt_app
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8080:80"
+    volumes:
+      - uploads_data:/var/www/html/public/uploads
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - comecyt_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/public/health.php" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ─────────────────────────────────────────────
+  # Base de Datos: PostgreSQL 15
+  # ─────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: comecyt_db
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:5433:5432" # Puerto externo 5433 para no chocar con instancias locales
+    environment:
+      POSTGRES_DB: ${DB_NAME:-bd_sisibic}
+      POSTGRES_USER: ${DB_USER:-comecyt_user}
+      POSTGRES_PASSWORD: ${DB_PASS:-123456789}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: America/Mexico_City
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Script de inicialización único unificado (sisibic + ss)
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U comecyt_user -d bd_sisibic" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - comecyt_net
+
+  # ─────────────────────────────────────────────
+  # pgAdmin — Administración visual de BD
+  # ─────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: comecyt_pgadmin
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8081:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@comecyt.local
+      PGADMIN_DEFAULT_PASSWORD: Admin2026!
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - comecyt_net
+
+# ─────────────────────────────────────────────
+# Volúmenes persistentes
+# ─────────────────────────────────────────────
+volumes:
+  postgres_data:
+    name: comecyt_postgres_data
+  uploads_data:
+    name: comecyt_uploads_data
+  pgadmin_data:
+    name: comecyt_pgadmin_data
+
+# ─────────────────────────────────────────────
+# Red interna aislada
+# ─────────────────────────────────────────────
+networks:
+  comecyt_net:
+    name: comecyt_network
+    driver: bridge
