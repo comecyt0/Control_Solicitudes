@@ -23,3 +23,95 @@
     color: #111827;
     border-radius: 14px 14px 14px 3px;
 }
+
+/* ==============================================================
+   Overrides Responsive para Paneles Flotantes del Admin
+   (chatPanel e iaPanel usan estilos inline; !important es necesario)
+   ============================================================== */
+
+/* --- Tablet ≤ 1024px --- */
+@media (max-width: 1024px) {
+    /* chatPanel: ajustar width cuando sidebar es más estrecho */
+    #chatPanel {
+        width: 320px !important;
+        right: 0 !important;
+    }
+
+    /* iaPanel: reposicionar junto al chatPanel */
+    #iaPanel {
+        right: 330px !important;
+        width: 300px !important;
+    }
+
+    /* Buscador global: limitar ancho del panel de resultados */
+    #globalSearchResults {
+        width: 280px !important;
+    }
+}
+
+/* --- Móvil ≤ 768px: paneles full-width sobre el contenido --- */
+@media (max-width: 768px) {
+    /* chatPanel: ocupa todo el ancho a la derecha */
+    #chatPanel {
+        width: 100vw !important;
+        right: 0 !important;
+        left: 0 !important;
+        top: 60px !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+    }
+
+    /* iaPanel: cae debajo del topbar también, a pantalla completa */
+    #iaPanel {
+        width: 100vw !important;
+        right: 0 !important;
+        left: 0 !important;
+        top: 60px !important;
+        height: calc(100vh - 60px) !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    /* Buscador: panel de resultados ocupa todo el ancho */
+    #globalSearchResults {
+        width: calc(100vw - 24px) !important;
+        right: 0 !important;
+        left: auto !important;
+    }
+
+    /* Topbar: ocultar el input de búsqueda y mostrar solo el ícono */
+    #globalSearchInput {
+        max-width: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Reducir botones de acción en topbar */
+    .topbar-actions {
+        gap: 6px !important;
+    }
+
+    /* Ocultar badges cuando no hay espacio */
+    #chatBadge {
+        font-size: 0.55rem !important;
+        min-width: 14px !important;
+        height: 14px !important;
+    }
+}
+
+/* --- Móvil muy pequeño ≤ 480px --- */
+@media (max-width: 480px) {
+    /* Reducir el sidebar izquierdo del chat */
+    #chatSidebar {
+        display: none !important;
+    }
+
+    /* El panel de chat se hace más compacto */
+    #chatPanel[style*="flex"] {
+        flex-direction: column !important;
+    }
+
+    /* Ocultar botones de IA en topbar si hay poco espacio */
+    #iaToggleBtn {
+        display: none !important;
+    }
+}

@@ -1640,90 +1640,394 @@ textarea.form-control {
 }
 
 /* ==============================================================
-   19. Responsive
+   19. Responsive — Multi-breakpoint (PC · Laptop · Tablet · Móvil)
    ============================================================== */
+
+/* ----------------------------------------------------------
+   Pantalla grande ≥ 1400px: dar más espacio al contenido
+   ---------------------------------------------------------- */
+@media (min-width: 1400px) {
+    .page-content {
+        padding: 32px 40px;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+}
+
+/* ----------------------------------------------------------
+   Laptop / Tablet grande 1024px – 1399px
+   ---------------------------------------------------------- */
+@media (max-width: 1399px) and (min-width: 1025px) {
+    .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+    }
+    .stat-value {
+        font-size: 1.7rem;
+    }
+}
+
+/* ----------------------------------------------------------
+   Tablet 768px – 1024px: sidebar colapsa, layout de 2 cols
+   ---------------------------------------------------------- */
 @media (max-width: 1100px) {
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-
     .detail-layout {
         grid-template-columns: 1fr;
     }
 }
 
-@media (max-width: 768px) {
-    .layout-admin .sidebar {
-        transform: translateX(calc(-1 * var(--sidebar-width)));
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-width: 220px;
     }
 
+    .page-content {
+        padding: 20px;
+    }
+
+    .topbar {
+        padding: 0 20px;
+    }
+
+    .stat-value {
+        font-size: 1.6rem;
+    }
+
+    .stats-grid {
+        gap: 12px;
+    }
+
+    /* Tablas internas con scroll horizontal garantizado */
+    .table-wrapper {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ----------------------------------------------------------
+   Tablet pequeña / Landscape móvil 768px – 1023px
+   ---------------------------------------------------------- */
+@media (max-width: 768px) {
+    /* SIDEBAR: oculta y desliza desde la izquierda */
+    .layout-admin .sidebar {
+        transform: translateX(calc(-1 * var(--sidebar-width)));
+        width: var(--sidebar-width);
+        box-shadow: var(--shadow-lg);
+    }
     .layout-admin .sidebar.open {
         transform: translateX(0);
     }
-
     .layout-admin .main-wrapper {
         margin-left: 0;
     }
-
     .menu-toggle {
         display: flex;
     }
 
+    /* TOPBAR */
+    .topbar {
+        padding: 0 16px;
+        gap: 10px;
+    }
+    .topbar-title h1 {
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+
+    /* CONTENIDO */
     .page-content {
         padding: 16px;
     }
-
-    .topbar {
-        padding: 0 16px;
-    }
-
     .stats-grid {
         grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    .stat-value {
+        font-size: 1.5rem;
     }
 
+    /* GRID TIPOS */
     .type-grid {
         grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+    .type-option {
+        padding: 16px 10px;
     }
 
+    /* FORMULARIOS */
     .form-grid-2 {
         grid-template-columns: 1fr;
     }
-
     .detail-grid {
         grid-template-columns: 1fr;
     }
 
+    /* LAYOUT PÚBLICO */
     .public-header {
         padding: 0 16px;
+        height: 56px;
     }
-
+    .public-brand-text .brand-sub {
+        display: none;
+    }
+    .public-nav .btn span {
+        display: none;
+    }
     .public-main {
         padding: 24px 16px;
     }
-
     .public-hero h2 {
         font-size: 1.3rem;
     }
-}
 
-@media (max-width: 480px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
+    /* MODALES: máximo 96vw */
+    .modal {
+        max-width: 96vw;
+        border-radius: var(--radius-lg);
+    }
+    .modal-header {
+        padding: 16px 18px;
+    }
+    .modal-body {
+        padding: 18px;
+    }
+    .modal-footer {
+        padding: 14px 18px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .modal-footer .btn {
+        flex: 1;
+        justify-content: center;
     }
 
+    /* TOAST: ajustar a móvil */
+    .toast-container {
+        bottom: 16px;
+        right: 12px;
+        left: 12px;
+    }
+    .toast {
+        min-width: unset;
+        max-width: 100%;
+    }
+
+    /* CARD */
+    .card {
+        padding: 16px;
+    }
+    .card-header {
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+    }
+
+    /* CHAT PANEL: posición corregida en móvil (sidebar oculto) */
+    .chat-panel {
+        left: 8px;
+        right: 8px;
+        width: auto;
+        bottom: 12px;
+    }
+
+    /* TABLA: asegurar scroll horizontal */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    tbody td,
+    thead th {
+        white-space: nowrap;
+    }
+
+    /* FILTER BAR */
+    .filter-bar {
+        gap: 8px;
+    }
+    .filter-bar .search-input-wrapper {
+        min-width: 100%;
+    }
+
+    /* DETAIL LAYOUT */
+    .detail-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    /* BACK LINK */
+    .back-link {
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+    }
+}
+
+/* ----------------------------------------------------------
+   Móvil retrato pequeño ≤ 480px
+   ---------------------------------------------------------- */
+@media (max-width: 480px) {
+    /* STATS */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .stat-card {
+        padding: 16px;
+    }
+    .stat-value {
+        font-size: 1.8rem;
+    }
+
+    /* TIPOS */
+    .type-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    /* TOPBAR: ocultar texto de botones de acción */
+    .topbar-title h1 {
+        max-width: 130px;
+        font-size: 0.9rem;
+    }
+    .topbar-actions .btn span {
+        display: none;
+    }
+    .topbar-actions .btn {
+        padding: 7px 10px;
+    }
+    .topbar-actions .btn i {
+        margin: 0;
+    }
+
+    /* FILTER BAR: columna */
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-bar > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* FORMULARIOS */
+    .btn {
+        padding: 9px 14px;
+    }
+    .form-control {
+        font-size: 16px; /* Prevent iOS zoom */
+    }
+
+    /* PAGE CONTENT */
+    .page-content {
+        padding: 12px;
+    }
+
+    /* ENCABEZADO PÚBLICO */
+    .public-header {
+        height: 52px;
+    }
+    .public-logo {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+    .public-brand-text .brand-name {
+        font-size: 0.85rem;
+    }
+    .public-main {
+        padding: 16px 12px;
+    }
+    .public-hero h2 {
+        font-size: 1.1rem;
+    }
+    .public-hero p {
+        font-size: 0.85rem;
+    }
+
+    /* FOLIO DISPLAY */
+    .folio-display {
+        min-width: unset;
+        width: 100%;
+    }
+    .folio-value {
+        font-size: 1.2rem;
+    }
+
+    /* MODALES full-width en móvil muy pequeño */
+    .modal-backdrop {
+        padding: 12px;
+        align-items: flex-end;
+    }
+    .modal {
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+        max-width: 100%;
+        margin-bottom: -12px;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+
+    /* TABLA: texto más pequeño para caber en pantalla */
+    tbody td,
+    thead th {
+        font-size: 0.8rem;
+        padding: 10px 10px;
+    }
+
+    /* CARD */
+    .card {
+        padding: 14px;
+        border-radius: var(--radius-md);
+    }
+
+    /* CHAT PANEL más estrechos */
+    .chat-panel {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 70vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+
+    /* PAGINATION */
+    .pagination {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .pagination-buttons {
+        flex-wrap: wrap;
+    }
+    .pagination-btn {
+        padding: 5px 9px;
+        font-size: 0.75rem;
+    }
+
+    /* EMPTY STATE ajustar padding */
+    .empty-state {
+        padding: 40px 16px;
+    }
+    .empty-state i {
+        font-size: 2.2rem;
+    }
+}
+
+/* ----------------------------------------------------------
+   Móvil mínimo ≤ 360px (teléfonos muy compactos)
+   ---------------------------------------------------------- */
+@media (max-width: 360px) {
     .type-grid {
         grid-template-columns: 1fr;
     }
-
-    .filter-bar {
-        flex-direction: column;
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
-
-    .filter-bar>* {
-        width: 100%;
-    }
-
-    .topbar-actions .btn span {
+    .topbar-title h1 {
         display: none;
     }
 }

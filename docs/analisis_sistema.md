@@ -1,70 +1,323 @@
-# Análisis del Sistema COMECyT (Intranet)
+# Análisis Técnico del Sistema COMECyT
+**Control de Solicitudes Internas | v3.1 | Marzo 2026**
 
-Este documento detalla el análisis del sistema web basado en el código fuente, la configuración para compartirlo localmente y la arquitectura de la infraestructura en Docker.
+Este documento detalla el análisis técnico completo del sistema: infraestructura, componentes de software, módulos de negocio y flujos de datos.
 
-## 1. Arquitectura del Sistema
+---
 
-El sistema es una aplicación web empaquetada a través de Docker Compose e incluye tres componentes (servicios) principales:
+## 1. Arquitectura de Infraestructura (Docker)
 
-- **App (PHP 8.1 + Apache)**:
-  Contenedor principal donde se ejecuta la lógica del sistema. Se expone en el puerto `8080`.
-  Está preconfigurado con las extensiones necesarias (PDO PostgreSQL, cURL, GD, etc.) y la carpeta pública del sistema mapeada dinámicamente. 
-  *Novedad:* Incluye ahora el **Módulo de Servicio Social** con su propia gestión Kanban, vista, y sistema de asistencias en paralelo a la lógica de administradores.
+El sistema está completamente contenedorizado mediante **Docker Compose** con 3 servicios:
 
-- **DB (PostgreSQL 15)**:
-  Servidor de base de datos contenedorizado. Se encuentra configurado con persistencia de datos (volumen `comecyt_postgres_data`) y se han inicializado las tablas pertinentes en la base `bd_sisibic` con el usuario `comecyt_user` y la nueva contraseña establecida `123456789`. Se expone localmente en el puerto `5433` mediante todas las interfaces (`0.0.0.0`), permitiendo el acceso si hiciera falta conectarse desde un cliente externo.
-  *Novedad:* Incluye esquemas independientes para `ss_usuarios`, `ss_kanban_tareas`, `ss_evidencias` y `ss_asistencia`.
+### Servicio: `comecyt_app` (PHP 8.1 + Apache)
+- **Imagen base**: Dockerfile personalizado sobre `php:8.1-apache`
+- **Puerto expuesto**: `8080 → 80`
+- **Extensiones PHP compiladas**: `pdo_pgsql`, `pgsql`, `gd`, `zip`, `curl`, `mbstring`, `opcache`
+- **OPcache activo**: Pre-compilación de bytecode PHP en RAM → carga casi instantánea
+- **Volume de uploads**: `comecyt_uploads_data:/var/www/html/public/uploads`
+- **Código fuente**: Copiado estáticamente durante el build (`COPY . /var/www/html`)
+  - ⚠️ Sin bind-mount por rendimiento en WSL2 — **Actualizar Docker al hacer cambios**
 
-- **pgAdmin**:
-  Interfaz gráfica para la administración de la base de datos a través del navegador. Se expone en el puerto `8081`.
+### Servicio: `comecyt_db` (PostgreSQL 15)
+- **Imagen**: `postgres:15-alpine`
+- **Base de datos**: `bd_sisibic`
+- **Usuario**: `comecyt_user` | **Contraseña**: en `.env`
+- **Puerto**: `5433 → 5432` (puerto de host 5433 → interno 5432)
+- **Persistencia**: Volumen `comecyt_postgres_data`
+- **Init scripts**: `database/init.sql` al primer inicio
 
-## 2. Configuración y Credenciales
+### Servicio: `comecyt_pgadmin` (pgAdmin)
+- **Puerto expuesto**: `8081 → 80`
+- **Credenciales**: Email y contraseña en `.env`
+- **Acceso**: http://localhost:8081
 
-Se actualizaron las credenciales con base en tu solicitud para mantener uniformidad en el despliegue local:
-- **Base de Datos**: `bd_sisibic`
-- **Usuario BD**: `comecyt_user`
-- **Contraseña BD**: `123456789`
+### Red interna
+Todos los servicios están en la red `comecyt_net` (bridge). El app se conecta a la BD usando hostname `db` (no localhost).
 
-El archivo de entorno `.env` ahora inyecta automáticamente esta contraseña a la capa de PHP, y el archivo `docker-compose.yml` instruye a PostgreSQL para que asigne esta misma contraseña.
+---
 
-*(Importante: Para que el cambio de contraseña tome efecto de cero, se limpió la persistencia vieja para forzar el script de inicialización de la contraseña del contendor).*
+## 2. Stack Tecnológico Completo
 
-## 3. Acceso y Uso Compartido en Red Local
+| Capa | Tecnología | Versión | Notas |
+|---|---|---|---|
+| Backend | PHP | 8.1 | MVC manual, sin framework |
+| Base de datos | PostgreSQL | 15 | pgsql, driver PDO |
+| Servidor web | Apache | 2.4 | Mod rewrite + PHP-FPM |
+| Frontend CSS | Vanilla CSS | — | CSS Custom Properties, 5 breakpoints |
+| Frontend JS | Vanilla JavaScript | — | Sin jQuery, sin Node.js |
+| Iconos | FontAwesome | 6.5.1 | CDN |
+| Tipografía | Google Fonts (Inter) | — | CDN |
+| IA API | Groq (LLaMA 3) | — | Requiere GROQ_API_KEY |
+| Email | PHP mail / SMTP | — | Configurable en .env |
+| Contenedores | Docker + Compose | 24+ | 3 servicios |
+| Control de versiones | Git | — | branch: main |
 
-La configuración de puertos en Docker se actualizó para enlazar explícitamente sobre `0.0.0.0` (todas las interfaces de red) para permitir conexiones de otros dispositivos en tu red LAN.
+---
 
-- **Tu Dirección IP Local Escaneada**: `172.30.0.44`
+## 3. Arquitectura PHP (Sin Framework)
 
-Para que tus compañeros de oficina puedan usar el sistema de forma local, pídeles que abran su navegador y escriban las siguientes direcciones según la herramienta que necesiten:
+El sistema usa **SSR nativo PHP** con patrón **PRG (Post-Redirect-Get)**:
 
-- **Para entrar al Sistema Web (App)**: `http://172.30.0.44:8080`
-- **Para entrar al Administrador de Base de Datos (pgAdmin)**: `http://172.30.0.44:8081`
+```
+Browser → GET página → HTML renderizado por PHP
+Browser → POST form → PHP valida → INSERT BD → header redirect → GET
+Browser → fetch() → admin/api/*.php → JSON response
+```
 
-### Acceso a pgAdmin (Credenciales por defecto)
-- **Usuario:** `admin@comecyt.local`
-- **Contraseña:** `Admin2026!`
+### Archivos de configuración base
 
-Una vez en pgAdmin, deberán registrar el servidor colocando `db` como hostname o `172.30.0.44`, el puerto `5432` de comunicación directa interna, usaurio `comecyt_user` y password `123456789`.
+| Archivo | Responsabilidad |
+|---|---|
+| `config/database.php` | Conexión PDO singleton, `generarFolio()`, constantes de BD |
+| `config/auth.php` | Sesiones, CSRF tokens, rate limiting, verificación de roles |
+| `includes/helpers.php` | `esc()`, `badgeEstatus()`, `csrfField()`, constantes de tipos y estados |
 
-## 4. Archivos de Control e Inicialización
+### Seguridad implementada
+- **CSRF**: Tokens en todos los POST, validados por `validarCsrfPost()` en `auth.php`
+- **Rate limiting**: 5 intentos → bloqueo 5 minutos por IP
+- **PDO**: Todas las queries con `prepare()` y `execute()` — sin SQL injection posible
+- **XSS**: Función `esc()` en TODA salida HTML sin excepción
+- **RCE**: `.htaccess` en `/uploads/` bloquea ejecución PHP de archivos subidos
+- **Secrets**: Variables en `.env`, no en código fuente (validado en `.gitignore`)
 
-- **docker-compose.yml**:
-  Contiene las directivas principales para levantar los 3 contenedores, definie redes locales (`comecyt_net`) y configura scripts de inicialización (`01_schema.sql` y `02_migracion.sql`) en `/docker-entrypoint-initdb.d/`.
+---
 
-- **.env**:
-  Controla los secrets y configuración del entorno de PHP, credenciales de Base de datos, API KEYS (`GROQ_API_KEY`) y configuración de correo/cron.
+## 4. Módulos del Sistema
 
-## 5. Requisitos de Ejecución y Mantenimiento
+### Módulo 1: Tickets de Soporte (Core)
+**Archivos principales**: `public/index.php`, `admin/solicitudes.php`, `admin/detalle.php`
 
-- **Persistencia**: Los archivos subidos se guardarán en el volumen `comecyt_uploads_data`, y los datos de Postgres en `comecyt_postgres_data`. Si se destruyen los volúmenes, la base se reseteará a cero.
-- **Detener el sistema**: `docker-compose down`
-- **Mirar el estado**: `docker-compose ps`
-- **Ver logs**: `docker-compose logs -f`
+Gestión completa del ciclo de vida de las solicitudes internas:
+- Alta por parte del empleado (público o autenticado)
+- Asignación y cambio de estatus por administradores
+- Bitácora inmutable de cambios (`historial_solicitudes`)
+- Comentarios privados internos
+- Notificación email automática al solicitante
+- Exportación individual en PDF y masiva en CSV
 
-## 6. Optimizaciones de Rendimiento (Producción)
+**Tipos de solicitud**:
+- `sistemas` — Problemas con sistemas internos COMECyT
+- `soporte` — Soporte técnico hardware/software
+- `atencion` — Atención ciudadana y correos
+- `administracion` — Gestión administrativa
 
-Dado que Docker en Windows (WSL2) sufre de alta latencia al compartir el sistema de archivos del proyecto con el contenedor Linux, el sistema fue optimizado para redes de alta demanda.
+**Ciclo de estatus**:
+```
+pendiente → en_proceso → completada
+           ↓
+        cancelada
+```
 
-- **Zend OPcache**: Se compiló y activó OPcache en PHP 8.1. Esto permite que todo el código fuente del sistema se pre-compile en Bytecode y se almacene en la Memoria RAM. Gracias a esto, la aplicación carga de forma casi instantánea para los usuarios de la red local sin tener que leer el disco duro de tu computadora en cada clic. Adicionalmente, se configuró `opcache.validate_timestamps=0` para que el servidor nunca pierda tiempo comprobando si los archivos cambiaron, mejorando aún más el throughput.
-- **Desvinculación de Sistema de Archivos**: Se eliminó el `bind mount` de desarrollo (`.:/var/www/html`) en Windows. Ahora el contenedor ejecuta sus procesos copiados nativamente en Linux, evadiendo la inmensa latencia de red 9P que sufre Docker Desktop al cruzar sistemas operativos.
-- **Realpath Cache**: Se aumentó el tamaño de caché de rutas (`realpath_cache_size=4096K`) para minimizar aún más las llamadas al sistema operativo host.
+**Generación de folios**: `CMCT-{AÑO}-{NNNN}` (secuencial por año, función `generarFolio()`)
+
+---
+
+### Módulo 2: ERP de Personal
+**Archivo principal**: `admin/personal.php`
+
+Catálogo maestro de empleados de COMECyT:
+- Tabla `cat_personal`: RFC, CURP, nombre, apellidos, extensión, email, área, categoría
+- Portal de registro de usuarios vinculado al catálogo
+- Solicitudes de actualización de datos (`solicitudes_actualizacion_personal`)
+- Filtros por área, estatus y búsqueda global
+
+---
+
+### Módulo 3: Inventario de Hardware
+**Archivo principal**: `admin/equipos.php`
+
+Control de activos tecnológicos:
+- `sb_bienes`: Computadoras, laptops, monitores
+- `sb_bienes_altum`: Equipos con número Altum (GEM)
+- `sb_bienes_impresoras`: Impresoras y multifuncionales
+- `sb_bienes_red`: Switches, APs, firewalls, cableado
+- `sb_bienes_baja`: Histórico de equipos dados de baja
+- Asignación de equipos a empleados y visualización por usuario
+
+---
+
+### Módulo 4: Calendario y Kanban
+**Archivo principal**: `admin/calendario.php`
+
+- Calendario de eventos institucionales con vista mensual
+- Tablero Kanban de tareas internas del equipo TI
+- Creación de tareas desde el chat del equipo
+- Eventos y tareas accesibles desde el header_admin (botones rápidos)
+
+---
+
+### Módulo 5: Colaboración Interna
+**Integrado en**: `includes/header_admin.php` + `admin/api/chat.php`
+
+- **Chat en tiempo real** entre administradores (polling cada 7s)
+- Canal general del equipo TI
+- Mensajes directos (DM) entre administradores
+- Creación de tareas Kanban y eventos desde el chat
+- **Asistente IA** integrado: Groq + LLaMA 3 con contexto del sistema
+- Búsqueda global: tickets, personal, equipos desde el topbar
+
+---
+
+### Módulo 6: Correos Institucionales
+**Archivo principal**: `admin/correos.php`
+
+Gestión del catálogo de correos oficiales por área:
+- Alta, modificación y baja de cuentas
+- Visualización por área organizacional
+
+---
+
+### Módulo 7: Reportes y Estadísticas
+**Archivo principal**: `admin/reportes.php`
+
+- KPIs en el dashboard: total, activas, completadas, urgentes
+- Gráficas CSS de distribución por tipo y área
+- Exportación CSV con filtros: tipo, estatus, rango de fechas
+
+---
+
+### Módulo 8: Servicio Social
+**Archivos**: `admin/servicio_social.php`, `servicio_social/dashboard.php`, `admin/api/servicio_social.php`
+
+Portal independiente para gestión de becarios de servicio social:
+- Registro de alumnos (`ss_alumnos`)
+- Control de asistencias diarias (`ss_asistencia`)
+- Tablero Kanban para tareas asignadas (`ss_kanban_tareas`)
+- Subida de evidencias (`ss_evidencias`)
+- Dashboard propio para el becario
+
+---
+
+## 5. Capa de Presentación (Frontend)
+
+### CSS (`assets/css/main.css`)
+- **Sistema de diseño** con CSS Custom Properties (variables CSS)
+- **Paleta institucional**: Guinda `#662331` + Dorado `#B19A6D` (identidad COMECyT / GEM 2023-2029)
+- **Dark Mode**: Clase `.dark-mode` en `<body>`, persistida en BD por administrador
+- **Responsive completo**: 5 breakpoints CSS:
+  - ≥ 1400px: Pantallas grandes
+  - 1024–1399px: Laptops
+  - 768–1023px: Tablets (sidebar colapsable)
+  - 480–767px: Móviles
+  - ≤ 360px: Móviles muy pequeños
+
+### JavaScript (`assets/js/app.js`)
+Minimal, solo lógica de UI:
+- Sidebar móvil (toggle + overlay + Escape key)
+- Apertura/cierre de modales
+- Sistema de toasts (notificaciones efímeras)
+- Auto-hide de alertas
+- Confirmaciones de acción globales
+
+### Iconos: FontAwesome 6.5.1 (CDN CloudFlare)
+### Tipografía: Inter (Google Fonts, CDN)
+
+---
+
+## 6. Base de Datos — Diagrama Lógico
+
+```
+solicitudes
+├── id (PK, serial)
+├── folio (unique, CMCT-YYYY-NNNN)
+├── tipo (enum: sistemas|soporte|atencion|administracion)
+├── solicitante (text)
+├── email_solicitante
+├── area (text)
+├── prioridad (enum: baja|media|alta|urgente)
+├── descripcion (text)
+├── estatus (enum: pendiente|en_proceso|completada|cancelada)
+├── resuelto_por (text, nullable)
+├── archivos (JSON array)
+├── equipo_id (FK → sb_bienes, nullable)
+├── fecha_creacion (timestamp)
+└── fecha_actualizacion (timestamp)
+    ↓ 1:N
+historial_solicitudes (bitácora inmutable)
+    ↓ 1:N
+comentarios_solicitudes (notas privadas)
+
+cat_personal ←→ usuarios
+cat_personal → cat_areas
+sb_bienes → solicitudes (equipo_id)
+```
+
+---
+
+## 7. Configuración del Entorno (.env)
+
+Variables requeridas en `.env` para producción:
+
+```env
+# Base de datos (PostgreSQL)
+DB_HOST=db              # 'db' en Docker, '127.0.0.1' sin Docker
+DB_PORT=5432
+DB_NAME=bd_sisibic
+DB_USER=comecyt_user
+DB_PASS=<contraseña>
+
+# Sistema
+FOLIO_PREFIX=CMCT
+BASE_URL=http://TU_IP:8080/
+APP_HTTPS=false         # true en producción con SSL
+
+# IA
+GROQ_API_KEY=<clave>    # Groq API para asistente IA
+
+# Email
+MAIL_ENABLED=true
+MAIL_HOST=smtp.comecyt.gob.mx
+MAIL_USER=<usuario>
+MAIL_PASS=<contraseña>
+MAIL_FROM=noreply@comecyt.gob.mx
+
+# pgAdmin
+PGADMIN_EMAIL=admin@comecyt.local
+PGADMIN_PASS=<contraseña>
+```
+
+---
+
+## 8. Datos Históricos Migrados
+
+En Marzo 2026 se realizó la migración de **85 registros históricos** de solicitudes previas al sistema actual.
+
+- **Script**: `database/migration_history.sql`
+- **Folios generados**: `CMCT-2025-0001` a `CMCT-2026-0084`
+- **Responsables mapeados**: VICTOR, RICARDO, ABRIL, FERNANDO, EDUARDO
+- **Nuevos administradores creados**: VICTOR (ID 7), RICARDO (ID 8)
+- **Estatus asignado**: `completada` para los registros "Atendido", `en_proceso` para los pendientes
+- **Campo área**: Texto libre mapeado al Sistema de origen (DUAL, ESYCA, Licenciatura, etc.)
+
+---
+
+## 9. Acceso en Red Local
+
+Para compartir el sistema en la red interna:
+
+1. Asegurarse de que Docker está activo
+2. Obtener la IP del servidor: `ipconfig` (Windows) / `ip addr` (Linux)
+3. Abrir puertos `8080` y `8081` en el firewall si es necesario
+4. Los usuarios acceden por: `http://IP_SERVIDOR:8080/public/`
+
+> La IP del servidor en la red COMECyT es típicamente `172.30.0.44` o `172.30.0.25`.
+
+---
+
+## 10. Mantenimiento y Actualización del Docker
+
+Cada vez que se modifique código fuente, es **necesario reconstruir la imagen Docker**:
+
+```bash
+# Reconstruir y reiniciar con los cambios
+docker compose down
+docker compose up --build -d
+
+# O solo el contenedor de la app
+docker compose up --build -d comecyt_app
+
+# Ver si los cambios cargaron bien
+docker compose logs -f comecyt_app
+```
+
+> ⚠️ **IMPORTANTE**: Debido a que el código se copia en el build (no hay bind mount), cualquier modificación de PHP, CSS o JS requiere ejecutar `--build` para que los cambios sean visibles.
