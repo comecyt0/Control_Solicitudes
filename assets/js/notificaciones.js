@@ -28,13 +28,15 @@
     let ultimoIdChat      = parseInt(sessionStorage.getItem('nc_chat') || '0');
     let ultimoIdSolicitud = parseInt(sessionStorage.getItem('nc_sol')  || '0');
     let baselineEstablecido = sessionStorage.getItem('nc_init') === '1';
-    let pollingTimer = null;
-    let audioCtx     = null;
+    let pollingTimer     = null;
+    let audioCtx         = null;
+    let audioDesbloqueado = false;  // Safari: true solo tras primer clic
 
     // ─── Inicialización ───────────────────────────────────────────────────────
     function init() {
         crearContenedor();
         solicitarPermisosNotif();
+        configurarAudioUnlock(); // Safari: desbloquear audio en primer clic
 
         if (baselineEstablecido && ultimoIdChat > 0 && ultimoIdSolicitud > 0) {
             // Ya tenemos baselines de esta sesión → empezar polling directamente
@@ -220,18 +222,50 @@
     }
 
     // ─── Web Audio API ────────────────────────────────────────────────────────
-    function getCtx() {
-        if (!audioCtx) {
-            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-            catch (_) {}
+    // Safari exige que el AudioContext se cree y reanude directamente
+    // desde un handler de clic/tap. "audio unlock" es el patrón estándar.
+
+    function configurarAudioUnlock() {
+        const eventos = ['click', 'touchstart', 'keydown'];
+        function desbloquear() {
+            if (audioDesbloqueado) return;
+
+            try {
+                // Crear el contexto DENTRO del handler de evento → Safari lo acepta
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                // Reanudar si está suspendido (obligatorio en Safari)
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume().then(() => {
+                        audioDesbloqueado = true;
+                    });
+                } else {
+                    audioDesbloqueado = true;
+                }
+            } catch (_) {
+                audioDesbloqueado = false;
+            }
+
+            // Solo necesitamos hacerlo una vez
+            eventos.forEach(ev => document.removeEventListener(ev, desbloquear, true));
         }
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+        eventos.forEach(ev => document.addEventListener(ev, desbloquear, { once: false, capture: true }));
+    }
+
+    function getCtx() {
+        // Si no está desbloqueado (sin interacción del usuario), no intentar crear
+        if (!audioDesbloqueado) return null;
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
         return audioCtx;
     }
 
     function reproducirSonido(tipo) {
         const ctx = getCtx();
-        if (!ctx) return;
+        if (!ctx) return;  // Silencioso si Safari no ha sido desbloqueado aún
         try {
             if (tipo === 'chat') {
                 tono(ctx, 880,  0.00, 0.10, 0.12);
