@@ -307,33 +307,45 @@
         document.head.appendChild(s);
     }
 
+    // ─── Elemento de audio para el MP3 del chat ─────────────────────────────
+    // Se precarga al iniciar para evitar delay en la primera notificación
+    const audioChat = new Audio(BASE + 'assets/TIENES UN MENSAJE!!!  letra.mp3');
+    audioChat.preload = 'auto';
+    audioChat.volume  = 0.7;
+
     // ─── Web Audio (con Safari unlock) ────────────────────────────────────────
     function configurarAudioUnlock() {
         const evs = ['click', 'touchstart', 'keydown'];
         function unlock() {
             if (audioOk) return;
+            // Desbloquear el elemento Audio de HTML (necesario en Safari/iOS)
+            audioChat.play().then(() => { audioChat.pause(); audioChat.currentTime = 0; }).catch(() => {});
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const reanudar = () => { audioOk = true; };
                 audioCtx.state === 'suspended' ? audioCtx.resume().then(reanudar) : reanudar();
-            } catch (_) {}
+            } catch (_) { audioOk = true; } // Permitir que el MP3 funcione aunque WebAudio falle
             evs.forEach(e => document.removeEventListener(e, unlock, true));
         }
         evs.forEach(e => document.addEventListener(e, unlock, { capture: true }));
     }
 
     function sonido(tipo) {
+        if (tipo === 'chat') {
+            // Usar el MP3 real para mensajes de chat
+            try {
+                audioChat.currentTime = 0;
+                audioChat.play().catch(() => {});
+            } catch (_) {}
+            return;
+        }
+        // Solicitudes → tono sintético Web Audio (más urgente/grave)
         if (!audioOk || !audioCtx) return;
         try {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (tipo === 'chat') {
-                nota(880,  0.00, 0.10, 0.12);
-                nota(1100, 0.12, 0.10, 0.12);
-            } else {
-                nota(440,  0.00, 0.14, 0.22);
-                nota(550,  0.16, 0.12, 0.20);
-                nota(660,  0.30, 0.10, 0.18);
-            }
+            nota(440,  0.00, 0.14, 0.22);
+            nota(550,  0.16, 0.12, 0.20);
+            nota(660,  0.30, 0.10, 0.18);
         } catch (_) {}
     }
 
