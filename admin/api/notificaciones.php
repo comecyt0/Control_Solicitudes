@@ -3,19 +3,23 @@
  * COMECyT Control de Solicitudes
  * API AJAX — Notificaciones en Tiempo Real
  *
- * Consulta en una sola petición:
- *   · Nuevos mensajes de chat (grupal) desde un ID conocido
- *   · Nuevas solicitudes desde un ID conocido
+ * Modos de operación:
  *
- * GET /admin/api/notificaciones.php
- *   ?ultimo_chat=N       → ID del último mensaje de chat conocido
- *   ?ultima_solicitud=N  → ID de la última solicitud conocida
+ * 1. ?init=1
+ *    → Devuelve los IDs MÁXIMOS actuales de chat y solicitudes
+ *      para establecer el baseline sin generar notificaciones.
+ *      Llamar SOLO UNA VEZ al cargar la página.
+ *
+ * 2. ?ultimo_chat=N&ultima_solicitud=N  (polling normal)
+ *    → Devuelve SOLO los registros que llegaron DESPUÉS de esos IDs.
+ *      Si count > 0 → hay elementos nuevos que mostrar al admin.
  *
  * Responde JSON:
  * {
  *   ok: true,
- *   chat: { count: N, ultimo_id: N, preview: "Texto..." },
- *   solicitudes: { count: N, ultimo_id: N, preview: "FOLIO · Tipo" }
+ *   init: bool,
+ *   chat:        { count, ultimo_id, preview },
+ *   solicitudes: { count, ultimo_id, preview }
  * }
  *
  * Solo accesible para administradores autenticados.
@@ -26,8 +30,8 @@ require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-cache, no-store, must-revalidate');
 
-// Iniciar sesión y verificar autenticación
 inicializarSesion();
 if (empty($_SESSION['admin_id'])) {
     http_response_code(401);
@@ -37,18 +41,45 @@ if (empty($_SESSION['admin_id'])) {
 $pdo     = getConnection();
 $adminId = (int) $_SESSION['admin_id'];
 
-$ultimoChat       = (int) ($_GET['ultimo_chat']       ?? 0);
-$ultimaSolicitud  = (int) ($_GET['ultima_solicitud']  ?? 0);
-
 $resultado = [
     'ok'          => true,
-    'chat'        => ['count' => 0, 'ultimo_id' => $ultimoChat,      'preview' => ''],
-    'solicitudes' => ['count' => 0, 'ultimo_id' => $ultimaSolicitud, 'preview' => ''],
+    'init'        => false,
+    'chat'        => ['count' => 0, 'ultimo_id' => 0, 'preview' => ''],
+    'solicitudes' => ['count' => 0, 'ultimo_id' => 0, 'preview' => ''],
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. Nuevos mensajes de chat (solo canal grupal, excluyendo los propios)
+// MODO INIT: devuelve solo los IDs máximos actuales (sin contar como 'nuevos')
+// Esto establece el baseline para el primer poll.
 // ─────────────────────────────────────────────────────────────────────────────
+if (isset($_GET['init'])) {
+    $resultado['init'] = true;
+
+    try {
+        $maxChat = $pdo->query("SELECT COALESCE(MAX(id), 0) FROM sb_chat_mensajes WHERE destinatario_id IS NULL")->fetchColumn();
+        $resultado['chat']['ultimo_id'] = (int) $maxChat;
+    } catch (Throwable $e) {}
+
+    try {
+        $maxSol = $pdo->query("SELECT COALESCE(MAX(id), 0) FROM solicitudes")->fetchColumn();
+        $resultado['solicitudes']['ultimo_id'] = (int) $maxSol;
+    } catch (Throwable $e) {}
+
+    echo json_encode($resultado);
+    exit;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODO POLLING: detectar solo registros nuevos desde los IDs conocidos
+// ─────────────────────────────────────────────────────────────────────────────
+$ultimoChat      = (int) ($_GET['ultimo_chat']      ?? 0);
+$ultimaSolicitud = (int) ($_GET['ultima_solicitud'] ?? 0);
+
+// Actualizar valores base en resultado
+$resultado['chat']['ultimo_id']        = $ultimoChat;
+$resultado['solicitudes']['ultimo_id'] = $ultimaSolicitud;
+
+// ── 1. Nuevos mensajes de chat (canal grupal, excluyendo propios) ─────────────
 try {
     $stmtChat = $pdo->prepare(
         "SELECT m.id,
@@ -61,39 +92,44 @@ try {
            AND m.destinatario_id IS NULL
            AND m.admin_id <> :admin_id
          ORDER BY m.id ASC
-         LIMIT 50"
+         LIMIT 20"
     );
     $stmtChat->execute([':desde' => $ultimoChat, ':admin_id' => $adminId]);
     $msgChat = $stmtChat->fetchAll();
 
     if (!empty($msgChat)) {
-        $ultimo   = end($msgChat);
-        $count    = count($msgChat);
-        $nombre   = mb_substr($ultimo['admin_nombre'], 0, 15);
-        $texto    = $ultimo['tipo'] === 'texto'
-                    ? mb_substr($ultimo['mensaje'], 0, 50)
-                    : ($ultimo['tipo'] === 'tarea' ? '📋 Nueva tarea' : '📅 Nuevo evento');
+        $ultimo  = end($msgChat);
+        $count   = count($msgChat);
+        $nombre  = mb_substr($ultimo['admin_nombre'], 0, 15);
+
+        if ($ultimo['tipo'] === 'texto') {
+            $texto = mb_substr($ultimo['mensaje'], 0, 50);
+        } elseif ($ultimo['tipo'] === 'tarea') {
+            $texto = '📋 ' . mb_substr($ultimo['ref_titulo'] ?? $ultimo['mensaje'], 0, 40);
+        } elseif ($ultimo['tipo'] === 'evento') {
+            $texto = '📅 ' . mb_substr($ultimo['ref_titulo'] ?? $ultimo['mensaje'], 0, 40);
+        } else {
+            $texto = mb_substr($ultimo['mensaje'], 0, 50);
+        }
 
         $resultado['chat'] = [
-            'count'    => $count,
+            'count'     => $count,
             'ultimo_id' => (int) $ultimo['id'],
-            'preview'  => "{$nombre}: {$texto}",
+            'preview'   => "{$nombre}: {$texto}",
         ];
     }
 } catch (Throwable $e) {
-    // No bloquear si falla chat
+    error_log('[COMECyT Notif] Error chat: ' . $e->getMessage());
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. Nuevas solicitudes
-// ─────────────────────────────────────────────────────────────────────────────
+// ── 2. Nuevas solicitudes ──────────────────────────────────────────────────────
 try {
     $stmtSol = $pdo->prepare(
-        "SELECT id, folio, tipo, solicitante, area
+        "SELECT id, folio, tipo, solicitante, area, fecha_creacion
          FROM solicitudes
          WHERE id > :desde
          ORDER BY id ASC
-         LIMIT 20"
+         LIMIT 10"
     );
     $stmtSol->execute([':desde' => $ultimaSolicitud]);
     $solicitudes = $stmtSol->fetchAll();
@@ -102,17 +138,16 @@ try {
         $ultima = end($solicitudes);
         $count  = count($solicitudes);
         $folio  = $ultima['folio'] ?? '—';
-        $tipo   = mb_substr($ultima['tipo'] ?? 'solicitud', 0, 20);
-        $who    = mb_substr($ultima['solicitante'] ?? '', 0, 20);
+        $who    = mb_substr($ultima['solicitante'] ?? '', 0, 25);
 
         $resultado['solicitudes'] = [
-            'count'    => $count,
+            'count'     => $count,
             'ultimo_id' => (int) $ultima['id'],
-            'preview'  => "{$folio} · {$who}",
+            'preview'   => "{$folio} · {$who}",
         ];
     }
 } catch (Throwable $e) {
-    // No bloquear si falla solicitudes
+    error_log('[COMECyT Notif] Error solicitudes: ' . $e->getMessage());
 }
 
 echo json_encode($resultado);
