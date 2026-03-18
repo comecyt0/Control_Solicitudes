@@ -1352,9 +1352,14 @@ function abrirModalEditar(id, titulo, desc, ini, fin, color, publico) {
         if (radio.value === color) {
             radio.checked = true;
         }
+```
     });
     
     abrirModal('modalEditarEvento');
+}
+
+function verDetalleEvento(t, d, h1, h2) {
+    COMECyTUI.info(`${d}\n\nHorario: ${h1} - ${h2}`, t);
 }
 
 function eliminarEvento() {
@@ -1511,7 +1516,7 @@ function gestionarSolicitud(estatus) {
     const motivo = document.getElementById('ps_motivo').value.trim();
     
     if (estatus === 'rechazado' && !motivo) {
-        alert('Debe indicar un motivo para el rechazo.');
+        COMECyTUI.alert('Debe indicar un motivo para el rechazo.');
         return;
     }
 
@@ -1529,13 +1534,12 @@ function gestionarSolicitud(estatus) {
                 cerrarModal('modalProcesarSolicitud');
                 cargarSolicitudes();
                 if (estatus === 'aceptado') {
-                    alert('Solicitud aprobada. El evento ha sido añadido al calendario.');
-                    location.reload(); // Recargar calendario para ver el nuevo evento
+                    COMECyTUI.info('Solicitud aprobada. El evento ha sido añadido al calendario.', 'Éxito', () => location.reload());
                 } else {
-                    alert('Solicitud rechazada.');
+                    COMECyTUI.info('Solicitud rechazada.', 'Gestión');
                 }
             } else {
-                alert('Error: ' + d.error);
+                COMECyTUI.alert('Error: ' + d.error);
             }
         });
 }

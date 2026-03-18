@@ -248,7 +248,7 @@ function abrirModalSolicitudDesdeCelda(f) {
 }
 
 function verDetalleEvento(t, d, h1, h2) {
-    alert(`${t}\n\nHorario: ${h1} - ${h2}\n\n${d}`);
+    COMECyTUI.info(`${d}\n\nHorario: ${h1} - ${h2}`, t);
 }
 
 function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -261,10 +261,10 @@ document.getElementById('formSolicitud').onsubmit = function(e) {
         .then(r => r.json())
         .then(d => {
             if (d.ok) {
-                alert('Solicitud enviada. Recibirá una notificación cuando sea revisada.');
+                COMECyTUI.info('Solicitud enviada. Recibirá una notificación cuando sea revisada.', 'Petición Recibida');
                 cerrarModal('modalSolicitud');
                 this.reset();
-            } else alert('Error: ' + d.error);
+            } else COMECyTUI.alert('Error: ' + d.error);
         });
 };
 
@@ -284,13 +284,13 @@ function verificarRespuestas() {
 function mostrarRespuesta(res) {
     reproducirSonido(res.estatus === 'aceptado');
     const msg = res.estatus === 'aceptado' ? `¡Aprobado! ${res.titulo}` : `Rechazado: ${res.titulo}\nMotivo: ${res.motivo_rechazo}`;
-    if (confirm(msg + '\n\n¿Marcar como leído?')) {
+    COMECyTUI.confirm(msg + '\n\n¿Marcar como leído?', () => {
         const fd = new FormData();
         fd.append('accion', 'marcar_leido');
         fd.append('id', res.id);
         fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
         fetch('<?= BASE_URL ?>public/api/calendario.php', { method: 'POST', body: fd }).then(() => location.reload());
-    }
+    });
 }
 
 function reproducirSonido(exito) {
