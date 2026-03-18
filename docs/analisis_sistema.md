@@ -72,6 +72,15 @@ Browser → fetch() → admin/api/*.php → JSON response
 | `config/auth.php` | Sesiones, CSRF tokens, rate limiting, verificación de roles |
 | `includes/helpers.php` | `esc()`, `badgeEstatus()`, `csrfField()`, constantes de tipos y estados |
 
+### 3.4 Gestión de Sesiones y Seguridad
+- **Sesiones**: Implementación de **Sesiones Permanentes** para administradores. La cookie y la sesión duran 30 días.
+- **Regla de Medianoche**: Las sesiones activas de administradores se invalidan automáticamente a las 12:00 AM si el usuario no ha tenido actividad (interacción de página) en los últimos 30 minutos.
+- **Seguridad**:
+    - CSRF Tokens en cada formulario.
+    - Password Hashing mediante `password_hash()` (Argon2ID/Bcrypt).
+    - Rate Limiting (5 intentos / 5 minutos) por IP y sesión.
+    - Headers de seguridad (CSP, HSTS, XSS Protection).
+
 ### Seguridad implementada
 - **CSRF**: Tokens en todos los POST, validados por `validarCsrfPost()` en `auth.php`
 - **Rate limiting**: 5 intentos → bloqueo 5 minutos por IP

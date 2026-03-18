@@ -21,7 +21,8 @@ if (!empty($_SESSION['admin_id'])) {
 }
 
 $error   = '';
-$timeout = getParam('motivo') === 'timeout';
+$motivo  = getParam('motivo');
+$timeout = $motivo === 'timeout' || $motivo === 'midnight_timeout';
 
 // Procesar submission del formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -86,7 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($timeout): ?>
         <div class="login-error">
             <i class="fa-solid fa-clock"></i>
-            Su sesion expiro por inactividad. Inicie sesion nuevamente.
+            <?php if ($motivo === 'midnight_timeout'): ?>
+                Su sesión se cerró por la limpieza diaria de medianoche. Inicie sesión para continuar.
+            <?php else: ?>
+                Su sesión expiró por inactividad. Inicie sesión nuevamente.
+            <?php endif; ?>
         </div>
         <?php endif; ?>
 

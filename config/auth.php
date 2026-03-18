@@ -45,15 +45,21 @@ function esHttps(): bool
 
 /**
  * Iniciar la sesión PHP de forma segura si aún no está activa.
+ * Se configura con un tiempo de vida extendido (30 días) para permitir sesiones permanentes.
  */
 function inicializarSesion(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
+        // 30 días de duración para la cookie y el recolector de basura de PHP
+        $duracion = 30 * 24 * 60 * 60;
+        
         session_start([
             'cookie_httponly' => true,
-            'cookie_secure'   => esHttps(),    // Dinámico: true en HTTPS, false en local
+            'cookie_secure'   => esHttps(),
             'cookie_samesite' => 'Lax',
             'use_strict_mode' => true,
+            'cookie_lifetime' => $duracion,
+            'gc_maxlifetime'  => $duracion,
         ]);
     }
     // Generar Token CSRF si no existe
@@ -97,7 +103,9 @@ function enviarHeadersSeguridad(): void
 }
 
 /**
- * Verificar que el administrador tenga sesión activa y no expirada.
+ * Verificar que el administrador tenga sesión activa.
+ * La sesión de administrador no expira por inactividad ordinaria (SESION PERMANENTE),
+ * excepto a las 12:00 AM si no se detecta actividad en los últimos 30 minutos.
  */
 function verificarSesionAdmin(): void
 {
@@ -110,10 +118,17 @@ function verificarSesionAdmin(): void
     }
 
     if (!empty($_SESSION['ultimo_acceso'])) {
-        $inactivo = time() - (int) $_SESSION['ultimo_acceso'];
-        if ($inactivo > SESSION_TIMEOUT) {
+        $ahora      = time();
+        $ultimo     = (int) $_SESSION['ultimo_acceso'];
+        $inactivo   = $ahora - $ultimo;
+        $medianoche = strtotime('today midnight');
+
+        // REGLA DE MEDIANOCHE:
+        // Si ya pasó la medianoche y el último acceso fue AYER (antes de las 00:00)
+        // Y el usuario no ha estado activo en los últimos 30 minutos (1800s), cerrar sesión.
+        if ($ahora >= $medianoche && $ultimo < $medianoche && $inactivo > 1800) {
             cerrarSesion();
-            header('Location: ' . BASE_URL . 'admin/login.php?motivo=timeout');
+            header('Location: ' . BASE_URL . 'admin/login.php?motivo=midnight_timeout');
             exit;
         }
     }
