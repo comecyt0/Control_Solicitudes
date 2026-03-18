@@ -167,293 +167,110 @@ if (!isset($_SESSION['admin_dark_mode'])) {
      CHAT PANEL  Equipo TI + Mensajes Directos (DM)
      Incluye: canal grupal, DMs por admin, avatares con inicial
      ============================================================== -->
+<!-- ==============================================================
+     CHAT PANEL v4 — Equipo TI + Mensajes Directos (DM)
+     ============================================================== -->
 <div id="chatPanel"
      aria-hidden="true"
      style="display:none; position:fixed; top:62px; right:20px;
-            width:580px; height:540px; z-index:9999;
-            background:#ffffff; border:1px solid #e5e7eb;
+            width:580px; height:540px; min-width:320px; min-height:400px;
+            z-index:9999; background:#ffffff; border:1px solid #e5e7eb;
             border-radius:16px; box-shadow:0 24px 64px rgba(102,35,49,0.22);
             flex-direction:row; overflow:hidden;
             font-family:Inter,'Segoe UI',system-ui,sans-serif;
             font-size:14px; color:#111827;">
 
-    <!-- --? Panel Izquierdo: Canales / Contactos DM --? -->
+    <!-- Control de redimensionamiento (Esquina inferior izquierda para no chocar con scroll) -->
+    <div id="chatResizeHandle" 
+         style="position:absolute; left:0; bottom:0; width:15px; height:15px; 
+                cursor:sw-resize; z-index:100; opacity:0.3; background:linear-gradient(135deg, transparent 50%, #662331 50%);">
+    </div>
+
+    <!-- Panel Izquierdo: Canales / Contactos DM -->
     <div id="chatSidebar"
          style="width:168px; flex-shrink:0; display:flex; flex-direction:column;
                 background:linear-gradient(180deg,#3d1520 0%,#662331 100%);
                 border-right:1px solid rgba(255,255,255,0.08);">
 
-        <!-- Logo del chat -->
         <div style="padding:14px 12px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">
             <span style="font-size:0.8rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
-                <i class="fa-solid fa-comments" style="font-size:0.85rem;"></i> Equipo TI
+                <i class="fa-solid fa-comments"></i> Equipo TI
             </span>
             <span style="font-size:0.64rem; color:rgba(255,255,255,0.55); display:block; margin-top:2px;">COMECyT · Chat Interno</span>
         </div>
 
-        <!-- Canal Grupal -->
         <div style="padding:8px 8px 4px;">
-            <span style="font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.4);
-                         text-transform:uppercase; letter-spacing:.08em; padding:0 4px;">
-                Canal
-            </span>
+            <span style="font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.4); text-transform:uppercase; padding:0 4px;">Canal</span>
         </div>
         <button id="chatBtnGrupal" onclick="chatSeleccionarCanal(null)"
-                style="margin:2px 8px; padding:8px 10px; background:rgba(255,255,255,0.18);
-                       border:none; border-radius:10px; cursor:pointer; text-align:left;
-                       display:flex; align-items:center; gap:8px; color:#fff;
-                       font-family:inherit; font-size:0.78rem; font-weight:600;
-                       transition:background .15s;">
-            <span style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.2);
-                         display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.75rem;">
+                style="margin:2px 8px; padding:8px 10px; background:rgba(255,255,255,0.18); border:none; border-radius:10px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px; color:#fff; font-family:inherit; font-size:0.78rem; font-weight:600;">
+            <span style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                 <i class="fa-solid fa-users"></i>
             </span>
-            <span style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">General</span>
+            <span>General</span>
         </button>
 
-        <!-- Mensajes Directos -->
         <div style="padding:10px 8px 4px;">
-            <span style="font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.4);
-                         text-transform:uppercase; letter-spacing:.08em; padding:0 4px;">
-                Mensajes Directos
-            </span>
+            <span style="font-size:0.6rem; font-weight:700; color:rgba(255,255,255,0.4); text-transform:uppercase; padding:0 4px;">Mensajes Directos</span>
         </div>
-        <div id="chatAdminList"
-             style="flex:1; overflow-y:auto; padding:0 8px 8px; display:flex; flex-direction:column; gap:2px;">
-            <!-- Se llena dinámicamente con JS -->
-        </div>
+        <div id="chatAdminList" style="flex:1; overflow-y:auto; padding:0 8px 8px; display:flex; flex-direction:column; gap:2px;"></div>
 
-        <!-- Acciones rápidas abajo -->
-        <div style="padding:8px; border-top:1px solid rgba(255,255,255,0.1);
-                    display:flex; gap:6px; flex-shrink:0;">
-            <button id="btnNuevaTarea" title="Nueva tarea Kanban"
-                    style="flex:1; padding:5px; border:1px solid rgba(255,255,255,0.2);
-                           border-radius:7px; background:rgba(255,255,255,0.08);
-                           color:rgba(255,255,255,0.85); font-size:0.65rem; font-weight:600;
-                           cursor:pointer; display:flex; flex-direction:column;
-                           align-items:center; gap:3px; font-family:inherit;">
+        <div style="padding:8px; border-top:1px solid rgba(255,255,255,0.1); display:flex; gap:6px; flex-shrink:0;">
+            <button id="btnNuevaTarea" title="Nueva tarea Kanban" style="flex:1; padding:5px; border:1px solid rgba(255,255,255,0.2); border-radius:7px; background:rgba(255,255,255,0.08); color:rgba(255,255,255,0.85); font-size:0.65rem; font-weight:600; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px;">
                 <i class="fa-solid fa-list-check"></i>Tarea
             </button>
-            <button id="btnNuevoEvento" title="Nuevo evento Calendario"
-                    style="flex:1; padding:5px; border:1px solid rgba(177,154,109,0.35);
-                           border-radius:7px; background:rgba(177,154,109,0.1);
-                           color:rgba(255,205,130,0.9); font-size:0.65rem; font-weight:600;
-                           cursor:pointer; display:flex; flex-direction:column;
-                           align-items:center; gap:3px; font-family:inherit;">
+            <button id="btnNuevoEvento" title="Nuevo evento Calendario" style="flex:1; padding:5px; border:1px solid rgba(177,154,109,0.35); border-radius:7px; background:rgba(177,154,109,0.1); color:rgba(255,205,130,0.9); font-size:0.65rem; font-weight:600; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px;">
                 <i class="fa-solid fa-calendar-plus"></i>Evento
             </button>
         </div>
     </div>
 
-    <!-- --? Panel Derecho: Mensajes --? -->
-    <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
-
-        <!-- Header del canal activo (drag handle) -->
-        <div id="chatPanelHeader"
-             style="display:flex; align-items:center; gap:10px; padding:10px 14px;
-                    background:#f8f9fc; border-bottom:1px solid #e5e7eb;
-                    flex-shrink:0; cursor:grab;">
-            <div id="chatCanalAvatar"
-                 style="width:32px; height:32px; border-radius:50%;
-                        background:linear-gradient(135deg,#662331,#8b2f42);
-                        display:flex; align-items:center; justify-content:center;
-                        font-size:0.75rem; color:#fff; flex-shrink:0; font-weight:700;">
-                <i class="fa-solid fa-users" style="font-size:0.8rem;"></i>
+    <!-- Panel Derecho: Mensajes -->
+    <div style="flex:1; display:flex; flex-direction:column; min-width:0; position:relative;">
+        <div id="chatPanelHeader" style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:#f8f9fc; border-bottom:1px solid #e5e7eb; flex-shrink:0; cursor:grab;">
+            <div id="chatCanalAvatar" style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#662331,#8b2f42); display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:#fff; flex-shrink:0; font-weight:700;">
+                <i class="fa-solid fa-users"></i>
             </div>
             <div style="flex:1; min-width:0;">
                 <span id="chatCanalNombre" style="font-size:0.88rem; font-weight:700; color:#1f2937; display:block; line-height:1.2;">General</span>
-                <span id="chatCanalSub" style="font-size:0.68rem; color:#9ca3af;">Canal grupal · Todos los administradores</span>
+                <span id="chatCanalSub" style="font-size:0.68rem; color:#9ca3af; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Canal grupal</span>
             </div>
-            <button onclick="toggleChat()" title="Cerrar"
-                    style="background:#f3f4f6; border:none; color:#6b7280;
-                           width:26px; height:26px; border-radius:50%; cursor:pointer;
-                           display:flex; align-items:center; justify-content:center;
-                           font-size:0.8rem; flex-shrink:0; transition:background .15s;">
+            <button onclick="toggleChat()" title="Cerrar" style="background:#f3f4f6; border:none; color:#6b7280; width:26px; height:26px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
-        <!-- Zona de mensajes -->
-        <div id="chatMessages"
-             style="flex:1; overflow-y:auto; padding:12px 12px 4px;
-                    display:flex; flex-direction:column; gap:6px;
-                    scroll-behavior:smooth; background:#f9fafb;">
-            <div id="chatLoadingState"
-                 style="color:#9ca3af; font-size:0.8rem; text-align:center; padding:24px 0;">
-                <i class="fa-solid fa-spinner fa-spin"></i> Cargando mensajes...
+        <div id="chatMessages" style="flex:1; overflow-y:auto; padding:12px 12px 4px; display:flex; flex-direction:column; gap:6px; scroll-behavior:smooth; background:#f9fafb;"></div>
+
+        <!-- Tooltip de Emojis -->
+        <div id="chatEmojiPicker" style="display:none; position:absolute; bottom:60px; right:12px; width:220px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); z-index:1000; padding:10px;">
+            <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:4px; font-size:1.3rem; text-align:center;">
+                <!-- Emojis comunes -->
+                <span onclick="insertarEmoji('😊')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😊</span>
+                <span onclick="insertarEmoji('😂')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😂</span>
+                <span onclick="insertarEmoji('👍')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">👍</span>
+                <span onclick="insertarEmoji('🙌')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🙌</span>
+                <span onclick="insertarEmoji('👀')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">👀</span>
+                <span onclick="insertarEmoji('🔥')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🔥</span>
+                <span onclick="insertarEmoji('✅')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">✅</span>
+                <span onclick="insertarEmoji('⚠️')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">⚠️</span>
+                <span onclick="insertarEmoji('💡')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">💡</span>
+                <span onclick="insertarEmoji('🕒')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🕒</span>
+                <span onclick="insertarEmoji('📌')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">📌</span>
+                <span onclick="insertarEmoji('💻')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">💻</span>
             </div>
         </div>
 
-        <!-- Input de envío -->
-        <div style="display:flex; align-items:flex-end; gap:8px;
-                    padding:10px 12px; border-top:1px solid #e5e7eb;
-                    background:#fdf8f5; flex-shrink:0;">
-            <textarea id="chatInput"
-                      placeholder="Escribe un mensaje..."
-                      rows="1" maxlength="2000"
-                      onkeydown="chatKeyDown(event)"
-                      style="flex:1; resize:none; border:1px solid #e5e7eb;
-                             border-radius:12px; background:#ffffff;
-                             color:#111827; padding:8px 12px;
-                             font-size:0.83rem; line-height:1.4; max-height:90px;
-                             outline:none; font-family:inherit;"></textarea>
-            <button onclick="enviarMensaje()" title="Enviar"
-                    style="width:36px; height:36px; border-radius:50%;
-                           background:linear-gradient(135deg,#662331,#8b2f42);
-                           color:#fff; border:none; cursor:pointer; font-size:0.9rem;
-                           display:flex; align-items:center; justify-content:center;
-                           flex-shrink:0;">
+        <div style="display:flex; align-items:flex-end; gap:8px; padding:10px 12px; border-top:1px solid #e5e7eb; background:#fdf8f5; flex-shrink:0;">
+            <button onclick="toggleEmojiPicker()" title="Emojis" style="background:none; border:none; color:#9ca3af; font-size:1.1rem; cursor:pointer; padding:6px 2px;">😊</button>
+            <textarea id="chatInput" placeholder="Escribe un mensaje..." rows="1" maxlength="2000" onkeydown="chatKeyDown(event)" style="flex:1; resize:none; border:1px solid #e5e7eb; border-radius:12px; background:#ffffff; color:#111827; padding:8px 12px; font-size:0.83rem; line-height:1.4; max-height:90px; outline:none; font-family:inherit;"></textarea>
+            <button onclick="enviarMensaje()" title="Enviar" style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#662331,#8b2f42); color:#fff; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
     </div>
 </div>
-
-
-
-<!-- ================================================================
-     MODAL: Nueva Tarea Kanban desde Chat
-     CRÍTICO: position:fixed inline para no depender de clases CSS
-     ================================================================ -->
-<div id="modalTareaOverlay"
-     onclick="cerrarModalTarea()"
-     style="display:none; position:fixed; inset:0; z-index:99999;
-            background:rgba(102,35,49,0.35); backdrop-filter:blur(3px);
-            align-items:center; justify-content:center; padding:20px;">
-    <div onclick="event.stopPropagation()"
-         style="background:#ffffff; border:1px solid #e5e7eb;
-                border-radius:14px; padding:24px; width:100%; max-width:420px;
-                box-shadow:0 24px 64px rgba(102,35,49,0.25);
-                font-family:Inter,'Segoe UI',system-ui,sans-serif;">
-        <h3 style="margin:0 0 18px; font-size:1rem; color:#662331; font-weight:700; display:flex; align-items:center; gap:8px;">
-            <i class="fa-solid fa-list-check"></i> Nueva Tarea Kanban
-        </h3>
-        <div style="margin-bottom:12px;">
-            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Título *</label>
-            <input type="text" id="chatTareaTitulo" placeholder="¿Qué hay que hacer?" maxlength="255"
-                   style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
-                          background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
-        </div>
-        <div style="margin-bottom:12px;">
-            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Descripción</label>
-            <textarea id="chatTareaDesc" rows="2" placeholder="Detalle opcional..."
-                      style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
-                             background:#f9fafb; color:#111827; font-size:0.85rem; outline:none;
-                             resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
-        </div>
-        <div style="margin-bottom:12px;">
-            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Asignar a</label>
-            <select id="chatTareaAsignado"
-                    style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
-                           background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
-                <option value="">-- Sin asignar -</option>
-            </select>
-        </div>
-        <div style="margin-bottom:18px; display:flex; align-items:center; gap:10px;">
-            <label style="font-size:0.8rem; font-weight:600; color:#374151;">Color</label>
-            <input type="color" id="chatTareaColor" value="#662331"
-                   style="height:34px; width:56px; border-radius:6px; border:1px solid #d1d5db; cursor:pointer; padding:2px;">
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="confirmarTarea()"
-                    style="flex:1; padding:9px 16px; background:linear-gradient(135deg,#662331,#8b2f42);
-                           color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600;
-                           cursor:pointer; font-family:inherit;">Crear Tarea</button>
-            <button onclick="cerrarModalTarea()"
-                    style="padding:9px 16px; background:#f3f4f6;
-                           color:#374151; border:1px solid #d1d5db; border-radius:8px; font-size:0.85rem;
-                           cursor:pointer; font-family:inherit;">Cancelar</button>
-        </div>
-    </div>
-</div>
-
-<!-- ================================================================
-     MODAL: Nuevo Evento de Calendario desde Chat
-     CRÍTICO: position:fixed inline para no depender de clases CSS
-     ================================================================ -->
-<div id="modalEventoOverlay"
-     onclick="cerrarModalEvento()"
-     style="display:none; position:fixed; inset:0; z-index:99999;
-            background:rgba(102,35,49,0.35); backdrop-filter:blur(3px);
-            align-items:center; justify-content:center; padding:20px;">
-    <div onclick="event.stopPropagation()"
-         style="background:#ffffff; border:1px solid #e5e7eb;
-                border-radius:14px; padding:24px; width:100%; max-width:420px;
-                box-shadow:0 24px 64px rgba(177,154,109,0.3);
-                font-family:Inter,'Segoe UI',system-ui,sans-serif;">
-        <h3 style="margin:0 0 18px; font-size:1rem; color:#7d6535; font-weight:700; display:flex; align-items:center; gap:8px;">
-            <i class="fa-solid fa-calendar-plus"></i> Nuevo Evento
-        </h3>
-        <div style="margin-bottom:12px;">
-            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Título *</label>
-            <input type="text" id="chatEventoTitulo" placeholder="Nombre del evento" maxlength="255"
-                   style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
-                          background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
-        </div>
-        <div style="margin-bottom:12px;">
-            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Descripción</label>
-            <textarea id="chatEventoDesc" rows="2" placeholder="Descripción opcional..."
-                      style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
-                             background:#f9fafb; color:#111827; font-size:0.85rem; outline:none;
-                             resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Fecha inicio *</label>
-                <input type="datetime-local" id="chatEventoInicio"
-                       style="width:100%; padding:7px 10px; border:1px solid #d1d5db; border-radius:8px;
-                              background:#f9fafb; color:#111827; font-size:0.8rem; outline:none; box-sizing:border-box;">
-            </div>
-            <div>
-                <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Fecha fin</label>
-                <input type="datetime-local" id="chatEventoFin"
-                       style="width:100%; padding:7px 10px; border:1px solid #d1d5db; border-radius:8px;
-                              background:#f9fafb; color:#111827; font-size:0.8rem; outline:none; box-sizing:border-box;">
-            </div>
-        </div>
-        <div style="margin-bottom:18px; display:flex; align-items:center; gap:10px;">
-            <label style="font-size:0.8rem; font-weight:600; color:#374151;">Color</label>
-            <input type="color" id="chatEventoColor" value="#B19A6D"
-                   style="height:34px; width:56px; border-radius:6px; border:1px solid #d1d5db; cursor:pointer; padding:2px;">
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="confirmarEvento()"
-                    style="flex:1; padding:9px 16px; background:linear-gradient(135deg,#9b865f,#B19A6D);
-                           color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600;
-                           cursor:pointer; font-family:inherit;">Agendar Evento</button>
-            <button onclick="cerrarModalEvento()"
-                    style="padding:9px 16px; background:#f3f4f6;
-                           color:#374151; border:1px solid #d1d5db; border-radius:8px; font-size:0.85rem;
-                           cursor:pointer; font-family:inherit;">Cancelar</button>
-        </div>
-    </div>
-</div>
-
-
-
-<!-- =========================================================
-     PANEL DERECHO: Chat del Equipo TI (chatPanel)
-     ========================================================= -->
-<div id="chatPanel" style="display:none; position:fixed; right:0; top:60px; width:340px; height:calc(100vh - 60px); background:#fff; z-index:9999; border-left:1px solid #e5e7eb; box-shadow:-4px 0 15px rgba(0,0,0,0.05); flex-direction:column; font-family:Inter,sans-serif;">
-    <div id="chatPanelHeader" style="padding:12px 15px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; gap:10px; cursor:grab; background:#f9fafb;">
-        <div id="chatCanalAvatar" style="width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; background:linear-gradient(135deg,#662331,#8b2f42);">
-            <i class="fa-solid fa-users"></i>
-        </div>
-        <div style="flex:1; min-width:0; display:flex; flex-direction:column;">
-            <span id="chatCanalNombre" style="font-size:0.9rem; font-weight:700; color:#111827;">General</span>
-            <span id="chatCanalSub" style="font-size:0.7rem; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Canal grupal · Todos los administradores</span>
-        </div>
-        <button onclick="toggleChat()" style="background:none; border:none; color:#6b7280; cursor:pointer; padding:4px;">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    </div>
-    <div id="chatMessages" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; background:#fdf8f5;"></div>
-    <div style="padding:10px 15px; border-top:1px solid #e5e7eb; background:#fff; display:flex; gap:8px;">
-        <input type="text" id="chatInput" placeholder="Escribe al equipo..." style="flex:1; border:1px solid #d1d5db; border-radius:20px; padding:8px 15px; outline:none; font-size:0.85rem;" onkeydown="chatKeyDown(event)">
-        <button onclick="enviarMensaje()" style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#662331,#8b2f42); color:#fff; border:none; cursor:pointer; flex-shrink:0;">
-            <i class="fa-solid fa-paper-plane"></i>
-        </button>
-    </div>
+  </div>
 </div>
 
 <!-- ================================================================
@@ -503,17 +320,13 @@ if (!isset($_SESSION['admin_dark_mode'])) {
 (function () {
     const ADMIN_ID   = <?= (int) $_SESSION['admin_id'] ?>;
     const API        = '<?= BASE_URL ?>admin/api/chat.php';
-    const POLL_MS    = 7000;   // Intervalo de polling activo (panel abierto)
-    const BG_POLL_MS = 30000;  // Intervalo de polling de fondo (panel cerrado)
+    const POLL_MS    = 6000;   // Reducción a 6s para mayor agilidad
+    const BG_POLL_MS = 15000;  // Reducción a 15s (antes 30s)
 
     // --? Estado del módulo ---------------------------------------?
     let chatOpen          = false;
-    let iaOpen            = false;
-    let canalActual       = null;          // null = grupal, N = ID admin DM
-    let canalNombreActual = 'General';
+    let canalActual       = null;
     let ultimoId          = 0;
-    let ultimoIdDM        = {};            // { adminId: lastMsgId }
-    let primerIdNoLeido   = 0;
     let noLeidosCnt       = 0;
     let pollingTimer      = null;
     let bgPollingTimer    = null;
@@ -526,7 +339,7 @@ if (!isset($_SESSION['admin_dark_mode'])) {
         '#be185d','#15803d','#c2410c','#1d4ed8','#6b21a8',
     ];
 
-    // -? Inyectar estilos de animaciones -------------------------?
+    // -? Inyectar estilos de animaciones y UI mejorada ----------?
     (function injectStyles() {
         const s = document.createElement('style');
         s.textContent = `
@@ -539,6 +352,30 @@ if (!isset($_SESSION['admin_dark_mode'])) {
             .chat-dm-btn:hover { background:rgba(255,255,255,0.13) !important; }
             .chat-dm-btn.activo { background:rgba(255,255,255,0.22) !important; }
             #chatBtnGrupal.activo { background:rgba(255,255,255,0.3) !important; }
+            
+            .chat-reacciones {
+                display:flex; flex-wrap:wrap; gap:3px; margin-top:4px;
+            }
+            .chat-reaccion-chip {
+                background:rgba(255,255,255,0.8); border:1px solid #e5e7eb;
+                border-radius:10px; padding:1px 6px; font-size:0.75rem;
+                display:flex; align-items:center; gap:3px; cursor:pointer;
+                transition: transform 0.1s;
+            }
+            .chat-reaccion-chip:hover { transform: scale(1.1); background:#fff; }
+            .chat-reaccion-yo { border-color:#662331; background:#fdf8f5; }
+            
+            .chat-bubble-tools {
+                opacity:0; transition:opacity 0.2s; 
+                position:absolute; top:0; right:-30px; display:flex; flex-direction:column; gap:4px;
+            }
+            .chat-bubble-wrap:hover .chat-bubble-tools { opacity:1; }
+            .chat-bubble-btn {
+                width:24px; height:24px; border-radius:50%; background:#fff;
+                border:1px solid #e5e7eb; color:#9ca3af; display:flex;
+                align-items:center; justify-content:center; cursor:pointer; font-size:0.7rem;
+            }
+            .chat-bubble-btn:hover { color:#662331; border-color:#662331; }
         `;
         document.head.appendChild(s);
     })();
@@ -697,33 +534,31 @@ if (!isset($_SESSION['admin_dark_mode'])) {
                 if (loadingEl) loadingEl.remove();
 
                 if (!data.mensajes.length) {
-                    if (!zona.children.length) {
-                        zona.innerHTML = '<div style="color:#9ca3af;font-size:0.8rem;text-align:center;padding:24px 0;"><i class="fa-solid fa-comment-slash" style="display:block;font-size:1.5rem;margin-bottom:8px;"></i>Sin mensajes aún</div>';
-                    }
                     if (scroll) zona.scrollTop = zona.scrollHeight;
                     return;
                 }
 
-                let dividerInyectado = false;
                 data.mensajes.forEach(m => {
                     const mid = parseInt(m.id);
-                    if (insertDivider && !dividerInyectado && primerIdNoLeido > 0 && mid >= primerIdNoLeido) {
-                        zona.appendChild(crearDivisorNoLeidos(noLeidosCnt));
-                        dividerInyectado = true;
-                    }
                     zona.appendChild(renderBurbuja(m));
                     ultimoId = Math.max(ultimoId, mid);
                 });
 
-                if (scroll) {
-                    const div = document.getElementById('chatDivisorNoLeidos');
-                    if (div) div.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    else zona.scrollTop = zona.scrollHeight;
+                if (scroll) zona.scrollTop = zona.scrollHeight;
+                
+                // Si el chat está abierto, persistir lectura en servidor
+                if (chatOpen && data.mensajes.length > 0) {
+                    marcarLeidoServidor(ultimoId);
                 }
-
-                primerIdNoLeido = 0;
             })
             .catch(() => {});
+    }
+
+    function marcarLeidoServidor(id) {
+        const fd = new FormData();
+        fd.append('accion', 'marcar_leido');
+        fd.append('ultimo_id', id);
+        fetch(API, { method: 'POST', body: fd }).catch(()=>{});
     }
 
     function crearDivisorNoLeidos(n) {
@@ -740,67 +575,96 @@ if (!isset($_SESSION['admin_dark_mode'])) {
         return el;
     }
 
-    // -? Renderizar burbuja de mensaje ---------------------------?
+    // -? Renderizar burbuja de mensaje con Reacciones -----------?
     function renderBurbuja(m) {
         const propio = parseInt(m.admin_id) === ADMIN_ID;
+        const mid    = parseInt(m.id);
         const wrap   = document.createElement('div');
+        wrap.className = 'chat-bubble-wrap';
         wrap.style.cssText = [
-            'display:flex', 'gap:6px', 'max-width:88%',
+            'display:flex', 'gap:6px', 'max-width:88%', 'position:relative',
             propio ? 'align-self:flex-end;flex-direction:row-reverse' : 'align-self:flex-start;flex-direction:row',
         ].join(';');
 
-        // Avatar del remitente (solo si no es propio)
         if (!propio) {
-            const av = crearAvatar(m.admin_nombre, parseInt(m.admin_id), 26);
-            av.title = m.admin_nombre;
-            wrap.appendChild(av);
+            wrap.appendChild(crearAvatar(m.admin_nombre, parseInt(m.admin_id), 26));
         }
 
-        // Contenedor de la burbuja + metadata
         const col  = document.createElement('div');
         col.style.cssText = 'display:flex;flex-direction:column;' + (propio ? 'align-items:flex-end;' : 'align-items:flex-start;');
 
-        let burbuja = '';
-
-        if (m.tipo === 'tarea') {
-            burbuja = `<a href="<?= BASE_URL ?>admin/calendario.php#kanban" target="_blank"
-              style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;
-                     background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.4);
-                     border-radius:10px;color:#6366f1;font-size:0.8rem;font-weight:600;
-                     text-decoration:none;max-width:100%;word-break:break-word;">
-                <i class="fa-solid fa-list-check" style="font-size:0.75rem;flex-shrink:0;"></i>
-                ${escapeHtml(m.ref_titulo || m.mensaje)}
-            </a>`;
-        } else if (m.tipo === 'evento') {
-            burbuja = `<a href="<?= BASE_URL ?>admin/calendario.php" target="_blank"
-              style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;
-                     background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.4);
-                     border-radius:10px;color:#0891b2;font-size:0.8rem;font-weight:600;
-                     text-decoration:none;max-width:100%;word-break:break-word;">
-                <i class="fa-solid fa-calendar-days" style="font-size:0.75rem;flex-shrink:0;"></i>
-                ${escapeHtml(m.ref_titulo || m.mensaje)}
+        let contenido = '';
+        if (m.tipo === 'tarea' || m.tipo === 'evento') {
+            const icon = m.tipo === 'tarea' ? 'fa-list-check' : 'fa-calendar-days';
+            const color = m.tipo === 'tarea' ? '#6366f1' : '#0891b2';
+            const bg = m.tipo === 'tarea' ? 'rgba(99,102,241,0.15)' : 'rgba(6,182,212,0.15)';
+            contenido = `<a href="#" onclick="return false;" style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;background:${bg};border:1px solid ${color}44;border-radius:10px;color:${color};font-size:0.8rem;font-weight:600;text-decoration:none;">
+                <i class="fa-solid ${icon}"></i> ${escapeHtml(m.ref_titulo || m.mensaje)}
             </a>`;
         } else {
-            const radiusPropio = '14px 14px 3px 14px';
-            const radiusOtro   = '14px 14px 14px 3px';
-            burbuja = `<span style="display:inline-block;padding:8px 12px;
-                     background:${propio ? 'linear-gradient(135deg,#662331,#8b2f42)' : '#f0ece8'};
-                     border-radius:${propio ? radiusPropio : radiusOtro};
-                     color:${propio ? '#ffffff' : '#111827'};font-size:0.83rem;
-                     line-height:1.45;word-break:break-word;white-space:pre-wrap;">
-                ${escapeHtml(m.mensaje)}
-            </span>`;
+            const radius = propio ? '14px 14px 3px 14px' : '14px 14px 14px 3px';
+            contenido = `<span style="display:inline-block;padding:8px 12px;background:${propio ? 'linear-gradient(135deg,#662331,#8b2f42)' : '#f0ece8'};border-radius:${radius};color:${propio ? '#fff' : '#111827'};font-size:0.83rem;line-height:1.45;word-break:break-word;white-space:pre-wrap;">${escapeHtml(m.mensaje)}</span>`;
         }
 
-        // Metadatos: nombre + hora
-        const meta = propio
-            ? `<span style="font-size:0.64rem;color:#9ca3af;padding:2px 2px 0;">${m.hora}</span>`
-            : `<span style="font-size:0.64rem;color:#9ca3af;padding:2px 2px 0;">${escapeHtml(m.admin_nombre)} · ${m.hora}</span>`;
+        // Reacciones
+        let reacHtml = '';
+        if (m.reacciones && m.reacciones.length > 0) {
+            reacHtml = '<div class="chat-reacciones">';
+            const counts = {};
+            m.reacciones.forEach(r => {
+                counts[r.emoji] = (counts[r.emoji] || 0) + 1;
+                if (r.admin_id === ADMIN_ID) counts[r.emoji + '_yo'] = true;
+            });
+            Object.keys(counts).forEach(e => {
+                if (e.endsWith('_yo')) return;
+                const esMio = counts[e + '_yo'];
+                reacHtml += `<div class="chat-reaccion-chip ${esMio ? 'chat-reaccion-yo' : ''}" onclick="reaccionar(${mid}, '${e}')">${e} <span>${counts[e]}</span></div>`;
+            });
+            reacHtml += '</div>';
+        }
 
-        col.innerHTML = burbuja + meta;
+        // Herramientas (Reaccionar rápido)
+        const tools = document.createElement('div');
+        tools.className = 'chat-bubble-tools';
+        tools.style.right = propio ? 'auto' : '-30px';
+        tools.style.left  = propio ? '-30px' : 'auto';
+        tools.innerHTML = `<button class="chat-bubble-btn" onclick="toggleReaccionesRapidas(event, ${mid})" title="Reaccionar"><i class="fa-solid fa-face-smile"></i></button>`;
+
+        const meta = `<span style="font-size:0.64rem;color:#9ca3af;padding:2px 2px 0;">${propio ? m.hora : escapeHtml(m.admin_nombre) + ' · ' + m.hora}</span>`;
+        
+        col.innerHTML = contenido + reacHtml + meta;
         wrap.appendChild(col);
+        wrap.appendChild(tools);
         return wrap;
     }
+
+    window.toggleReaccionesRapidas = function(e, mid) {
+        // Implementación simple: reaccionar con un emoji predefinido o abrir mini picker
+        reaccionar(mid, '👍');
+    };
+
+    window.reaccionar = function(mid, emoji) {
+        const fd = new FormData();
+        fd.append('csrf_token', csrfToken);
+        fd.append('accion', 'reaccionar');
+        fd.append('mensaje_id', mid);
+        fd.append('emoji', emoji);
+        fetch(API, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(d => { if (d.ok) cargarMensajes(false, false); });
+    };
+
+    window.toggleEmojiPicker = function() {
+        const p = document.getElementById('chatEmojiPicker');
+        p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.insertarEmoji = function(e) {
+        const inp = document.getElementById('chatInput');
+        inp.value += e;
+        inp.focus();
+        toggleEmojiPicker();
+    };
 
     function escapeHtml(s) {
         return String(s || '')
@@ -960,58 +824,64 @@ if (!isset($_SESSION['admin_dark_mode'])) {
             .catch(() => alert('Error de conexión'));
     };
 
-    // -? Drag & Drop del panel ------------------------------------?
-    (function initDrag() {
-        const panel  = document.getElementById('chatPanel');
-        const handle = document.getElementById('chatPanelHeader');
-        if (!panel || !handle) return;
-        let dragActive = false, startX, startY, origLeft, origTop;
+    // -? Drag & Drop + Resize del panel ---------------------------?
+    (function initInteractions() {
+        const panel   = document.getElementById('chatPanel');
+        const header  = document.getElementById('chatPanelHeader');
+        const resizer = document.getElementById('chatResizeHandle');
+        if (!panel || !header || !resizer) return;
 
-        handle.addEventListener('mousedown', function (e) {
-            // No iniciar drag si el clic fue en el botón cerrar
+        let dragActive = false, resizeActive = false;
+        let startX, startY, startW, startH, origLeft, origTop;
+
+        // DRAG
+        header.addEventListener('mousedown', (e) => {
             if (e.target.closest('button')) return;
-
             dragActive = true;
-            handle.style.cursor = 'grabbing';
-
+            header.style.cursor = 'grabbing';
             const rect = panel.getBoundingClientRect();
-            startX   = e.clientX;
-            startY   = e.clientY;
-            origLeft = rect.left;
-            origTop  = rect.top;
-
-            // Asegurar posicionamiento absoluto basado en top/left
-            panel.style.right  = 'auto';
-            panel.style.bottom = 'auto';
-            panel.style.left   = origLeft + 'px';
-            panel.style.top    = origTop  + 'px';
-
+            startX = e.clientX; startY = e.clientY;
+            origLeft = rect.left; origTop = rect.top;
+            panel.style.right = 'auto'; panel.style.left = origLeft + 'px';
+            panel.style.top = origTop + 'px';
             e.preventDefault();
         });
 
-        document.addEventListener('mousemove', function (e) {
-            if (!dragActive) return;
-
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-
-            let newLeft = origLeft + dx;
-            let newTop  = origTop  + dy;
-
-            // Mantener dentro del viewport
-            const pw = panel.offsetWidth;
-            const ph = panel.offsetHeight;
-            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - pw));
-            newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - ph));
-
-            panel.style.left = newLeft + 'px';
-            panel.style.top  = newTop  + 'px';
+        // RESIZE (Bottom-Left)
+        resizer.addEventListener('mousedown', (e) => {
+            resizeActive = true;
+            startX = e.clientX; startY = e.clientY;
+            startW = panel.offsetWidth; startH = panel.offsetHeight;
+            const rect = panel.getBoundingClientRect();
+            origLeft = rect.left;
+            e.preventDefault();
         });
 
-        document.addEventListener('mouseup', function () {
-            if (!dragActive) return;
-            dragActive = false;
-            handle.style.cursor = 'grab';
+        document.addEventListener('mousemove', (e) => {
+            if (dragActive) {
+                let newLeft = origLeft + (e.clientX - startX);
+                let newTop  = origTop + (e.clientY - startY);
+                panel.style.left = Math.max(0, Math.min(newLeft, window.innerWidth - panel.offsetWidth)) + 'px';
+                panel.style.top  = Math.max(0, Math.min(newTop, window.innerHeight - panel.offsetHeight)) + 'px';
+            }
+            if (resizeActive) {
+                const dx = startX - e.clientX; // Invertido porque redimensionamos desde la izquierda
+                const dy = e.clientY - startY;
+                const newW = Math.max(320, startW + dx);
+                const newH = Math.max(400, startH + dy);
+                
+                // Si movemos el borde izquierdo, también debemos mover la posición 'left'
+                if (newW > 320) {
+                    panel.style.left  = (origLeft - dx) + 'px';
+                    panel.style.width = newW + 'px';
+                }
+                panel.style.height = newH + 'px';
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            dragActive = false; resizeActive = false;
+            header.style.cursor = 'grab';
         });
     })();
 

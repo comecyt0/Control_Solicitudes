@@ -12,7 +12,12 @@ El sistema usa **Server-Side Rendering (SSR) nativo PHP** sin frameworks pesados
 Navegador → POST form → PHP valida (CSRF + PDO) → INSERT BD → Flash msg → Location redirect → GET página
 ```
 - **CSRF**: Todo POST valida `validarCsrfPost()` en `config/auth.php`
-- **PDO**: Todas las queries usan `$pdo->prepare()` / `execute()`, sin SQLA diferencia de los usuarios regulares, los administradores cuentan con **Sesiones Permanentes**. 
+- **PDO**: Todas las queries usan `$pdo->prepare()` / `execute()`, sin SQL
+- **Notificaciones y Chat**:
+    - Polling bidireccional: `assets/js/notificaciones.js` (global, cada 8s) y `header_admin.php` (local, cada 6s).
+    - El backend (`admin/api/chat.php`) gestiona la lógica de mensajes, reacciones y persistencia de lectura.
+    - Sincronización de lectura: Al abrir el chat, el cliente notifica al servidor (`marcar_leido`) para limpiar estados de alerta en toda la sesión del admin.
+A diferencia de los usuarios regulares, los administradores cuentan con **Sesiones Permanentes**.
 - La sesión no expira por el simple paso del tiempo durante la jornada laboral.
 - **Excepción (Regla de Medianoche)**: El sistema realiza un cierre de seguridad a las 12:00 AM. Si el servidor detecta que la hora actual es >= 12:00 AM y el último clic del usuario fue el día anterior (y hace más de 30 minutos), la sesión se invalida. Esto garantiza que el panel no quede abierto indefinidamente en equipos desatendidos durante días.
 

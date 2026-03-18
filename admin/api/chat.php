@@ -35,61 +35,106 @@ $adminId = (int) $_SESSION['admin_id'];
 $accion  = $_GET['accion'] ?? $_POST['accion'] ?? '';
 
 // ------------------------------------------------------------------
-// LISTAR: Devuelve los últimos mensajes del canal grupal o de un DM
+// LISTAR: Devuelve los últimos mensajes del canal grupal o de un DM con reacciones
 // Parámetros GET:
-//   desde       → ID del último mensaje conocido (long-polling optimizado)
-//   destinatario → ID del admin destino para filtrar DMs bidireccionales
+//   desde       → ID del último mensaje conocido
+//   destinatario → ID del admin destino para filtrar DMs
 // ------------------------------------------------------------------
 if ($accion === 'listar') {
     $desde        = (int) ($_GET['desde'] ?? 0);
     $destinatario = isset($_GET['destinatario']) ? (int) $_GET['destinatario'] : null;
 
+    $params = [':desde' => $desde];
+    $where  = "m.id > :desde ";
+
     if ($destinatario !== null && $destinatario > 0) {
-        // Canal DM bidireccional: mensajes entre los dos admins
-        $sql = "SELECT m.id, m.admin_id, m.destinatario_id, m.mensaje, m.tipo,
-                       m.ref_id, m.ref_titulo,
-                       TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'HH24:MI') AS hora,
-                       TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'DD/MM/YYYY') AS fecha_dia,
-                       a.nombre AS admin_nombre
-                FROM sb_chat_mensajes m
-                INNER JOIN administradores a ON a.id = m.admin_id
-                WHERE m.id > :desde
-                  AND (
-                    (m.admin_id = :yo AND m.destinatario_id = :ellos)
-                    OR
-                    (m.admin_id = :ellos2 AND m.destinatario_id = :yo2)
-                  )
-                ORDER BY m.id ASC
-                LIMIT 100";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ':desde'  => $desde,
-            ':yo'     => $adminId,
-            ':ellos'  => $destinatario,
-            ':ellos2' => $destinatario,
-            ':yo2'    => $adminId,
-        ]);
+        $where .= " AND ((m.admin_id = :yo AND m.destinatario_id = :eux) OR (m.admin_id = :eux2 AND m.destinatario_id = :yo2))";
+        $params[':yo']   = $adminId;
+        $params[':eux']  = $destinatario;
+        $params[':eux2'] = $destinatario;
+        $params[':yo2']  = $adminId;
     } else {
-        // Canal grupal: mensajes sin destinatario privado
-        $sql = "SELECT m.id, m.admin_id, m.destinatario_id, m.mensaje, m.tipo,
-                       m.ref_id, m.ref_titulo,
-                       TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'HH24:MI') AS hora,
-                       TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'DD/MM/YYYY') AS fecha_dia,
-                       a.nombre AS admin_nombre
-                FROM sb_chat_mensajes m
-                INNER JOIN administradores a ON a.id = m.admin_id
-                WHERE m.id > :desde
-                  AND m.destinatario_id IS NULL
-                ORDER BY m.id ASC
-                LIMIT 80";
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([':desde' => $desde]);
+        $where .= " AND m.destinatario_id IS NULL";
     }
 
+    $sql = "SELECT m.id, m.admin_id, m.destinatario_id, m.mensaje, m.tipo,
+                   m.ref_id, m.ref_titulo,
+                   TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'HH24:MI') AS hora,
+                   TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'DD/MM/YYYY') AS fecha_dia,
+                   a.nombre AS admin_nombre,
+                   (
+                       SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', r.admin_id, 'nombre', r2.nombre))
+                       FROM sb_chat_reacciones r
+                       JOIN administradores r2 ON r2.id = r.admin_id
+                       WHERE r.mensaje_id = m.id
+                   ) as reacciones
+            FROM sb_chat_mensajes m
+            INNER JOIN administradores a ON a.id = m.admin_id
+            WHERE $where
+            ORDER BY m.id ASC
+            LIMIT 100";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $mensajes = $stmt->fetchAll();
+
+    // Limpiar nulos de reacciones (json_agg devuelve null si no hay filas)
+    foreach ($mensajes as &$m) {
+        $m['reacciones'] = json_decode($m['reacciones'] ?? '[]', true);
+    }
+
     echo json_encode(['ok' => true, 'mensajes' => $mensajes]);
+    exit;
+}
+
+// ------------------------------------------------------------------
+// MARCAR LEÍDO: Persistir el último mensaje visto por el admin
+// ------------------------------------------------------------------
+if ($accion === 'marcar_leido' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $ultimoId = (int) ($_POST['ultimo_id'] ?? 0);
+    if ($ultimoId > 0) {
+        $sql = "INSERT INTO sb_chat_lectura (admin_id, ultimo_id_leido, fecha_actualizacion)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT (admin_id) DO UPDATE 
+                SET ultimo_id_leido = EXCLUDED.ultimo_id_leido, 
+                    fecha_actualizacion = CURRENT_TIMESTAMP";
+        $pdo->prepare($sql)->execute([$adminId, $ultimoId]);
+    }
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ------------------------------------------------------------------
+// REACCIONAR: Añadir, cambiar o quitar reacción a un mensaje
+// ------------------------------------------------------------------
+if ($accion === 'reaccionar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    validarCsrfPost();
+    $mensajeId = (int) ($_POST['mensaje_id'] ?? 0);
+    $emoji     = trim($_POST['emoji'] ?? '');
+
+    if ($mensajeId > 0 && $emoji) {
+        // Si el usuario ya reaccionó con el MISMO emoji -> quitarla (toggle)
+        $chk = $pdo->prepare("SELECT id FROM sb_chat_reacciones WHERE mensaje_id = ? AND admin_id = ? AND emoji = ?");
+        $chk->execute([$mensajeId, $adminId, $emoji]);
+        
+        if ($chk->fetch()) {
+            $pdo->prepare("DELETE FROM sb_chat_reacciones WHERE mensaje_id = ? AND admin_id = ? AND emoji = ?")
+                ->execute([$mensajeId, $adminId, $emoji]);
+            $res = 'deleted';
+        } else {
+            // Un admin solo tiene una reacción por mensaje? 
+            // Hagamos que pueda tener varias pero una de cada tipo.
+            // Para simplificar el UI: "Unique(mensaje_id, admin_id)" (una sola reacción por mensaje)
+            $sql = "INSERT INTO sb_chat_reacciones (mensaje_id, admin_id, emoji)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT (mensaje_id, admin_id) DO UPDATE SET emoji = EXCLUDED.emoji";
+            $pdo->prepare($sql)->execute([$mensajeId, $adminId, $emoji]);
+            $res = 'saved';
+        }
+        echo json_encode(['ok' => true, 'res' => $res]);
+    } else {
+        echo json_encode(['ok' => false, 'error' => 'Parámetros inválidos']);
+    }
     exit;
 }
 

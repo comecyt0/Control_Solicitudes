@@ -155,19 +155,21 @@ Control de activos tecnológicos:
 
 ---
 
-### Módulo 5: Colaboración Interna
-**Integrado en**: `includes/header_admin.php` + `admin/api/chat.php`
-
-- **Chat en tiempo real** entre administradores (polling cada 7s)
-- Canal general del equipo TI
-- Mensajes directos (DM) entre administradores
-- Creación de tareas Kanban y eventos desde el chat
+### 4.4 Chat Corporativo TI (v4)
+Sistema de mensajería interna para administradores con soporte para:
+- **Canales**: General (grupal) y Mensajes Directos (DM) entre administradores.
+- **Interactividad**: 
+    - **Reacciones**: Soporte para emojis en cada mensaje (persistencia en `sb_chat_reacciones`).
+    - **Emojis**: Selector integrado para inserción rápida.
+    - **Redimensionabilidad**: Panel flotante con tamaño ajustable por el usuario.
+- **Sincronización**: Seguimiento de lectura persistente en servidor (`sb_chat_lectura`) para evitar duplicidad de alertas en múltiples pestañas.
+- **Integración**: Capacidad de crear tareas Kanban y eventos de calendario directamente desde la conversación.
 - **Asistente IA** integrado: Groq + LLaMA 3 con contexto del sistema
 - Búsqueda global: tickets, personal, equipos desde el topbar
 
 ---
 
-### Módulo 6: Correos Institucionales
+### Módulo 5: Correos Institucionales
 **Archivo principal**: `admin/correos.php`
 
 Gestión del catálogo de correos oficiales por área:

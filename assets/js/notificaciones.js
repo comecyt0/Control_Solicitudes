@@ -15,7 +15,7 @@
     'use strict';
 
     // ─── Configuración ────────────────────────────────────────────────────────
-    const POLL_MS        = 15000;   // Polling cada 15 segundos
+    const POLL_MS        = 8000;    // Polling cada 8 segundos (antes 15s)
     const TOAST_MS       = 6000;    // Auto-dismiss
     const MAX_TOASTS     = 4;
 
