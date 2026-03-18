@@ -15,9 +15,9 @@
     'use strict';
 
     // ─── Configuración ────────────────────────────────────────────────────────
-    const POLL_MS        = 8000;    // Polling cada 8 segundos (antes 15s)
-    const TOAST_MS       = 6000;    // Auto-dismiss
-    const MAX_TOASTS     = 4;
+    const POLL_MS = 2000;    // Polling cada 2 segundos (antes 15s)
+    const TOAST_MS = 6000;    // Auto-dismiss
+    const MAX_TOASTS = 4;
 
     // Detectar BASE_URL: primero variable global, luego inferir desde el script src
     function detectarBase() {
@@ -30,21 +30,21 @@
         }
         // Último recurso: usar path relativo a /admin/
         const path = window.location.pathname;
-        const idx  = path.indexOf('/admin/');
+        const idx = path.indexOf('/admin/');
         if (idx !== -1) return window.location.origin + path.substring(0, idx + 1);
         return window.location.origin + '/';
     }
 
     const BASE = detectarBase();
-    const API  = BASE + 'admin/api/notificaciones.php';
+    const API = BASE + 'admin/api/notificaciones.php';
 
     // ─── Estado ───────────────────────────────────────────────────────────────
-    let ultimoIdChat       = parseInt(sessionStorage.getItem('nc_chat') || '0');
-    let ultimoIdSolicitud  = parseInt(sessionStorage.getItem('nc_sol')  || '0');
-    let baselineOk         = sessionStorage.getItem('nc_init') === '1';
-    let pollingTimer       = null;
-    let audioCtx           = null;
-    let audioOk            = false;  // true tras primer clic (Safari fix)
+    let ultimoIdChat = parseInt(sessionStorage.getItem('nc_chat') || '0');
+    let ultimoIdSolicitud = parseInt(sessionStorage.getItem('nc_sol') || '0');
+    let baselineOk = sessionStorage.getItem('nc_init') === '1';
+    let pollingTimer = null;
+    let audioCtx = null;
+    let audioOk = false;  // true tras primer clic (Safari fix)
 
     // ─── Inicio ───────────────────────────────────────────────────────────────
     function init() {
@@ -66,10 +66,10 @@
             .then(r => r.json())
             .then(d => {
                 if (!d.ok) return;
-                ultimoIdChat      = d.chat.ultimo_id;
+                ultimoIdChat = d.chat.ultimo_id;
                 ultimoIdSolicitud = d.solicitudes.ultimo_id;
                 sessionStorage.setItem('nc_chat', ultimoIdChat);
-                sessionStorage.setItem('nc_sol',  ultimoIdSolicitud);
+                sessionStorage.setItem('nc_sol', ultimoIdSolicitud);
                 sessionStorage.setItem('nc_init', '1');
                 iniciarPolling();
             })
@@ -89,10 +89,10 @@
             .then(r => r.json())
             .then(d => {
                 if (!d.ok) return;
-                if (d.chat        && d.chat.count        > 0) onNuevoChat(d.chat);
+                if (d.chat && d.chat.count > 0) onNuevoChat(d.chat);
                 if (d.solicitudes && d.solicitudes.count > 0) onNuevaSolicitud(d.solicitudes);
             })
-            .catch(() => {});
+            .catch(() => { });
     }
 
     // ─── Nuevo mensaje de chat ────────────────────────────────────────────────
@@ -125,7 +125,7 @@
 
         if (window.Notification && Notification.permission === 'granted') {
             try { new Notification('COMECyT — Nueva solicitud', { body: data.preview, icon: BASE + 'assets/MARCA.png', tag: 'nc-sol' }); }
-            catch (_) {}
+            catch (_) { }
         }
     }
 
@@ -134,8 +134,8 @@
         const b = document.getElementById('chatBadge');
         if (!b) return;
         const actual = parseInt(b.textContent) || 0;
-        const nuevo  = actual + n;
-        b.textContent   = nuevo > 99 ? '99+' : nuevo;
+        const nuevo = actual + n;
+        b.textContent = nuevo > 99 ? '99+' : nuevo;
         b.style.display = 'flex';
     }
 
@@ -311,7 +311,7 @@
     // Se precarga al iniciar para evitar delay en la primera notificación
     const audioChat = new Audio(BASE + 'assets/TIENES UN MENSAJE!!!  letra.mp3');
     audioChat.preload = 'auto';
-    audioChat.volume  = 0.7;
+    audioChat.volume = 0.7;
 
     // ─── Web Audio (con Safari unlock) ────────────────────────────────────────
     function configurarAudioUnlock() {
@@ -319,7 +319,7 @@
         function unlock() {
             if (audioOk) return;
             // Desbloquear el elemento Audio de HTML (necesario en Safari/iOS)
-            audioChat.play().then(() => { audioChat.pause(); audioChat.currentTime = 0; }).catch(() => {});
+            audioChat.play().then(() => { audioChat.pause(); audioChat.currentTime = 0; }).catch(() => { });
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const reanudar = () => { audioOk = true; };
@@ -335,24 +335,24 @@
             // Usar el MP3 real para mensajes de chat
             try {
                 audioChat.currentTime = 0;
-                audioChat.play().catch(() => {});
-            } catch (_) {}
+                audioChat.play().catch(() => { });
+            } catch (_) { }
             return;
         }
         // Solicitudes → tono sintético Web Audio (más urgente/grave)
         if (!audioOk || !audioCtx) return;
         try {
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            nota(440,  0.00, 0.14, 0.22);
-            nota(550,  0.16, 0.12, 0.20);
-            nota(660,  0.30, 0.10, 0.18);
-        } catch (_) {}
+            nota(440, 0.00, 0.14, 0.22);
+            nota(550, 0.16, 0.12, 0.20);
+            nota(660, 0.30, 0.10, 0.18);
+        } catch (_) { }
     }
 
     function nota(freq, delay, dur, vol) {
-        const osc  = audioCtx.createOscillator();
+        const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        const t    = audioCtx.currentTime + delay;
+        const t = audioCtx.currentTime + delay;
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, t);
         gain.gain.setValueAtTime(0, t);
@@ -374,8 +374,8 @@
     // ─── Escape XSS ──────────────────────────────────────────────────────────
     function xss(s) {
         return String(s || '')
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     // ─── Arranque ─────────────────────────────────────────────────────────────
@@ -388,11 +388,11 @@
     // API pública
     window.COMECyTNotif = {
         test: (tipo) => tipo === 'chat'
-            ? onNuevoChat({ count:1, ultimo_id: ultimoIdChat, preview: 'Prueba de notificación de chat' })
-            : onNuevaSolicitud({ count:1, ultimo_id: ultimoIdSolicitud, preview: 'CMCT-2026-TEST · Prueba' }),
-        polling:   hacerPolling,
+            ? onNuevoChat({ count: 1, ultimo_id: ultimoIdChat, preview: 'Prueba de notificación de chat' })
+            : onNuevaSolicitud({ count: 1, ultimo_id: ultimoIdSolicitud, preview: 'CMCT-2026-TEST · Prueba' }),
+        polling: hacerPolling,
         reiniciar: () => {
-            ['nc_chat','nc_sol','nc_init'].forEach(k => sessionStorage.removeItem(k));
+            ['nc_chat', 'nc_sol', 'nc_init'].forEach(k => sessionStorage.removeItem(k));
             if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
             init();
         },
