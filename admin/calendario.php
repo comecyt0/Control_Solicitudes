@@ -713,9 +713,15 @@ require_once __DIR__ . '/../includes/header_admin.php';
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
     <h2><i class="fa-solid fa-calendar-days text-primary"></i> Calendario</h2>
-    <button class="btn btn-primary" onclick="abrirModalCrear()">
-        <i class="fa-solid fa-plus"></i> Nuevo Evento
-    </button>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-outline" id="btnVerSolicitudes" onclick="abrirModalSolicitudes()" style="position:relative;">
+            <i class="fa-solid fa-bell"></i> Solicitudes 
+            <span id="badgeSolicitudes" style="display:none; position:absolute; top:-8px; right:-8px; background:var(--color-danger); color:#fff; border-radius:50%; width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid #fff;">0</span>
+        </button>
+        <button class="btn btn-primary" onclick="abrirModalCrear()">
+            <i class="fa-solid fa-plus"></i> Nuevo Evento
+        </button>
+    </div>
 </div>
 
 <div class="calendar-wrapper">
@@ -1245,6 +1251,54 @@ require_once __DIR__ . '/../includes/header_admin.php';
         </form>
     </div>
 </div>
+<!-- Modal: Gestionar Solicitudes -->
+<div class="modal-backdrop" id="modalSolicitudesCalendario">
+    <div class="modal" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fa-solid fa-calendar-check text-primary"></i> Solicitudes de Espacio Pendientes
+            </h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalSolicitudesCalendario')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="listaSolicitudesPendientes" style="max-height: 450px; overflow-y: auto;">
+                <!-- Cargado via AJAX -->
+                <p style="text-align:center; padding:20px; color:#64748b;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando...</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" onclick="cerrarModal('modalSolicitudesCalendario')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Detalle/Procesar Solicitud -->
+<div class="modal-backdrop" id="modalProcesarSolicitud">
+    <div class="modal" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="ps_titulo">Procesar Solicitud</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalProcesarSolicitud')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="ps_id">
+            <div id="ps_info" style="margin-bottom: 15px; font-size: 0.9rem; line-height: 1.4;">
+                <!-- Info detallada -->
+            </div>
+            <div class="form-group">
+                <label class="form-label">Motivo (en caso de rechazo)</label>
+                <textarea id="ps_motivo" class="form-control" rows="2" placeholder="Explique por qué no se puede agendar el espacio..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-danger" style="flex:1;" onclick="gestionarSolicitud('rechazado')">Rechazar</button>
+            <button type="button" class="btn btn-primary" style="flex:1;" onclick="gestionarSolicitud('aceptado')">Aceptar y Agendar</button>
+        </div>
+    </div>
+</div>
 
 <script>
 function abrirModalCrear() {
@@ -1359,22 +1413,131 @@ function eliminarTareaDesdeModal() {
     eliminarTarea(id);
 }
 
-// DRAG AND DROP API LOGIC
-function allowDrop(ev) {
-    ev.preventDefault();
+// ==========================================
+// SCRIPTS DE SOLICITUDES DE CALENDARIO
+// ==========================================
+let solicitudesCache = [];
+
+function abrirModalSolicitudes() {
+    abrirModal('modalSolicitudesCalendario');
+    cargarSolicitudes();
 }
 
-function drag(ev, id) {
-    ev.dataTransfer.setData("tarea_id", id);
+function cargarSolicitudes() {
+    const zona = document.getElementById('listaSolicitudesPendientes');
+    fetch('<?= BASE_URL ?>admin/api/calendario_solicitudes.php?accion=listar_pendientes')
+        .then(r => r.json())
+        .then(d => {
+            if (!d.ok) return;
+            solicitudesCache = d.solicitudes;
+            actualizarBadgeSolicitudes(solicitudesCache.length);
+            
+            if (solicitudesCache.length === 0) {
+                zona.innerHTML = '<p style="text-align:center; padding:40px; color:#94a3b8;">No hay solicitudes pendientes.</p>';
+                return;
+            }
+
+            let html = '<div style="display:flex; flex-direction:column; gap:12px;">';
+            solicitudesCache.forEach(s => {
+                html += `
+                    <div style="padding:15px; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:700; color:#334155; margin-bottom:2px;">${escapeHtml(s.titulo)}</div>
+                            <div style="font-size:0.75rem; color:#64748b;">
+                                <i class="fa-solid fa-user"></i> ${escapeHtml(s.solicitante_nombre)} | 
+                                <i class="fa-solid fa-calendar"></i> ${formatFechaDisplay(s.fecha_inicio)}
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="abrirDetalleSolicitud(${s.id})">Revisar</button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            zona.innerHTML = html;
+        });
 }
 
-function drop(ev, nuevoEstatus) {
-    ev.preventDefault();
-    var id = ev.dataTransfer.getData("tarea_id");
-    if (id) {
-        moverTarea(id, nuevoEstatus);
+function actualizarBadgeSolicitudes(n) {
+    const b = document.getElementById('badgeSolicitudes');
+    if (n > 0) {
+        b.textContent = n;
+        b.style.display = 'flex';
+    } else {
+        b.style.display = 'none';
     }
 }
+
+function abrirDetalleSolicitud(id) {
+    const s = solicitudesCache.find(x => parseInt(x.id) === id);
+    if (!s) return;
+    
+    document.getElementById('ps_id').value = s.id;
+    document.getElementById('ps_titulo').textContent = s.titulo;
+    document.getElementById('ps_info').innerHTML = `
+        <p><strong>Solicitante:</strong> ${escapeHtml(s.solicitante_nombre)}</p>
+        <p><strong>Inicio:</strong> ${formatFechaDisplay(s.fecha_inicio)}</p>
+        <p><strong>Fin:</strong> ${formatFechaDisplay(s.fecha_fin)}</p>
+        <div style="background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin-top:10px;">
+            <strong>Descripción:</strong><br>${escapeHtml(s.descripcion || 'Sin descripción')}
+        </div>
+    `;
+    document.getElementById('ps_motivo').value = '';
+    abrirModal('modalProcesarSolicitud');
+}
+
+function gestionarSolicitud(estatus) {
+    const id = document.getElementById('ps_id').value;
+    const motivo = document.getElementById('ps_motivo').value.trim();
+    
+    if (estatus === 'rechazado' && !motivo) {
+        alert('Debe indicar un motivo para el rechazo.');
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append('accion', 'gestionar');
+    fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+    fd.append('id', id);
+    fd.append('estatus', estatus);
+    fd.append('motivo', motivo);
+
+    fetch('<?= BASE_URL ?>admin/api/calendario_solicitudes.php', { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(d => {
+            if (d.ok) {
+                cerrarModal('modalProcesarSolicitud');
+                cargarSolicitudes();
+                if (estatus === 'aceptado') {
+                    alert('Solicitud aprobada. El evento ha sido añadido al calendario.');
+                    location.reload(); // Recargar calendario para ver el nuevo evento
+                } else {
+                    alert('Solicitud rechazada.');
+                }
+            } else {
+                alert('Error: ' + d.error);
+            }
+        });
+}
+
+function formatFechaDisplay(s) {
+    const d = new Date(s);
+    return d.toLocaleString('es-MX', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function escapeHtml(s) {
+    return String(s || '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Inicializar contador al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('<?= BASE_URL ?>admin/api/calendario_solicitudes.php?accion=listar_pendientes')
+        .then(r => r.json())
+        .then(d => {
+            if (d.ok) actualizarBadgeSolicitudes(d.solicitudes.length);
+        });
+});
 
 </script>
 

@@ -62,6 +62,11 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
                 <i class="fa-solid fa-laptop nav-icon"></i>
                 <span>Mis Equipos Asignados</span>
             </a>
+            <a href="<?= BASE_URL ?>public/calendario.php"
+               class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar nav-icon"></i>
+                <span>Calendario Institucional</span>
+            </a>
         </div>
     </nav>
 
