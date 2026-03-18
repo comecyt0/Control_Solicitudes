@@ -180,10 +180,12 @@ if (!isset($_SESSION['admin_dark_mode'])) {
             font-family:Inter,'Segoe UI',system-ui,sans-serif;
             font-size:14px; color:#111827;">
 
-    <!-- Control de redimensionamiento (Esquina inferior izquierda para no chocar con scroll) -->
+    <!-- Control de redimensionamiento (Esq. inferior izquierda) -->
     <div id="chatResizeHandle" 
-         style="position:absolute; left:0; bottom:0; width:15px; height:15px; 
-                cursor:sw-resize; z-index:100; opacity:0.3; background:linear-gradient(135deg, transparent 50%, #662331 50%);">
+         title="Arrastrar para redimensionar"
+         style="position:absolute; left:0; bottom:0; width:20px; height:20px; 
+                cursor:sw-resize; z-index:100; opacity:0.6; 
+                background:linear-gradient(135deg, #662331 35%, transparent 35%);">
     </div>
 
     <!-- Panel Izquierdo: Canales / Contactos DM -->
@@ -242,23 +244,55 @@ if (!isset($_SESSION['admin_dark_mode'])) {
 
         <div id="chatMessages" style="flex:1; overflow-y:auto; padding:12px 12px 4px; display:flex; flex-direction:column; gap:6px; scroll-behavior:smooth; background:#f9fafb;"></div>
 
-        <!-- Tooltip de Emojis -->
-        <div id="chatEmojiPicker" style="display:none; position:absolute; bottom:60px; right:12px; width:220px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); z-index:1000; padding:10px;">
-            <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:4px; font-size:1.3rem; text-align:center;">
-                <!-- Emojis comunes -->
-                <span onclick="insertarEmoji('😊')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😊</span>
-                <span onclick="insertarEmoji('😂')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😂</span>
-                <span onclick="insertarEmoji('👍')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">👍</span>
-                <span onclick="insertarEmoji('🙌')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🙌</span>
-                <span onclick="insertarEmoji('👀')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">👀</span>
-                <span onclick="insertarEmoji('🔥')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🔥</span>
-                <span onclick="insertarEmoji('✅')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">✅</span>
-                <span onclick="insertarEmoji('⚠️')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">⚠️</span>
-                <span onclick="insertarEmoji('💡')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">💡</span>
-                <span onclick="insertarEmoji('🕒')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🕒</span>
-                <span onclick="insertarEmoji('📌')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">📌</span>
-                <span onclick="insertarEmoji('💻')" style="cursor:pointer; padding:2px; border-radius:4px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">💻</span>
+        <!-- Tooltip de Emojis Expandido -->
+        <div id="chatEmojiPicker" style="display:none; position:absolute; bottom:60px; right:12px; width:260px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.1); z-index:1000; padding:12px;">
+            <div style="font-size:0.7rem; font-weight:700; color:#9ca3af; text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                <span>Selector de Emojis</span>
+                <i class="fa-solid fa-face-smile"></i>
             </div>
+            <div id="chatEmojiGrid" style="display:grid; grid-template-columns:repeat(8,1fr); gap:4px; font-size:1.25rem; text-align:center; max-height:180px; overflow-y:auto;">
+                <!-- Se llena dinámicamente o estáticamente aquí -->
+                <span onclick="insertarEmoji('😊')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😊</span>
+                <span onclick="insertarEmoji('😂')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😂</span>
+                <span onclick="insertarEmoji('🤣')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🤣</span>
+                <span onclick="insertarEmoji('😍')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😍</span>
+                <span onclick="insertarEmoji('🤔')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🤔</span>
+                <span onclick="insertarEmoji('😅')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😅</span>
+                <span onclick="insertarEmoji('😎')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😎</span>
+                <span onclick="insertarEmoji('😭')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">😭</span>
+                
+                <span onclick="insertarEmoji('👍')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">👍</span>
+                <span onclick="insertarEmoji('🙌')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🙌</span>
+                <span onclick="insertarEmoji('👏')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">👏</span>
+                <span onclick="insertarEmoji('🤝')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🤝</span>
+                <span onclick="insertarEmoji('💪')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">💪</span>
+                <span onclick="insertarEmoji('🙏')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🙏</span>
+                <span onclick="insertarEmoji('👀')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">👀</span>
+                <span onclick="insertarEmoji('✨')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">✨</span>
+
+                <span onclick="insertarEmoji('🔥')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🔥</span>
+                <span onclick="insertarEmoji('✅')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">✅</span>
+                <span onclick="insertarEmoji('⚠️')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">⚠️</span>
+                <span onclick="insertarEmoji('💡')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">💡</span>
+                <span onclick="insertarEmoji('📌')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">📌</span>
+                <span onclick="insertarEmoji('🚀')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🚀</span>
+                <span onclick="insertarEmoji('💻')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">💻</span>
+                <span onclick="insertarEmoji('🕒')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🕒</span>
+
+                <span onclick="insertarEmoji('🎉')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🎉</span>
+                <span onclick="insertarEmoji('📢')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">📢</span>
+                <span onclick="insertarEmoji('🛠️')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🛠️</span>
+                <span onclick="insertarEmoji('🔍')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">🔍</span>
+                <span onclick="insertarEmoji('📦')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">📦</span>
+                <span onclick="insertarEmoji('📋')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">📋</span>
+                <span onclick="insertarEmoji('📎')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">📎</span>
+                <span onclick="insertarEmoji('📅')" style="cursor:pointer; padding:3px; border-radius:6px;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background=''">📅</span>
+            </div>
+        </div>
+
+        <!-- Selector de Reacciones (Mini-Picker para Burbujas) -->
+        <div id="chatReactionPicker" style="display:none; position:fixed; background:#fff; border:1px solid #e5e7eb; border-radius:24px; box-shadow:0 8px 24px rgba(0,0,0,0.12); z-index:10000; padding:4px 8px; display:flex; gap:4px; align-items:center;">
+            <!-- Se llena vía JS -->
         </div>
 
         <div style="display:flex; align-items:flex-end; gap:8px; padding:10px 12px; border-top:1px solid #e5e7eb; background:#fdf8f5; flex-shrink:0;">
@@ -639,8 +673,43 @@ if (!isset($_SESSION['admin_dark_mode'])) {
     }
 
     window.toggleReaccionesRapidas = function(e, mid) {
-        // Implementación simple: reaccionar con un emoji predefinido o abrir mini picker
-        reaccionar(mid, '👍');
+        e.stopPropagation();
+        const p = document.getElementById('chatReactionPicker');
+        if (p.style.display === 'flex' && p.dataset.mid == mid) {
+            p.style.display = 'none';
+            return;
+        }
+
+        const emojis = ['👍','❤️','😂','😮','😢','🔥'];
+        p.innerHTML = emojis.map(emo => `
+            <span onclick="reaccionar(${mid}, '${emo}'); document.getElementById('chatReactionPicker').style.display='none';" 
+                  style="cursor:pointer; padding:4px 6px; border-radius:12px; font-size:1.2rem; transition:transform 0.1s;"
+                  onmouseover="this.style.transform='scale(1.3)';this.style.background='#f3f4f6'"
+                  onmouseout="this.style.transform='scale(1)';this.style.background='transparent'">
+                ${emo}
+            </span>
+        `).join('') + `
+            <div style="width:1px; height:20px; background:#e5e7eb; margin:0 4px;"></div>
+            <i class="fa-solid fa-plus" style="color:#9ca3af; font-size:0.8rem; cursor:pointer; padding:4px;" 
+               onclick="toggleEmojiPicker(); document.getElementById('chatReactionPicker').style.display='none';"></i>
+        `;
+
+        p.dataset.mid = mid;
+        p.style.display = 'flex';
+        
+        // Posicionamiento inteligente cerca del clic
+        const rect = e.target.closest('button').getBoundingClientRect();
+        p.style.left = (rect.left - 100) + 'px';
+        p.style.top  = (rect.top - 50) + 'px';
+
+        // Cerrar al hacer clic fuera
+        const closePicker = (ev) => {
+            if (!p.contains(ev.target)) {
+                p.style.display = 'none';
+                document.removeEventListener('click', closePicker);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', closePicker), 10);
     };
 
     window.reaccionar = function(mid, emoji) {
@@ -663,7 +732,7 @@ if (!isset($_SESSION['admin_dark_mode'])) {
         const inp = document.getElementById('chatInput');
         inp.value += e;
         inp.focus();
-        toggleEmojiPicker();
+        // No cerrar automáticamente para permitir insertar varios
     };
 
     function escapeHtml(s) {
@@ -824,7 +893,7 @@ if (!isset($_SESSION['admin_dark_mode'])) {
             .catch(() => alert('Error de conexión'));
     };
 
-    // -? Drag & Drop + Resize del panel ---------------------------?
+    // -? Drag & Drop + Resize del panel v4.1 ----------------------?
     (function initInteractions() {
         const panel   = document.getElementById('chatPanel');
         const header  = document.getElementById('chatPanelHeader');
@@ -842,7 +911,8 @@ if (!isset($_SESSION['admin_dark_mode'])) {
             const rect = panel.getBoundingClientRect();
             startX = e.clientX; startY = e.clientY;
             origLeft = rect.left; origTop = rect.top;
-            panel.style.right = 'auto'; panel.style.left = origLeft + 'px';
+            panel.style.right = 'auto'; 
+            panel.style.left = origLeft + 'px';
             panel.style.top = origTop + 'px';
             e.preventDefault();
         });
@@ -851,10 +921,13 @@ if (!isset($_SESSION['admin_dark_mode'])) {
         resizer.addEventListener('mousedown', (e) => {
             resizeActive = true;
             startX = e.clientX; startY = e.clientY;
-            startW = panel.offsetWidth; startH = panel.offsetHeight;
             const rect = panel.getBoundingClientRect();
+            startW = rect.width; 
+            startH = rect.height;
             origLeft = rect.left;
+            origTop  = rect.top;
             e.preventDefault();
+            e.stopPropagation();
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -865,14 +938,15 @@ if (!isset($_SESSION['admin_dark_mode'])) {
                 panel.style.top  = Math.max(0, Math.min(newTop, window.innerHeight - panel.offsetHeight)) + 'px';
             }
             if (resizeActive) {
-                const dx = startX - e.clientX; // Invertido porque redimensionamos desde la izquierda
+                const dx = startX - e.clientX; 
                 const dy = e.clientY - startY;
-                const newW = Math.max(320, startW + dx);
-                const newH = Math.max(400, startH + dy);
                 
-                // Si movemos el borde izquierdo, también debemos mover la posición 'left'
+                const newW = Math.max(320, Math.min(startW + dx, window.innerWidth * 0.9));
+                const newH = Math.max(400, Math.min(startH + dy, window.innerHeight * 0.9));
+                
+                // Al crecer hacia la IZQUIERDA, el 'left' debe disminuir
                 if (newW > 320) {
-                    panel.style.left  = (origLeft - dx) + 'px';
+                    panel.style.left  = (origLeft - (newW - startW)) + 'px';
                     panel.style.width = newW + 'px';
                 }
                 panel.style.height = newH + 'px';
