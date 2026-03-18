@@ -27,22 +27,11 @@ if (!function_exists('mostrarError')) {
 }
 // -----------------------------------------------------------------------
 if (!defined('BASE_URL')) {
-    $protocolo = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host      = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $protocolo = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     
-    // Ruta absoluta del proyecto en el disco (subiendo un nivel desde /includes)
-    $raizProyecto = realpath(__DIR__ . '/../'); 
-    // Ruta absoluta de la raíz del servidor web
-    $docRoot = realpath($_SERVER['DOCUMENT_ROOT']);
-    
-    // Diferencia entre raíz del proyecto y raíz del servidor para obtener el subdirectorio URL
-    // (Ejemplo: si el proyecto está en c:/wamp/www/proyectoa/ y docRoot es c:/wamp/www/, esto devuelve /proyectoa)
-    $dirProyecto = str_replace($docRoot, '', $raizProyecto);
-    $dirProyecto = str_replace('\\', '/', $dirProyecto);
-    $dirProyecto = '/' . ltrim($dirProyecto, '/');
-    $dirProyecto = rtrim($dirProyecto, '/') . '/';
-    
-    define('BASE_URL', $protocolo . '://' . $host . $dirProyecto);
+    // En Docker el proyecto está en la raíz del servidor web
+    define('BASE_URL', $protocolo . '://' . $host . '/');
 }
 
 // -----------------------------------------------------------------------

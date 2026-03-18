@@ -718,7 +718,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
     <div style="display: flex; gap: 10px;">
         <button class="btn btn-outline" id="btnVerSolicitudes" onclick="abrirModalSolicitudes()" style="position:relative;">
             <i class="fa-solid fa-bell"></i> Solicitudes 
-            <span id="badgeSolicitudes" style="display:none; position:absolute; top:-8px; right:-8px; background:var(--color-danger); color:#fff; border-radius:50%; width:20px; height:20px; font-size:0.7rem; display:flex; align-items:center; justify-content:center; border:2px solid #fff;">0</span>
+            <span id="badgeSolicitudes" style="display:none; position:absolute; top:-8px; right:-8px; background:var(--color-danger); color:#fff; border-radius:50%; width:20px; height:20px; font-size:0.7rem; align-items:center; justify-content:center; border:2px solid #fff;">0</span>
         </button>
         <button class="btn btn-primary" onclick="abrirModalCrear()">
             <i class="fa-solid fa-plus"></i> Nuevo Evento
@@ -1451,10 +1451,16 @@ function abrirModalSolicitudes() {
 
 function cargarSolicitudes() {
     const zona = document.getElementById('listaSolicitudesPendientes');
-    fetch('<?= BASE_URL ?>admin/api/calendario_solicitudes.php?accion=listar_pendientes')
-        .then(r => r.json())
+    fetch('api/calendario_solicitudes.php?accion=listar_pendientes')
+        .then(r => {
+            if (!r.ok) throw new Error('API Response Error: ' + r.status);
+            return r.json();
+        })
         .then(d => {
-            if (!d.ok) return;
+            if (!d.ok) {
+                console.error('API Error:', d.error);
+                return;
+            }
             solicitudesCache = d.solicitudes;
             actualizarBadgeSolicitudes(solicitudesCache.length);
             
@@ -1480,6 +1486,10 @@ function cargarSolicitudes() {
             });
             html += '</div>';
             zona.innerHTML = html;
+        })
+        .catch(err => {
+            console.error('Fetch error:', err);
+            zona.innerHTML = '<p style="text-align:center; padding:40px; color:#ef4444;">Error al cargar solicitudes. Verifique su sesión.</p>';
         });
 }
 
@@ -1527,7 +1537,7 @@ function gestionarSolicitud(estatus) {
     fd.append('estatus', estatus);
     fd.append('motivo', motivo);
 
-    fetch('<?= BASE_URL ?>admin/api/calendario_solicitudes.php', { method: 'POST', body: fd })
+    fetch('api/calendario_solicitudes.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(d => {
             if (d.ok) {
@@ -1557,11 +1567,15 @@ function escapeHtml(s) {
 
 // Inicializar contador al cargar
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('<?= BASE_URL ?>admin/api/calendario_solicitudes.php?accion=listar_pendientes')
-        .then(r => r.json())
+    fetch('api/calendario_solicitudes.php?accion=listar_pendientes')
+        .then(r => {
+            if (!r.ok) throw new Error('API Response Error: ' + r.status);
+            return r.json();
+        })
         .then(d => {
             if (d.ok) actualizarBadgeSolicitudes(d.solicitudes.length);
-        });
+        })
+        .catch(err => console.error('Initial fetch error:', err));
 });
 
 </script>
