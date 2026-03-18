@@ -29,7 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $color = postParam('color', '#3788d8');
         
         if ($titulo && $fechaInicio && $fechaFin) {
-            $stmt = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por) VALUES (?, ?, ?, ?, ?, ?)");
+            $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
+            $stmt = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, $publico)");
             $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id']]);
             header('Location: ' . BASE_URL . 'admin/calendario.php?flash=evento_creado');
             exit;
@@ -46,7 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $color = postParam('color', '#3788d8');
         
         if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
-            $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ? WHERE id = ?");
+            $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
+            $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
             $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
             header('Location: ' . BASE_URL . 'admin/calendario.php?flash=evento_editado');
             exit;
@@ -798,11 +800,16 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         <?php 
                             $claseNota = $mapaColoresNotas[$ev['color']] ?? 'nota-azul';
                         ?>
-                        <div class="evento-pildora <?= $claseNota ?>" title="<?= esc($ev['titulo']) ?>">
-                             <div class="evento-titulo"><?= esc($ev['titulo']) ?></div>
-                             <div class="evento-hora">
-                                 <i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?>
-                             </div>
+                         <div class="evento-pildora <?= $claseNota ?>" title="<?= esc($ev['titulo']) ?>">
+                              <div class="evento-titulo">
+                                  <?php if ($ev['publico']): ?>
+                                      <i class="fa-solid fa-eye text-primary" title="Visible en Calendario Público"></i>
+                                  <?php endif; ?>
+                                  <?= esc($ev['titulo']) ?>
+                              </div>
+                              <div class="evento-hora">
+                                  <i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?>
+                              </div>
                              <div class="evento-acciones">
                                  <button type="button" class="btn-evento-accion" title="Ver Nota"
                                          onclick="event.stopPropagation(); abrirModalVer(
@@ -820,7 +827,8 @@ require_once __DIR__ . '/../includes/header_admin.php';
                                              '<?= esc(addslashes($ev['descripcion'] ?? '')) ?>', 
                                              '<?= date('Y-m-d\TH:i', strtotime($ev['fecha_inicio'])) ?>', 
                                              '<?= date('Y-m-d\TH:i', strtotime($ev['fecha_fin'])) ?>', 
-                                             '<?= esc($ev['color']) ?>'
+                                             '<?= esc($ev['color']) ?>',
+                                             <?= $ev['publico'] ? 1 : 0 ?>
                                          )">
                                      <i class="fa-solid fa-pen"></i>
                                  </button>
@@ -997,6 +1005,12 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         </label>
                     </div>
                 </div>
+                <div class="form-group" style="margin-top: 1rem; padding: 12px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="publico" id="c_publico" style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="c_publico" style="margin: 0; cursor: pointer; font-weight: 600; color: #0369a1; font-size: 0.9rem;">
+                        <i class="fa-solid fa-earth-americas"></i> Mostrar en Calendario Público
+                    </label>
+                </div>
 
             </div>
             <div class="modal-footer">
@@ -1092,6 +1106,12 @@ require_once __DIR__ . '/../includes/header_admin.php';
                             <input type="radio" name="color" value="#6B7280"> <span class="color-dot" style="background:#6B7280;"></span> Nota
                         </label>
                     </div>
+                </div>
+                <div class="form-group" style="margin-top: 1rem; padding: 12px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="publico" id="e_publico" style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="e_publico" style="margin: 0; cursor: pointer; font-weight: 600; color: #0369a1; font-size: 0.9rem;">
+                        <i class="fa-solid fa-earth-americas"></i> Mostrar en Calendario Público
+                    </label>
                 </div>
             </div>
             <div class="modal-footer" style="display: flex; justify-content: space-between;">
@@ -1318,13 +1338,14 @@ function abrirModalVer(titulo, desc, ini, fin) {
     abrirModal('modalVerEvento');
 }
 
-function abrirModalEditar(id, titulo, desc, ini, fin, color) {
+function abrirModalEditar(id, titulo, desc, ini, fin, color, publico) {
     document.getElementById('e_evento_id').value = id;
     document.getElementById('e_titulo').value = titulo;
     document.getElementById('e_descripcion').value = desc;
     document.getElementById('e_fecha_inicio').value = ini;
     document.getElementById('e_fecha_fin').value = fin;
     document.getElementById('e_accion').value = 'editar_evento';
+    document.getElementById('e_publico').checked = (publico == 1);
     
     let colorRadios = document.querySelectorAll('#formEditarEvento input[name="color"]');
     colorRadios.forEach(radio => {

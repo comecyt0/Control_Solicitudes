@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
         $stmt = $pdo->prepare("SELECT id, titulo AS title, descripcion AS description, fecha_inicio AS start, fecha_fin AS end, color 
                                FROM eventos 
-                               WHERE fecha_inicio < ? AND fecha_fin > ?");
+                               WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?");
         $stmt->execute([$end, $start]);
         $eventos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
