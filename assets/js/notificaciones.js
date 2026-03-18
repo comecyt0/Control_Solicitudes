@@ -15,7 +15,7 @@
     'use strict';
 
     // ─── Configuración ────────────────────────────────────────────────────────
-    const POLL_MS = 2000;    // Polling cada 2 segundos (antes 15s)
+    const POLL_MS = 5000;    // Polling cada 5 segundos (antes 15s)
     const TOAST_MS = 6000;    // Auto-dismiss
     const MAX_TOASTS = 4;
 
@@ -391,6 +391,7 @@
             ? onNuevoChat({ count: 1, ultimo_id: ultimoIdChat, preview: 'Prueba de notificación de chat' })
             : onNuevaSolicitud({ count: 1, ultimo_id: ultimoIdSolicitud, preview: 'CMCT-2026-TEST · Prueba' }),
         polling: hacerPolling,
+        alerta: (tipo) => reproducirAlerta(tipo === 'chat'),
         reiniciar: () => {
             ['nc_chat', 'nc_sol', 'nc_init'].forEach(k => sessionStorage.removeItem(k));
             if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }

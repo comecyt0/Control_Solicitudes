@@ -746,7 +746,8 @@ if (!isset($_SESSION['admin_dark_mode'])) {
             const icon = m.tipo === 'tarea' ? 'fa-list-check' : 'fa-calendar-days';
             const color = m.tipo === 'tarea' ? '#6366f1' : '#0891b2';
             const bg = m.tipo === 'tarea' ? 'rgba(99,102,241,0.15)' : 'rgba(6,182,212,0.15)';
-            contenido = `<a href="#" onclick="return false;" style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;background:${bg};border:1px solid ${color}44;border-radius:10px;color:${color};font-size:0.8rem;font-weight:600;text-decoration:none;">
+            const url = m.tipo === 'tarea' ? 'admin/kanban.php' : 'admin/calendario.php';
+            contenido = `<a href="${BASE_URL_JS}${url}" style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;background:${bg};border:1px solid ${color}44;border-radius:10px;color:${color};font-size:0.8rem;font-weight:600;text-decoration:none;transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
                 <i class="fa-solid ${icon}"></i> ${escapeHtml(m.ref_titulo || m.mensaje)}
             </a>`;
         } else {
@@ -970,7 +971,13 @@ if (!isset($_SESSION['admin_dark_mode'])) {
         if (asig) fd.append('asignado_a', asig);
         fetch(API, { method: 'POST', body: fd })
             .then(r => r.json())
-            .then(d => { if (d.ok) { cerrarModalTarea(); cargarMensajes(true, false); } else alert('Error: ' + (d.error || 'Desconocido')); })
+            .then(d => { 
+                if (d.ok) { 
+                    cerrarModalTarea(); 
+                    cargarMensajes(true, false); 
+                    if(window.COMECyTNotif) window.COMECyTNotif.alerta('chat');
+                } else alert('Error: ' + (d.error || 'Desconocido')); 
+            })
             .catch(() => alert('Error de conexión'));
     };
 
@@ -1003,7 +1010,13 @@ if (!isset($_SESSION['admin_dark_mode'])) {
         fd.append('color',        document.getElementById('chatEventoColor').value);
         fetch(API, { method: 'POST', body: fd })
             .then(r => r.json())
-            .then(d => { if (d.ok) { cerrarModalEvento(); cargarMensajes(true, false); } else alert('Error: ' + (d.error || 'Desconocido')); })
+            .then(d => { 
+                if (d.ok) { 
+                    cerrarModalEvento(); 
+                    cargarMensajes(true, false); 
+                    if(window.COMECyTNotif) window.COMECyTNotif.alerta('chat');
+                } else alert('Error: ' + (d.error || 'Desconocido')); 
+            })
             .catch(() => alert('Error de conexión'));
     };
 
