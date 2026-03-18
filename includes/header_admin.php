@@ -304,7 +304,121 @@ if (!isset($_SESSION['admin_dark_mode'])) {
         </div>
     </div>
 </div>
-  </div>
+
+<!-- ================================================================
+     MODAL: Nueva Tarea Kanban desde Chat
+     ================================================================ -->
+<div id="modalTareaOverlay"
+     onclick="cerrarModalTarea()"
+     style="display:none; position:fixed; inset:0; z-index:99999;
+            background:rgba(102,35,49,0.35); backdrop-filter:blur(3px);
+            align-items:center; justify-content:center; padding:20px;">
+    <div onclick="event.stopPropagation()"
+         style="background:#ffffff; border:1px solid #e5e7eb;
+                border-radius:14px; padding:24px; width:100%; max-width:420px;
+                box-shadow:0 24px 64px rgba(102,35,49,0.25);
+                font-family:Inter,'Segoe UI',system-ui,sans-serif;">
+        <h3 style="margin:0 0 18px; font-size:1rem; color:#662331; font-weight:700; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-list-check"></i> Nueva Tarea Kanban
+        </h3>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Título *</label>
+            <input type="text" id="chatTareaTitulo" placeholder="¿Qué hay que hacer?" maxlength="255"
+                   style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                          background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Descripción</label>
+            <textarea id="chatTareaDesc" rows="2" placeholder="Detalle opcional..."
+                      style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                             background:#f9fafb; color:#111827; font-size:0.85rem; outline:none;
+                             resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Asignar a</label>
+            <select id="chatTareaAsignado"
+                    style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                           background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
+                <option value="">-- Sin asignar -</option>
+            </select>
+        </div>
+        <div style="margin-bottom:18px; display:flex; align-items:center; gap:10px;">
+            <label style="font-size:0.8rem; font-weight:600; color:#374151;">Color</label>
+            <input type="color" id="chatTareaColor" value="#662331"
+                   style="height:34px; width:56px; border-radius:6px; border:1px solid #d1d5db; cursor:pointer; padding:2px;">
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="confirmarTarea()"
+                    style="flex:1; padding:9px 16px; background:linear-gradient(135deg,#662331,#8b2f42);
+                           color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600;
+                           cursor:pointer; font-family:inherit;">Crear Tarea</button>
+            <button onclick="cerrarModalTarea()"
+                    style="padding:9px 16px; background:#f3f4f6;
+                           color:#374151; border:1px solid #d1d5db; border-radius:8px; font-size:0.85rem;
+                           cursor:pointer; font-family:inherit;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================
+     MODAL: Nuevo Evento de Calendario desde Chat
+     ================================================================ -->
+<div id="modalEventoOverlay"
+     onclick="cerrarModalEvento()"
+     style="display:none; position:fixed; inset:0; z-index:99999;
+            background:rgba(102,35,49,0.35); backdrop-filter:blur(3px);
+            align-items:center; justify-content:center; padding:20px;">
+    <div onclick="event.stopPropagation()"
+         style="background:#ffffff; border:1px solid #e5e7eb;
+                border-radius:14px; padding:24px; width:100%; max-width:420px;
+                box-shadow:0 24px 64px rgba(177,154,109,0.3);
+                font-family:Inter,'Segoe UI',system-ui,sans-serif;">
+        <h3 style="margin:0 0 18px; font-size:1rem; color:#7d6535; font-weight:700; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-calendar-plus"></i> Nuevo Evento
+        </h3>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Título *</label>
+            <input type="text" id="chatEventoTitulo" placeholder="Nombre del evento" maxlength="255"
+                   style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                          background:#f9fafb; color:#111827; font-size:0.85rem; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Descripción</label>
+            <textarea id="chatEventoDesc" rows="2" placeholder="Descripción opcional..."
+                      style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px;
+                             background:#f9fafb; color:#111827; font-size:0.85rem; outline:none;
+                             resize:vertical; font-family:inherit; box-sizing:border-box;"></textarea>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+            <div>
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Fecha inicio *</label>
+                <input type="datetime-local" id="chatEventoInicio"
+                       style="width:100%; padding:7px 10px; border:1px solid #d1d5db; border-radius:8px;
+                               background:#f9fafb; color:#111827; font-size:0.8rem; outline:none; box-sizing:border-box;">
+            </div>
+            <div>
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:#374151; margin-bottom:4px;">Fecha fin</label>
+                <input type="datetime-local" id="chatEventoFin"
+                       style="width:100%; padding:7px 10px; border:1px solid #d1d5db; border-radius:8px;
+                               background:#f9fafb; color:#111827; font-size:0.8rem; outline:none; box-sizing:border-box;">
+            </div>
+        </div>
+        <div style="margin-bottom:18px; display:flex; align-items:center; gap:10px;">
+            <label style="font-size:0.8rem; font-weight:600; color:#374151;">Color</label>
+            <input type="color" id="chatEventoColor" value="#B19A6D"
+                   style="height:34px; width:56px; border-radius:6px; border:1px solid #d1d5db; cursor:pointer; padding:2px;">
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="confirmarEvento()"
+                    style="flex:1; padding:9px 16px; background:linear-gradient(135deg,#9b865f,#B19A6D);
+                           color:#fff; border:none; border-radius:8px; font-size:0.85rem; font-weight:600;
+                           cursor:pointer; font-family:inherit;">Agendar Evento</button>
+            <button onclick="cerrarModalEvento()"
+                    style="padding:9px 16px; background:#f3f4f6;
+                           color:#374151; border:1px solid #d1d5db; border-radius:8px; font-size:0.85rem;
+                           cursor:pointer; font-family:inherit;">Cancelar</button>
+        </div>
+    </div>
 </div>
 
 <!-- ================================================================
