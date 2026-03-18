@@ -12,7 +12,7 @@ require_once __DIR__ . '/../../config/auth.php';
 verificarSesionAdmin();
 $pdo = getConnection();
 
-$accion = getParam('accion');
+$accion = $_REQUEST['accion'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($accion === 'listar_pendientes') {

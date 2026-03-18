@@ -30,6 +30,18 @@ if (!isset($_SESSION['admin_dark_mode'])) {
         $darkMode = 0;
     }
 }
+
+// -------------------------------------------------------------
+// Notificaciones globales (Badges de sidebar)
+// -------------------------------------------------------------
+$countCalendario = 0;
+try {
+    $pdoHeader = getConnection();
+    $stmtC = $pdoHeader->query("SELECT COUNT(*) FROM sb_calendario_solicitudes WHERE estatus = 'pendiente'");
+    $countCalendario = (int) $stmtC->fetchColumn();
+} catch (Throwable $e) {
+    error_log("[Header] Fallo al contar solicitudes: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -96,9 +108,16 @@ if (!isset($_SESSION['admin_dark_mode'])) {
             </a>
 
             <a href="<?= BASE_URL ?>admin/calendario.php"
-               class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
-                <i class="fa-solid fa-calendar-days nav-icon"></i>
-                <span>Calendario</span>
+               class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <i class="fa-solid fa-calendar-days nav-icon"></i>
+                    <span>Calendario</span>
+                </div>
+                <?php if ($countCalendario > 0): ?>
+                    <span class="badge badge-error" style="background:#ef4444; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;">
+                        <?= $countCalendario ?>
+                    </span>
+                <?php endif; ?>
             </a>
             <a href="<?= BASE_URL ?>admin/reportes.php"
                class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
