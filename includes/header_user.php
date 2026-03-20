@@ -33,6 +33,7 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
 <body class="layout-admin"> <!-- Reutilizando layout-admin para aprovechar la cuadrícula Sidebar/Main -->
 <?php require_once __DIR__ . '/loader.php'; ?>
 
+<?php if (empty($hideSidebar)): ?>
 <!-- Sidebar Usuario -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
@@ -96,16 +97,23 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <?php require_once __DIR__ . '/help_widget.php'; ?>
+<?php endif; ?>
 
 <!-- Contenido principal -->
-<div class="main-wrapper">
+<div class="main-wrapper" <?php if (!empty($hideSidebar)) echo 'style="margin-left: 0; width: 100%; transition: none;"'; ?>>
     <!-- Topbar -->
-    <header class="topbar">
+    <header class="topbar" <?php if (!empty($hideSidebar)) echo 'style="left: 0; width: 100%; padding-left: 24px; transition: none;"'; ?>>
+        <?php if (empty($hideSidebar)): ?>
         <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu" aria-expanded="false">
             <i class="fa-solid fa-bars"></i>
         </button>
-        <div class="topbar-title">
-            <h1><?= esc($pageTitle) ?></h1>
+        <?php endif; ?>
+        
+        <div class="topbar-title" <?php if (!empty($hideSidebar)) echo 'style="display: flex; align-items: center;"'; ?>>
+            <?php if (!empty($hideSidebar)): ?>
+                <img src="<?= BASE_URL ?>assets/MARCA.png" alt="Logo COMECyT" style="height: 38px; margin-right: 15px; border-right: 1px solid #e2e8f0; padding-right: 15px;">
+            <?php endif; ?>
+            <h1 <?php if (!empty($hideSidebar)) echo 'style="margin:0; font-size:1.1rem;"'; ?>><?= esc($pageTitle) ?></h1>
         </div>
         <div class="topbar-actions">
             <?php if (!empty($_SESSION['admin_id'])): ?>
@@ -113,7 +121,12 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
                     <i class="fa-solid fa-shapes"></i> Panel de Admin
                 </a>
             <?php endif; ?>
+            <?php if (!empty($hideSidebar)): ?>
+                <a href="<?= BASE_URL ?>public/historial.php" class="btn btn-primary btn-sm" style="margin-left: 10px;">
+                    <i class="fa-solid fa-user"></i> Mi Cuenta
+                </a>
+            <?php endif; ?>
         </div>
     </header>
     
-    <main class="content-area">
+    <main class="content-area" <?php if (!empty($hideSidebar)) echo 'style="max-width: 1400px; margin: 0 auto; padding-top: 100px;"'; ?>>

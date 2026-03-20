@@ -121,6 +121,12 @@ require_once __DIR__ . '/../includes/header_admin.php';
                 </div>
 
                 <div class="form-group">
+                    <label class="form-label">Imagen / Banner del Anuncio (Opcional)</label>
+                    <input type="file" id="a_banner" accept="image/*" class="form-control" style="padding: 6px;">
+                    <small class="text-muted">Formatos soportados: JPG, PNG, WEBP. Se recomienda una proporción ancha (ej. 800x200).</small>
+                </div>
+
+                <div class="form-group">
                     <label class="form-label">Contenido <span class="required">*</span></label>
                     <textarea id="a_contenido" class="form-control" rows="5" required placeholder="Cuerpo del anuncio..."></textarea>
                 </div>
@@ -150,6 +156,7 @@ function abrirModalCrear() {
     document.getElementById('a_contenido').value = '';
     document.getElementById('a_tipo').value = 'info';
     document.getElementById('a_activo').checked = true;
+    document.getElementById('a_banner').value = '';
     abrirModal('modalAnuncio');
 }
 
@@ -160,6 +167,7 @@ function abrirModalEditar(id, titulo, contenido, tipo, activo) {
     document.getElementById('a_contenido').value = contenido;
     document.getElementById('a_tipo').value = tipo;
     document.getElementById('a_activo').checked = activo;
+    document.getElementById('a_banner').value = '';
     abrirModal('modalAnuncio');
 }
 
@@ -177,6 +185,11 @@ function guardarAnuncio(e) {
     fd.append('contenido', document.getElementById('a_contenido').value);
     fd.append('tipo', document.getElementById('a_tipo').value);
     fd.append('activo', document.getElementById('a_activo').checked ? 1 : 0);
+    
+    const bannerFile = document.getElementById('a_banner').files[0];
+    if (bannerFile) {
+        fd.append('banner', bannerFile);
+    }
 
     fetch('api/anuncios.php', { method: 'POST', body: fd })
         .then(r => r.json())

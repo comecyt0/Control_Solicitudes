@@ -26,48 +26,48 @@ try {
     // Si la tabla no existe o hay error, continua vacio
 }
 
-$pageTitle  = 'Intranet COMECyT';
-$activeMenu = 'dashboard';
+$hideSidebar = true;
+$pageTitle  = 'Intranet';
 $extraHead  = '
 <style>
-/* Estilos para el Dashboard Intranet */
+/* Estilos para el Dashboard Intranet - Rediseño Profesional */
 .intranet-hero {
-    background: linear-gradient(135deg, rgba(102, 35, 49, 0.05) 0%, rgba(139, 47, 66, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(102, 35, 49, 0.03) 0%, rgba(139, 47, 66, 0.08) 100%);
     border-radius: 20px;
     padding: 40px;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(102, 35, 49, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(102, 35, 49, 0.05);
 }
 .intranet-hero-content h1 {
     font-size: 2.2rem;
     font-weight: 700;
     color: var(--color-primary);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     line-height: 1.2;
 }
 .intranet-hero-content p {
     font-size: 1.1rem;
-    color: #64748b;
-    max-width: 500px;
+    color: #475569;
+    max-width: 550px;
 }
 .intranet-hero-icon {
-    font-size: 5rem;
-    color: rgba(102, 35, 49, 0.15);
+    font-size: 5.5rem;
+    color: rgba(102, 35, 49, 0.1);
 }
 
 .intranet-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
+    gap: 24px;
     margin-bottom: 40px;
 }
 
 .intranet-card {
-    background: #fff;
+    background: #ffffff;
     border-radius: 16px;
     padding: 24px;
     text-decoration: none;
@@ -75,9 +75,9 @@ $extraHead  = '
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     position: relative;
     overflow: hidden;
 }
@@ -89,12 +89,12 @@ $extraHead  = '
     background: var(--color-primary);
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 0.3s ease;
+    transition: transform 0.4s ease;
 }
 
 .intranet-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
     border-color: #cbd5e1;
 }
 
@@ -103,102 +103,134 @@ $extraHead  = '
 }
 
 .intranet-card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: rgba(102, 35, 49, 0.1);
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(102, 35, 49, 0.08);
     color: var(--color-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    margin-bottom: 16px;
-    transition: background 0.3s ease, color 0.3s ease;
+    font-size: 1.6rem;
+    margin-bottom: 20px;
+    transition: background 0.4s ease, color 0.4s ease, transform 0.4s ease;
 }
 
 .intranet-card:hover .intranet-card-icon {
     background: var(--color-primary);
     color: #fff;
+    transform: scale(1.05);
 }
 
 .intranet-card-title {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 600;
     color: #1e293b;
     margin-bottom: 8px;
 }
 .intranet-card-desc {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: #64748b;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 /* Modificadores de color para tarjetas */
-.card-solicitud::before { background: #3b82f6; }
-.card-solicitud .intranet-card-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.card-solicitud:hover .intranet-card-icon { background: #3b82f6; color: #fff; }
+.card-solicitud::before { background: #0369a1; }
+.card-solicitud .intranet-card-icon { background: rgba(3, 105, 161, 0.1); color: #0369a1; }
+.card-solicitud:hover .intranet-card-icon { background: #0369a1; color: #fff; }
 
-.card-historial::before { background: #8b5cf6; }
-.card-historial .intranet-card-icon { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
-.card-historial:hover .intranet-card-icon { background: #8b5cf6; color: #fff; }
+.card-historial::before { background: #6b21a8; }
+.card-historial .intranet-card-icon { background: rgba(107, 33, 168, 0.1); color: #6b21a8; }
+.card-historial:hover .intranet-card-icon { background: #6b21a8; color: #fff; }
 
-.card-equipos::before { background: #10b981; }
-.card-equipos .intranet-card-icon { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-.card-equipos:hover .intranet-card-icon { background: #10b981; color: #fff; }
+.card-equipos::before { background: #0f766e; }
+.card-equipos .intranet-card-icon { background: rgba(15, 118, 110, 0.1); color: #0f766e; }
+.card-equipos:hover .intranet-card-icon { background: #0f766e; color: #fff; }
 
-.card-calendario::before { background: #f59e0b; }
-.card-calendario .intranet-card-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-.card-calendario:hover .intranet-card-icon { background: #f59e0b; color: #fff; }
+.card-calendario::before { background: #b45309; }
+.card-calendario .intranet-card-icon { background: rgba(180, 83, 9, 0.1); color: #b45309; }
+.card-calendario:hover .intranet-card-icon { background: #b45309; color: #fff; }
 
 .panels-grid {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1.7fr 1fr;
+    gap: 30px;
 }
 @media (max-width: 1024px) {
     .panels-grid { grid-template-columns: 1fr; }
 }
 
 .anuncio-item {
-    padding: 16px;
-    border-radius: 12px;
-    background: #f8fafc;
+    background: #ffffff;
+    border-radius: 14px;
     border: 1px solid #e2e8f0;
-    margin-bottom: 12px;
-    transition: background 0.2s;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .anuncio-item:hover {
-    background: #f1f5f9;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.05);
 }
 .anuncio-item:last-child { margin-bottom: 0; }
-.anuncio-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.anuncio-titulo { font-weight: 600; color: #1e293b; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
-.anuncio-fecha { font-size: 0.75rem; color: #94a3b8; }
-.anuncio-contenido { font-size: 0.9rem; color: #475569; line-height: 1.5; }
-
-.sistemas-card {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-    color: #fff;
+.anuncio-banner {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+    border-bottom: 1px solid #f1f5f9;
 }
-.sistemas-card .card-header { border-bottom-color: rgba(255,255,255,0.1); }
-.sistemas-card .card-title { color: #fff; }
-.sistemas-team-list { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
-.team-member { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; }
-.team-member:hover { background: rgba(255,255,255,0.08); }
-.team-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; }
+.anuncio-body {
+    padding: 20px;
+}
+.anuncio-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.anuncio-titulo { font-weight: 700; color: #1e293b; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
+.anuncio-fecha { font-size: 0.8rem; color: #94a3b8; background: #f8fafc; padding: 4px 8px; border-radius: 6px; }
+.anuncio-contenido { font-size: 0.95rem; color: #475569; line-height: 1.6; }
+
+/* Panel Sistemas - Rediseño Claro e Institucional */
+.sistemas-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+.sistemas-card .card-header {
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 16px;
+}
+.sistemas-card .card-title {
+    color: var(--color-primary);
+    font-weight: 700;
+}
+.sistemas-team-list { margin-top: 16px; display: flex; flex-direction: column; gap: 16px; }
+.team-member { display: flex; align-items: center; gap: 16px; padding: 12px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; transition: background 0.3s ease; }
+.team-member:hover { background: #f1f5f9; }
+.team-avatar { width: 44px; height: 44px; border-radius: 12px; background: rgba(102, 35, 49, 0.1); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--color-primary); font-size: 1.2rem; }
 .team-info { display: flex; flex-direction: column; }
-.team-name { font-weight: 600; font-size: 0.9rem; }
-.team-role { font-size: 0.75rem; color: #94a3b8; }
+.team-name { font-weight: 700; font-size: 0.95rem; color: #1e293b; }
+.team-role { font-size: 0.8rem; color: #64748b; }
+
+/* Clases para animación de scroll */
+.reveal-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.reveal-up.active {
+    opacity: 1;
+    transform: translateY(0);
+}
 </style>
 ';
 
 require_once __DIR__ . '/../includes/header_user.php';
 ?>
 
-<div class="intranet-hero">
+<div class="intranet-hero reveal-up">
     <div class="intranet-hero-content">
         <h1>¡Bienvenido/a, <?= esc($usuarioNombre) ?>!</h1>
-        <p>Dashboard central de servicios y requerimientos técnicos COMECyT. Gestiona tus solicitudes, equipos y mantente informado.</p>
+        <p>Dashboard central de servicios técnicos COMECyT. Gestiona tus requerimientos y mantente enterado de los últimos comunicados institucionales.</p>
     </div>
     <div class="intranet-hero-icon">
         <i class="fa-solid fa-shapes"></i>
@@ -206,7 +238,7 @@ require_once __DIR__ . '/../includes/header_user.php';
 </div>
 
 <div class="intranet-grid">
-    <a href="<?= BASE_URL ?>public/nueva_solicitud.php" class="intranet-card card-solicitud">
+    <a href="<?= BASE_URL ?>public/nueva_solicitud.php" class="intranet-card card-solicitud reveal-up" style="transition-delay: 0.1s;">
         <div class="intranet-card-icon">
             <i class="fa-solid fa-plus-circle"></i>
         </div>
@@ -214,7 +246,7 @@ require_once __DIR__ . '/../includes/header_user.php';
         <div class="intranet-card-desc">Crea un nuevo ticket de soporte, mantenimiento, atención o sistema.</div>
     </a>
 
-    <a href="<?= BASE_URL ?>public/historial.php" class="intranet-card card-historial">
+    <a href="<?= BASE_URL ?>public/historial.php" class="intranet-card card-historial reveal-up" style="transition-delay: 0.2s;">
         <div class="intranet-card-icon">
             <i class="fa-solid fa-clock-rotate-left"></i>
         </div>
@@ -222,54 +254,58 @@ require_once __DIR__ . '/../includes/header_user.php';
         <div class="intranet-card-desc">Consulta el estatus y progreso de todas tus solicitudes previas.</div>
     </a>
 
-    <a href="<?= BASE_URL ?>public/equipos_usuario.php" class="intranet-card card-equipos">
+    <a href="<?= BASE_URL ?>public/equipos_usuario.php" class="intranet-card card-equipos reveal-up" style="transition-delay: 0.3s;">
         <div class="intranet-card-icon">
             <i class="fa-solid fa-laptop"></i>
         </div>
         <div class="intranet-card-title">Mis Equipos</div>
-        <div class="intranet-card-desc">Revisa el inventario de equipo de cómputo que tienes asignado.</div>
+        <div class="intranet-card-desc">Revisa el inventario de equipo de cómputo que tienes asignado actualmente.</div>
     </a>
 
-    <a href="<?= BASE_URL ?>public/calendario.php" class="intranet-card card-calendario">
+    <a href="<?= BASE_URL ?>public/calendario.php" class="intranet-card card-calendario reveal-up" style="transition-delay: 0.4s;">
         <div class="intranet-card-icon">
             <i class="fa-solid fa-calendar-days"></i>
         </div>
         <div class="intranet-card-title">Calendario</div>
-        <div class="intranet-card-desc">Consulta eventos públicos o solicita agendar espacios institucionales.</div>
+        <div class="intranet-card-desc">Consulta eventos públicos o solicita agendar espacios institucionales de manera interactiva.</div>
     </a>
 </div>
 
 <div class="panels-grid">
     <!-- Panel de Anuncios -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title">
-                <i class="fa-solid fa-bullhorn text-primary"></i> Anuncios y Comunicados
-            </h2>
+    <div class="card reveal-up" style="border:none; box-shadow:none; background:transparent;">
+        <div style="display:flex; align-items:center; gap: 12px; margin-bottom: 24px;">
+            <i class="fa-solid fa-bullhorn" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+            <h2 style="font-size: 1.4rem; font-weight: 700; color: #1e293b; margin: 0;">Anuncios y Comunicados</h2>
         </div>
-        <div class="card-body">
+        <div>
             <?php if (empty($anuncios)): ?>
-                <div style="text-align: center; padding: 40px 20px; color: #94a3b8;">
-                    <i class="fa-regular fa-bell-slash" style="font-size: 2rem; margin-bottom: 12px; display: block;"></i>
-                    <p>No hay avisos recientes por parte del departamento.</p>
+                <div style="text-align: center; padding: 60px 20px; color: #94a3b8; background: #fff; border-radius: 16px; border: 1px dashed #cbd5e1;">
+                    <i class="fa-regular fa-bell-slash" style="font-size: 2.5rem; margin-bottom: 16px; display: block;"></i>
+                    <p style="font-size: 1.1rem;">No hay avisos recientes por parte del departamento.</p>
                 </div>
             <?php else: ?>
                 <?php foreach ($anuncios as $a): 
                     $icon = 'fa-circle-info';
-                    $color = '#3b82f6';
+                    $color = '#0ea5e9'; // azul claro default
                     if ($a['tipo'] === 'warning') { $icon = 'fa-triangle-exclamation'; $color = '#f59e0b'; }
                     elseif ($a['tipo'] === 'success') { $icon = 'fa-check-circle'; $color = '#10b981'; }
                     elseif ($a['tipo'] === 'urgent') { $icon = 'fa-bell'; $color = '#ef4444'; }
                 ?>
                 <div class="anuncio-item">
-                    <div class="anuncio-header">
-                        <div class="anuncio-titulo" style="color: <?= $color ?>;">
-                            <i class="fa-solid <?= $icon ?>"></i> <?= esc($a['titulo']) ?>
+                    <?php if (!empty($a['banner_url'])): ?>
+                        <img src="<?= BASE_URL . 'public/uploads/anuncios/' . esc($a['banner_url']) ?>" alt="Banner Anuncio" class="anuncio-banner">
+                    <?php endif; ?>
+                    <div class="anuncio-body">
+                        <div class="anuncio-header">
+                            <h3 class="anuncio-titulo" style="color: <?= $color ?>;">
+                                <i class="fa-solid <?= $icon ?>"></i> <?= esc($a['titulo']) ?>
+                            </h3>
+                            <div class="anuncio-fecha"><i class="fa-regular fa-clock"></i> <?= date('d/m/Y', strtotime($a['fecha_creacion'])) ?></div>
                         </div>
-                        <div class="anuncio-fecha"><?= date('d/m/Y', strtotime($a['fecha_creacion'])) ?></div>
-                    </div>
-                    <div class="anuncio-contenido">
-                        <?= nl2br(esc($a['contenido'])) ?>
+                        <div class="anuncio-contenido">
+                            <?= nl2br(esc($a['contenido'])) ?>
+                        </div>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -278,46 +314,68 @@ require_once __DIR__ . '/../includes/header_user.php';
     </div>
 
     <!-- Panel Equipo de Sistemas -->
-    <div class="card sistemas-card">
+    <div class="card sistemas-card reveal-up" style="transition-delay: 0.2s;">
         <div class="card-header">
             <h2 class="card-title">
                 <i class="fa-solid fa-shield-halved"></i> Equipo de TI y Sistemas
             </h2>
         </div>
-        <div class="card-body" style="padding-top: 10px;">
-            <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">
-                El equipo de Tecnologías de la Información está aquí para garantizar el óptimo funcionamiento de la infraestructura y proveer soluciones innovadoras al COMECyT.
+        <div class="card-body" style="padding-top: 16px;">
+            <p style="font-size: 0.95rem; color: #475569; line-height: 1.6; margin-bottom: 24px;">
+                El equipo de Tecnologías de la Información está aquí para garantizar el óptimo funcionamiento de la infraestructura y brindar un soporte integral a toda la comunidad COMECyT.
             </p>
             
             <div class="sistemas-team-list">
                 <div class="team-member">
-                    <div class="team-avatar">S</div>
+                    <div class="team-avatar"><i class="fa-solid fa-wrench"></i></div>
                     <div class="team-info">
                         <span class="team-name">Soporte Técnico</span>
-                        <span class="team-role">Mantenimiento y atención de hardware</span>
+                        <span class="team-role">Mantenimiento y atención de hardware activo</span>
                     </div>
                 </div>
                 <div class="team-member">
-                    <div class="team-avatar" style="background: #3b82f6;">D</div>
+                    <div class="team-avatar" style="color: #0369a1; background: rgba(3, 105, 161, 0.1);"><i class="fa-solid fa-code"></i></div>
                     <div class="team-info">
                         <span class="team-name">Desarrollo Web</span>
-                        <span class="team-role">Creación de sistemas web institucionales</span>
+                        <span class="team-role">Creación y mejora de sistemas institucionales</span>
                     </div>
                 </div>
                 <div class="team-member">
-                    <div class="team-avatar" style="background: #8b5cf6;">R</div>
+                    <div class="team-avatar" style="color: #6b21a8; background: rgba(107, 33, 168, 0.1);"><i class="fa-solid fa-network-wired"></i></div>
                     <div class="team-info">
                         <span class="team-name">Redes y Servidores</span>
-                        <span class="team-role">Estabilidad y seguridad de infraestructura</span>
+                        <span class="team-role">Estabilidad, conectividad y seguridad de red</span>
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top: 24px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; text-align: center; font-size: 0.85rem; color: #94a3b8;">
-                <i class="fa-solid fa-headset" style="margin-right: 6px;"></i> Extensión IT: <strong>4100</strong>
+            <div style="margin-top: 32px; padding: 16px; background: rgba(102, 35, 49, 0.05); border: 1px dashed rgba(102, 35, 49, 0.2); border-radius: 12px; text-align: center; font-size: 0.95rem; color: var(--color-primary);">
+                <i class="fa-solid fa-headset" style="margin-right: 8px;"></i> Extensión de Ayuda IT: <strong>4100</strong>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Animaciones al hacer scroll (Reveal Up)
+document.addEventListener("DOMContentLoaded", () => {
+    const reveals = document.querySelectorAll(".reveal-up");
+
+    const revealOnScroll = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("active");
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        root: null,
+        rootMargin: "0px 0px -50px 0px",
+        threshold: 0.1
+    });
+
+    reveals.forEach(el => revealOnScroll.observe(el));
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
