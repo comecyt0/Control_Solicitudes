@@ -1352,7 +1352,6 @@ function abrirModalEditar(id, titulo, desc, ini, fin, color, publico) {
         if (radio.value === color) {
             radio.checked = true;
         }
-```
     });
     
     abrirModal('modalEditarEvento');
@@ -1386,6 +1385,20 @@ function eliminarEvento() {
 // ==========================================
 // SCRIPTS DE KANBAN
 // ==========================================
+
+function allowDrop(ev) {
+    ev.preventDefault();
+}
+
+function drag(ev, id) {
+    ev.dataTransfer.setData("text", id);
+}
+
+function drop(ev, nuevoEstatus) {
+    ev.preventDefault();
+    const id = ev.dataTransfer.getData("text");
+    moverTarea(id, nuevoEstatus);
+}
 
 function abrirModalCrearTarea() {
     abrirModal('modalCrearTarea');

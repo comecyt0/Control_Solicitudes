@@ -62,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $s = $stmtSel->fetch();
 
                 if ($s) {
-                    $ins = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por) 
-                                         VALUES (?, ?, ?, ?, ?, ?)");
+                    $ins = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) 
+                                         VALUES (?, ?, ?, ?, ?, ?, TRUE)");
                     $ins->execute([$s['titulo'], $s['descripcion'], $s['fecha_inicio'], $s['fecha_fin'], $s['color'], $adminId]);
                 }
             }

@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = (int) postParam('id');
         $usuario_id = $_SESSION['user_id'] ?? $_SESSION['admin_id'];
 
-        $stmt = $pdo->prepare("UPDATE sb_calendario_solicitudes SET leido_por_usuario = TRUE WHERE id = ? AND usuario_id = ?");
+        $stmt = $pdo->prepare("DELETE FROM sb_calendario_solicitudes WHERE id = ? AND usuario_id = ?");
         $stmt->execute([$id, $usuario_id]);
 
         echo json_encode(['ok' => true]);

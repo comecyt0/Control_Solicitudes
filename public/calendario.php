@@ -67,7 +67,7 @@ $extraHead = '
     border-radius: 16px;
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
     overflow: hidden;
-    margin-top: 1.5rem;
+    margin-top: 0.5rem;
     border: 1px solid rgba(0,0,0,0.05);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -128,20 +128,81 @@ $extraHead = '
     .calendar-cell { min-height: auto; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; }
     .calendar-cell.empty { display: none; }
 }
+
+/* Mailbox Styles */
+.mailbox-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.btn-mailbox {
+    background: #fff; border: 1px solid #e2e8f0; color: #64748b;
+    padding: 0.5rem 1rem; border-radius: 10px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; font-weight: 600;
+    transition: all 0.2s ease; position: relative;
+}
+.btn-mailbox:hover { background: #f8fafc; color: var(--color-primary); border-color: var(--color-primary); }
+.mailbox-badge {
+    position: absolute; top: -5px; right: -5px;
+    background: #ef4444; color: #fff; font-size: 0.65rem;
+    min-width: 18px; hieght: 18px; padding: 2px 5px;
+    border-radius: 20px; display: none; align-items: center; justify-content: center;
+    border: 2px solid #fff; font-weight: 700;
+}
+.mailbox-panel {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    width: 320px; background: #fff; border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none;
+    flex-direction: column; z-index: 1000; border: 1px solid #f1f5f9;
+    overflow: hidden; animation: ui-slide-up 0.3s ease;
+}
+.mailbox-header {
+    padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #f1f5f9;
+    font-size: 0.9rem; font-weight: 700; color: #334155;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.mailbox-list { max-height: 350px; overflow-y: auto; padding: 10px; }
+.mailbox-item {
+    padding: 12px; border-radius: 10px; margin-bottom: 8px;
+    background: #fff; border: 1px solid #f1f5f9; font-size: 0.85rem;
+    cursor: pointer; transition: all 0.2s;
+}
+.mailbox-item:hover { background: #f9fafb; border-color: #e2e8f0; }
+.mailbox-item--aceptado { border-left: 4px solid #16a34a; }
+.mailbox-item--rechazado { border-left: 4px solid #ef4444; }
+.mailbox-item-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.mailbox-empty { padding: 30px 20px; text-align: center; color: #94a3b8; font-size: 0.85rem; }
 </style>
 ';
 
 require_once __DIR__ . '/../includes/header_user.php';
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
     <div>
         <h2 style="margin:0;"><i class="fa-solid fa-calendar-days text-primary"></i> Agenda Institucional</h2>
         <p style="margin:4px 0 0; font-size: 0.85rem; color: #64748b;">Consulte eventos oficiales y solicite la reserva de espacios.</p>
     </div>
-    <button class="btn btn-primary" onclick="abrirModalSolicitud()">
-        <i class="fa-solid fa-plus"></i> Solicitar Espacio
-    </button>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="mailbox-wrapper">
+            <button class="btn-mailbox" id="btnMailbox" onclick="toggleMailbox()">
+                <i class="fa-solid fa-bell"></i> <span>Buzón</span>
+                <span class="mailbox-badge" id="mailboxBadge">0</span>
+            </button>
+            <div class="mailbox-panel" id="mailboxPanel">
+                <div class="mailbox-header">
+                    <span>Solicitudes Recientes</span>
+                    <i class="fa-solid fa-inbox text-muted"></i>
+                </div>
+                <div class="mailbox-list" id="mailboxList">
+                    <div class="mailbox-empty">Sin notificaciones nuevas</div>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalSolicitud()">
+            <i class="fa-solid fa-plus"></i> Solicitar Espacio
+        </button>
+    </div>
 </div>
 
 <div class="calendar-wrapper">
@@ -268,7 +329,19 @@ document.getElementById('formSolicitud').onsubmit = function(e) {
         });
 };
 
-// Polling (mismo que anterior)
+function toggleMailbox() {
+    const p = document.getElementById('mailboxPanel');
+    p.style.display = (p.style.display === 'flex') ? 'none' : 'flex';
+}
+
+// Cerrar buzón al hacer clic fuera
+document.addEventListener('click', (e) => {
+    const w = document.querySelector('.mailbox-wrapper');
+    const p = document.getElementById('mailboxPanel');
+    if (w && !w.contains(e.target)) p.style.display = 'none';
+});
+
+// Polling
 setInterval(verificarRespuestas, 15000);
 function verificarRespuestas() {
     const fd = new FormData();
@@ -277,21 +350,55 @@ function verificarRespuestas() {
     fetch('<?= BASE_URL ?>public/api/calendario.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(d => {
-            if (d.ok && d.respuestas.length > 0) d.respuestas.forEach(r => mostrarRespuesta(r));
+            if (d.ok) actualizarBuzon(d.respuestas);
         });
 }
 
-function mostrarRespuesta(res) {
-    reproducirSonido(res.estatus === 'aceptado');
-    const msg = res.estatus === 'aceptado' ? `¡Aprobado! ${res.titulo}` : `Rechazado: ${res.titulo}\nMotivo: ${res.motivo_rechazo}`;
-    COMECyTUI.confirm(msg + '\n\n¿Marcar como leído?', () => {
-        const fd = new FormData();
-        fd.append('accion', 'marcar_leido');
-        fd.append('id', res.id);
-        fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
-        fetch('<?= BASE_URL ?>public/api/calendario.php', { method: 'POST', body: fd }).then(() => location.reload());
-    });
+function actualizarBuzon(respuestas) {
+    const badge = document.getElementById('mailboxBadge');
+    const list = document.getElementById('mailboxList');
+    
+    if (respuestas.length > 0) {
+        badge.innerText = respuestas.length;
+        badge.style.display = 'flex';
+        
+        list.innerHTML = respuestas.map(r => {
+            const esAceptado = r.estatus === 'aceptado';
+            const icon = esAceptado ? 'fa-check-circle text-success' : 'fa-circle-xmark text-danger';
+            const cls = esAceptado ? 'mailbox-item--aceptado' : 'mailbox-item--rechazado';
+            const detalle = esAceptado ? '¡Aprobado! Ya disponible en el calendario.' : `Rechazado. Motivo: ${r.motivo_rechazo || 'No especificado'}`;
+            
+            return `
+                <div class="mailbox-item ${cls}" onclick="marcarLeidoBuzon(${r.id}, '${r.estatus}')">
+                    <div class="mailbox-item-title">
+                        <i class="fa-solid ${icon}"></i> 
+                        ${r.titulo}
+                    </div>
+                    <div style="color:#64748b; font-size:0.75rem;">${detalle}</div>
+                    <div style="margin-top:5px; color:var(--color-primary); font-weight:700; font-size:0.65rem;">Haga clic para archivar</div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        badge.style.display = 'none';
+        list.innerHTML = '<div class="mailbox-empty">Sin notificaciones nuevas</div>';
+    }
 }
+
+function marcarLeidoBuzon(id, estatus) {
+    const fd = new FormData();
+    fd.append('accion', 'marcar_leido');
+    fd.append('id', id);
+    fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+    fetch('<?= BASE_URL ?>public/api/calendario.php', { method: 'POST', body: fd })
+        .then(() => {
+            if (estatus === 'aceptado') location.reload();
+            else verificarRespuestas(); // Refrescar contador
+        });
+}
+
+// Carga inicial
+verificarRespuestas();
 
 function reproducirSonido(exito) {
     try {
