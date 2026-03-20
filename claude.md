@@ -32,7 +32,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Buzón de Solicitudes (v2)**: Sistema de notificaciones integrado con eliminación automática de registros al archivar (mantiene BD limpia).
 - **Diseño Optimizado**: Reducción de espacios en blanco y corrección de layout flex en el calendario público.
 - **Visibilidad Pública Automática**: Al aceptar una solicitud, se crea el evento con `publico = TRUE` por defecto.
-- **Kanban Drag-and-Drop**: Corrección de la funcionalidad de arrastre en `admin/calendario.php` mediante la implementación de los manejadores de eventos nativos (`drag`, `allowDrop`, `drop`).
+- **Kanban Drag-and-Drop Fix**: Se implementaron las funciones HTML5 de corrección de drag-and-drop en `admin/calendario.php` (allowDrop, drag, drop).
+- **Intranet Dashboard Público**: Se integró un panel central en `public/index.php` con grid de accesos rápidos animados, un panel informativo del Equipo de Sistemas y un módulo administrable de Anuncios.
+- **Gestor de Anuncios**: CRUD disponible en `admin/anuncios.php` para publicar comunicados internos en la Intranet con la tabla `anuncios`.
 
 ## Contexto Importante
 - **BASE_URL**: Crucial para la conectividad entre módulos. Se detecta dinámicamente en `helpers.php`.

@@ -45,6 +45,11 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
         <div class="nav-group">
             <span class="nav-group-label">Acciones</span>
             <a href="<?= BASE_URL ?>public/index.php"
+               class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
+                <i class="fa-solid fa-house nav-icon" style="color:var(--color-primary)"></i>
+                <span>Inicio / Intranet</span>
+            </a>
+            <a href="<?= BASE_URL ?>public/nueva_solicitud.php"
                class="nav-link <?= $activeMenu === 'nueva_solicitud' ? 'active' : '' ?>">
                 <i class="fa-solid fa-plus-circle nav-icon"></i>
                 <span>Registrar Solicitud</span>

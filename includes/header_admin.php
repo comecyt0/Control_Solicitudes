@@ -127,6 +127,15 @@ try {
         </div>
 
         <div class="nav-group">
+            <span class="nav-group-label">Intranet</span>
+            <a href="<?= BASE_URL ?>admin/anuncios.php"
+               class="nav-link <?= $activeMenu === 'anuncios' ? 'active' : '' ?>">
+                <i class="fa-solid fa-bullhorn nav-icon"></i>
+                <span>Gestión de Anuncios</span>
+            </a>
+        </div>
+
+        <div class="nav-group">
             <span class="nav-group-label">Gestión ERP</span>
             <a href="<?= BASE_URL ?>admin/personal.php"
                class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
@@ -158,7 +167,7 @@ try {
             <span class="nav-group-label">Acceso Publico</span>
             <a href="<?= BASE_URL ?>public/index.php" target="_blank" class="nav-link">
                 <i class="fa-solid fa-arrow-up-right-from-square nav-icon"></i>
-                <span>Vista Solicitudes</span>
+                <span>Vista Intranet</span>
             </a>
         </div>
     </nav>
