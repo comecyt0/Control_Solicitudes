@@ -183,19 +183,66 @@ $extraHead = '
     opacity: 1;
     transform: translateY(0);
 }
+
+/* Header Responsivo del Calendario */
+.page-header-calendario {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.header-text-zone h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-text-zone p {
+    margin: 8px 0 0;
+    font-size: 1rem;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.header-actions-zone {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .page-header-calendario {
+        flex-direction: column;
+    }
+    .header-actions-zone {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
 </style>
 ';
 
-$hideSidebar = true; // Forzar vista Intranet sin sidebar
 require_once __DIR__ . '/../includes/header_user.php';
 ?>
 
-<div class="reveal-up" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; transition-delay: 0.1s;">
-    <div>
-        <h2 style="margin:0;"><i class="fa-solid fa-calendar-days text-primary"></i> Agenda Institucional</h2>
-        <p style="margin:4px 0 0; font-size: 0.85rem; color: #64748b;">Consulte eventos oficiales y solicite la reserva de espacios.</p>
+<div class="page-header-calendario reveal-up" style="transition-delay: 0.1s;">
+    <div class="header-text-zone">
+        <h2><i class="fa-solid fa-calendar-days" style="color: var(--color-primary); background: rgba(102, 35, 49, 0.1); padding: 12px; border-radius: 12px;"></i> Agenda Institucional</h2>
+        <p>Consulte los eventos oficiales, fechas cívicas y solicite la reserva de espacios o salas de forma rápida.</p>
     </div>
-    <div style="display: flex; gap: 10px; align-items: center;">
+    <div class="header-actions-zone">
         <div class="mailbox-wrapper">
             <button class="btn-mailbox" id="btnMailbox" onclick="toggleMailbox()">
                 <i class="fa-solid fa-bell"></i> <span>Buzón</span>

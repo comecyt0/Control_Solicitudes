@@ -31,7 +31,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 
 - **Buzón de Solicitudes (v2)**: Sistema de notificaciones integrado con eliminación automática de registros al archivar (mantiene BD limpia).
 - **Intranet Dashboard Público**: Se integró un panel central `.intranet-grid` en `public/index.php` con grid de accesos rápidos animados y full-width (se oculta el sidebar seteando `$hideSidebar = true`). Ajustes finos: Ext. "314 y/o 114" y botón Topbar Cerrar Sesión.
-- **Formularios y Calendario (Vistas Públicas)**: Tanto `public/nueva_solicitud.php` como `public/calendario.php` fueron inmersos al diseño de la Intranet Full-Width. Incorporan tarjetas con sombra suave premium, `box-shadow` y opacidad sin recuadros grises, además de animaciones Reveal-Up y minimización de лого institucionales.
+- **Formularios y Calendario (Vistas Públicas)**: 
+  - `public/nueva_solicitud.php`: Incorpora tarjetas con sombra suave premium, `box-shadow` y opacidad sin recuadros grises, además de minimización del logo institucional (`max-width: 260px`).
+  - `public/calendario.php`: Restablece la visualización correcta del `sidebar` garantizando navegabilidad y añade cabecero `.page-header-calendario` altamente resposivno con mejor tipografía e iconografía destacada.
 - **Animaciones UI**: Se incorpora IntersectionObserver para reveals de items al scrollear (`.reveal-up`) en el Dashboard, Nueva Solicitud y Calendario.
 - **Gestor de Anuncios y Banners**: CRUD disponible en `admin/anuncios.php`. Se superó limitación de directorios en PHP usando `dirname(__DIR__, 2)` para procesar descargas de banners transparentes.
 
