@@ -172,13 +172,25 @@ $extraHead = '
 .mailbox-item--rechazado { border-left: 4px solid #ef4444; }
 .mailbox-item-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
 .mailbox-empty { padding: 30px 20px; text-align: center; color: #94a3b8; font-size: 0.85rem; }
+
+/* Clases para animación de scroll */
+.reveal-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+.reveal-up.active {
+    opacity: 1;
+    transform: translateY(0);
+}
 </style>
 ';
 
+$hideSidebar = true; // Forzar vista Intranet sin sidebar
 require_once __DIR__ . '/../includes/header_user.php';
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+<div class="reveal-up" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; transition-delay: 0.1s;">
     <div>
         <h2 style="margin:0;"><i class="fa-solid fa-calendar-days text-primary"></i> Agenda Institucional</h2>
         <p style="margin:4px 0 0; font-size: 0.85rem; color: #64748b;">Consulte eventos oficiales y solicite la reserva de espacios.</p>
@@ -199,13 +211,13 @@ require_once __DIR__ . '/../includes/header_user.php';
                 </div>
             </div>
         </div>
-        <button class="btn btn-primary" onclick="abrirModalSolicitud()">
+        <button class="btn btn-primary" onclick="abrirModalSolicitud()" style="box-shadow: 0 4px 15px rgba(102, 35, 49, 0.2); border-radius: 8px;">
             <i class="fa-solid fa-plus"></i> Solicitar Espacio
         </button>
     </div>
 </div>
 
-<div class="calendar-wrapper">
+<div class="calendar-wrapper reveal-up" style="transition-delay: 0.2s;">
     <div class="calendar-header-nav">
         <h3><?= $mesesNombres[$mes] ?> de <?= $anio ?></h3>
         <div class="nav-btn-group">
@@ -412,6 +424,20 @@ function reproducirSonido(exito) {
         osc.start(); osc.stop(audioCtx.currentTime + 0.5);
     } catch(e) {}
 }
+
+// Animaciones al hacer scroll (Reveal Up)
+document.addEventListener("DOMContentLoaded", () => {
+    const reveals = document.querySelectorAll(".reveal-up");
+    const revealOnScroll = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("active");
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { root: null, rootMargin: "0px 0px -50px 0px", threshold: 0.1 });
+    reveals.forEach(el => revealOnScroll.observe(el));
+});
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

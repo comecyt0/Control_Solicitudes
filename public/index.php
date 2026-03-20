@@ -350,7 +350,7 @@ require_once __DIR__ . '/../includes/header_user.php';
             </div>
 
             <div style="margin-top: 32px; padding: 16px; background: rgba(102, 35, 49, 0.05); border: 1px dashed rgba(102, 35, 49, 0.2); border-radius: 12px; text-align: center; font-size: 0.95rem; color: var(--color-primary);">
-                <i class="fa-solid fa-headset" style="margin-right: 8px;"></i> Extensión de Ayuda IT: <strong>4100</strong>
+                <i class="fa-solid fa-headset" style="margin-right: 8px;"></i> Extensión de Ayuda IT: <strong>314 y/o 114</strong>
             </div>
         </div>
     </div>

@@ -35,21 +35,26 @@ try {
     // Función helper para procesar el banner
     $procesarBanner = function() {
         if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
-            $tmpInfo = getimagesize($_FILES['banner']['tmp_name']);
+            $tmpInfo = @getimagesize($_FILES['banner']['tmp_name']);
             if ($tmpInfo !== false) {
                 $exts = ['image/jpeg' => '.jpg', 'image/png' => '.png', 'image/webp' => '.webp'];
                 $mime = mime_content_type($_FILES['banner']['tmp_name']);
                 if (isset($exts[$mime])) {
                     $ext = $exts[$mime];
                     $filename = uniqid('banner_') . $ext;
-                    $path = __DIR__ . '/../../public/uploads/anuncios/' . $filename;
-                    if (move_uploaded_file($_FILES['banner']['tmp_name'], $path)) {
+                    // Asegurar la ruta absoluta usando dirname(__DIR__, 2)
+                    $uploadDir = dirname(__DIR__, 2) . '/public/uploads/anuncios/';
+                    if (!is_dir($uploadDir)) {
+                        @mkdir($uploadDir, 0755, true);
+                    }
+                    $path = $uploadDir . $filename;
+                    if (@move_uploaded_file($_FILES['banner']['tmp_name'], $path)) {
                         return $filename;
                     }
                 }
             }
         }
-        return null;
+        return null; // Si falla algo retorna null, sin matar el script
     };
 
     if ($accion === 'crear') {

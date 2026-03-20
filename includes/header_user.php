@@ -122,9 +122,14 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
                 </a>
             <?php endif; ?>
             <?php if (!empty($hideSidebar)): ?>
-                <a href="<?= BASE_URL ?>public/historial.php" class="btn btn-primary btn-sm" style="margin-left: 10px;">
-                    <i class="fa-solid fa-user"></i> Mi Cuenta
-                </a>
+                <div style="display: flex; gap: 8px;">
+                    <a href="<?= BASE_URL ?>public/historial.php" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-user"></i> Mi Cuenta
+                    </a>
+                    <a href="<?= BASE_URL ?>admin/logout.php" class="btn btn-outline btn-sm" style="color: #ef4444; border-color: #fca5a5; background: #fef2f2;" title="Cerrar sesion">
+                        <i class="fa-solid fa-right-from-bracket"></i> Salir
+                    </a>
+                </div>
             <?php endif; ?>
         </div>
     </header>

@@ -306,14 +306,14 @@ if ($usuariologueado) {
 
     <?php else: ?>
     <!-- Formulario -->
-    <div class="public-hero" style="text-align: center; padding: 40px 20px 20px;">
-        <img src="<?= BASE_URL ?>assets/MARCA.png" alt="Logo COMECyT" style="max-width: 450px; width: 100%; height: auto; margin: 0 auto 24px; display: block; filter: drop-shadow(0 0 30px rgba(177, 154, 109, 0.15));">
-        <h2>Registrar Solicitud</h2>
-        <p>Complete el formulario y recibira un folio de seguimiento de inmediato.</p>
+    <div class="public-hero reveal-up" style="text-align: center; padding: 40px 20px 20px;">
+        <img src="<?= BASE_URL ?>assets/MARCA.png" alt="Logo COMECyT" style="max-width: 260px; width: 100%; height: auto; margin: 0 auto 24px; display: block; filter: drop-shadow(0 0 30px rgba(177, 154, 109, 0.15));">
+        <h2 style="font-size: 2rem; color: var(--color-primary); font-weight: 700; margin-bottom: 8px;">Registrar Solicitud</h2>
+        <p style="color: #64748b; font-size: 1.1rem;">Complete el formulario y recibirá un folio de seguimiento de inmediato.</p>
     </div>
 
     <?php if (!empty($errores)): ?>
-    <div class="alert alert-error" style="max-width: 820px; margin: 0 auto 20px;">
+    <div class="alert alert-error reveal-up" style="max-width: 820px; margin: 0 auto 20px;">
         <div>
             <i class="fa-solid fa-triangle-exclamation"></i>
             <strong>Corrija los siguientes errores:</strong>
@@ -326,24 +326,53 @@ if ($usuariologueado) {
     </div>
     <?php endif; ?>
 
+    <style>
+        .premium-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            margin-bottom: 24px;
+            overflow: hidden;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+        .premium-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+        }
+        .premium-card .card-header border-bottom {
+            border-color: #f1f5f9;
+        }
+        /* Clases para animación de scroll */
+        .reveal-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s cubic-bezier(0.165, 0.84, 0.44, 1), transform 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .reveal-up.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+
     <form method="POST" action="" enctype="multipart/form-data" novalidate>
         <?= csrfField() ?>
         <!-- 1. Tipo de solicitud -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fa-solid fa-tag"></i>
+        <div class="premium-card reveal-up" style="transition-delay: 0.1s;">
+            <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px;">
+                <h3 class="card-title" style="color: #1e293b; font-size: 1.25rem;">
+                    <i class="fa-solid fa-tag text-primary"></i>
                     Tipo de Solicitud <span style="color: #F87171; margin-left: 3px;">*</span>
                 </h3>
             </div>
-            <div class="type-grid">
+            <div class="type-grid" style="padding: 20px;">
                 <?php
                 $tiposConfig = [
-                    'mantenimiento' => ['icono' => 'fa-wrench', 'desc' => 'Infraestructura fisica y equipo'],
-                    'atencion'      => ['icono' => 'fa-headset', 'desc' => 'Atencion a usuarios'],
-                    'soporte'       => ['icono' => 'fa-laptop-code', 'desc' => 'Soporte tecnico o informatico'],
-                    'administracion'=> ['icono' => 'fa-folder-open', 'desc' => 'Tramites y procesos administrativos'],
-                    'sistemas'      => ['icono' => 'fa-globe', 'desc' => 'Sistemas y paginas web (adjuntos permitidos)'],
+                    'mantenimiento' => ['icono' => 'fa-wrench', 'desc' => 'Infraestructura física y equipo'],
+                    'atencion'      => ['icono' => 'fa-headset', 'desc' => 'Atención a usuarios'],
+                    'soporte'       => ['icono' => 'fa-laptop-code', 'desc' => 'Soporte técnico o informático'],
+                    'administracion'=> ['icono' => 'fa-folder-open', 'desc' => 'Trámites y procesos administrativos'],
+                    'sistemas'      => ['icono' => 'fa-globe', 'desc' => 'Sistemas y páginas web (adjuntos permitidos)'],
                 ];
                 foreach ($tiposConfig as $valor => $cfg):
                     $seleccionado = (postParam('tipo') === $valor || ($datos['tipo'] ?? '') === $valor) ? 'selected' : '';
@@ -363,34 +392,34 @@ if ($usuariologueado) {
         </div>
 
         <!-- 2. Datos del solicitante -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fa-solid fa-user"></i>
+        <div class="premium-card reveal-up" style="transition-delay: 0.2s;">
+            <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px;">
+                <h3 class="card-title" style="color: #1e293b; font-size: 1.25rem;">
+                    <i class="fa-solid fa-user text-primary"></i>
                     Datos del Solicitante
                 </h3>
             </div>
-            <div class="card-body" style="background-color: var(--bg-body); border-radius: 0 0 16px 16px; padding: 20px;">
+            <div class="card-body" style="background-color: var(--bg-body); padding: 20px;">
                 <p class="text-muted" style="margin-bottom: 16px; font-size: 0.9rem;">
                     <i class="fa-solid fa-circle-info"></i> Estos datos se obtienen automáticamente de tu sesión activa.
                 </p>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Nombre Completo</label>
-                        <input type="text" class="form-control" value="<?= esc($solicitanteNombre) ?>" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                        <input type="text" class="form-control" value="<?= esc($solicitanteNombre) ?>" readonly style="background-color: #f8fafc; cursor: not-allowed; border-color: #e2e8f0;">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">Área de Adscripcion</label>
-                        <input type="text" class="form-control" value="<?= esc($solicitanteArea) ?>" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                        <label class="form-label">Área de Adscripción</label>
+                        <input type="text" class="form-control" value="<?= esc($solicitanteArea) ?>" readonly style="background-color: #f8fafc; cursor: not-allowed; border-color: #e2e8f0;">
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Correo Electrónico</label>
-                        <input type="email" class="form-control" value="<?= esc($solicitanteEmail) ?>" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                        <input type="email" class="form-control" value="<?= esc($solicitanteEmail) ?>" readonly style="background-color: #f8fafc; cursor: not-allowed; border-color: #e2e8f0;">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label" for="prioridad">Prioridad de Atencion</label>
+                        <label class="form-label" for="prioridad">Prioridad de Atención</label>
                         <select name="prioridad" id="prioridad" class="form-control">
                             <?php foreach (ETIQUETAS_PRIORIDAD as $val => $lbl): ?>
                             <option value="<?= $val ?>" <?= ($datos['prioridad'] ?? 'media') === $val ? 'selected' : '' ?>>
@@ -404,13 +433,13 @@ if ($usuariologueado) {
         </div>
 
         <!-- SECCION DINÁMICA: VINCULACIÓN DE EQUIPO (MANTENIMIENTO) -->
-        <div id="seccion_equipo" class="card" style="display: none; margin-bottom: 24px; border-left: 4px solid var(--color-primary);">
-            <div class="card-header">
-                <h3 class="card-title">
+        <div id="seccion_equipo" class="premium-card reveal-up" style="display: none; border-left: 4px solid var(--color-primary); transition-delay: 0.3s;">
+            <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px;">
+                <h3 class="card-title" style="color: var(--color-primary); font-size: 1.25rem;">
                     <i class="fa-solid fa-laptop-medical"></i> Información del Equipo Involucrado
                 </h3>
             </div>
-            <div class="card-body" style="background-color: var(--bg-body); border-radius: 0 0 16px 16px; padding: 20px;">
+            <div class="card-body" style="background-color: var(--bg-body); padding: 20px;">
                 <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
                     <?php if(!empty($_SESSION['user_id']) || !empty($_SESSION['admin_id'])): ?>
                     <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
@@ -476,13 +505,13 @@ if ($usuariologueado) {
         </div>
 
         <!-- SECCION DINÁMICA: SUBTIPO + ADJUNTOS (SISTEMAS / WEB) -->
-        <div id="seccion_sistemas" class="card" style="display: none; margin-bottom: 24px; border-left: 4px solid #8b5cf6;">
-            <div class="card-header">
-                <h3 class="card-title" style="color: #8b5cf6;">
+        <div id="seccion_sistemas" class="premium-card reveal-up" style="display: none; border-left: 4px solid #8b5cf6; transition-delay: 0.3s;">
+            <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px;">
+                <h3 class="card-title" style="color: #8b5cf6; font-size: 1.25rem;">
                     <i class="fa-solid fa-globe"></i> Especificación del Requerimiento Web / Sistema
                 </h3>
             </div>
-            <div class="card-body" style="background-color: var(--bg-body); border-radius: 0 0 16px 16px; padding: 20px;">
+            <div class="card-body" style="background-color: var(--bg-body); padding: 20px;">
 
                 <!-- ① SELECTOR DE SUBTIPO (pills) -->
                 <div class="form-group" style="margin-bottom: 24px;">
@@ -537,25 +566,6 @@ if ($usuariologueado) {
                     </div>
                 </div>
 
-                <!-- CÓDIGO ANTERIOR: Filas dinámicas (Comentado por solicitud)
-                <div id="caja_hipervinculos_old" style="display: none;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label">
-                            <i class="fa-solid fa-pen-to-square" style="color:#f59e0b;"></i> Hipervínculos a Actualizar
-                            <span class="text-muted" style="font-weight:400; font-size:0.85rem;"> (especifica cada cambio)</span>
-                        </label>
-                        <div id="hipervinculos_lista" style="display:flex; flex-direction:column; gap:12px;"></div>
-                        <button type="button" id="btnAgregarHipervinculo"
-                                style="margin-top: 12px; display:inline-flex; align-items:center; gap:6px;
-                                       padding:7px 14px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35);
-                                       border-radius:8px; color:#b45309; font-size:0.82rem; font-weight:600;
-                                       cursor:pointer; font-family:inherit;">
-                            <i class="fa-solid fa-plus"></i> Agregar otro hipervínculo
-                        </button>
-                    </div>
-                </div>
-                -->
-
                 <!-- ④ ACTUALIZAR HIPERVÍNCULOS: documento adjunto -->
                 <div id="caja_hipervinculos" style="display: none;">
                     <div class="form-group" style="margin-bottom: 0;">
@@ -590,28 +600,28 @@ if ($usuariologueado) {
         </div>
 
         <!-- 3. Descripcion -->
-        <div class="card" style="margin-bottom: 24px;">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fa-solid fa-align-left"></i>
-                    Descripcion de la Solicitud
+        <div class="premium-card reveal-up" style="transition-delay: 0.4s;">
+            <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px;">
+                <h3 class="card-title" style="color: #1e293b; font-size: 1.25rem;">
+                    <i class="fa-solid fa-align-left text-primary"></i>
+                    Descripción de la Solicitud
                 </h3>
             </div>
-            <div class="form-group" style="margin-bottom: 0;">
+            <div class="form-group" style="margin-bottom: 0; padding: 20px; background-color: var(--bg-body);">
                 <label class="form-label" for="descripcion">
                     Detalle el motivo y lo que se requiere <span class="required">*</span>
                 </label>
-                <textarea id="descripcion" name="descripcion" class="form-control" rows="5"
-                          placeholder="Describa con el mayor detalle posible lo que necesita, el contexto y cualquier informacion relevante para atender su solicitud."
-                          required minlength="20"><?= esc($datos['descripcion'] ?? '') ?></textarea>
-                <p class="form-hint">Minimo 20 caracteres.</p>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="6"
+                          placeholder="Describa con el mayor detalle posible lo que necesita, el contexto y cualquier información relevante para atender su solicitud de manera eficiente."
+                          required minlength="20" style="border-color: #cbd5e1;"><?= esc($datos['descripcion'] ?? '') ?></textarea>
+                <p class="form-hint" style="margin-top: 8px;">Mínimo 20 caracteres.</p>
             </div>
         </div>
 
-        <div style="text-align: center;">
-            <button type="submit" class="btn btn-primary btn-lg">
+        <div class="reveal-up" style="text-align: center; transition-delay: 0.5s;">
+            <button type="submit" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 15px rgba(102, 35, 49, 0.2); padding: 12px 32px; font-size: 1.1rem; border-radius: 12px;">
                 <i class="fa-solid fa-paper-plane"></i>
-                Enviar Solicitud
+                Enviar Solicitud Institucional
             </button>
         </div>
     </form>
@@ -621,6 +631,19 @@ if ($usuariologueado) {
 
 <script src="<?= BASE_URL ?>assets/js/app.js?v=2.0"></script>
 <script>
+// Animaciones al hacer scroll (Reveal Up)
+document.addEventListener("DOMContentLoaded", () => {
+    const reveals = document.querySelectorAll(".reveal-up");
+    const revealOnScroll = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("active");
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { root: null, rootMargin: "0px 0px -50px 0px", threshold: 0.1 });
+    reveals.forEach(el => revealOnScroll.observe(el));
+});
 /**
  * UI Dinámica — Formulario de Nueva Solicitud
  * Controla: selector de tipo, sección de equipo, sección Sistemas/Web.

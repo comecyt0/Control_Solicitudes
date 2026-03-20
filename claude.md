@@ -30,12 +30,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **JS**: Fetch API para comunicación asíncrona. Notificaciones integradas vía `COMECyTUI` (incluyendo Toasts).
 
 - **Buzón de Solicitudes (v2)**: Sistema de notificaciones integrado con eliminación automática de registros al archivar (mantiene BD limpia).
-- **Diseño Optimizado**: Reducción de espacios en blanco y corrección de layout flex en el calendario público.
-- **Visibilidad Pública Automática**: Al aceptar una solicitud, se crea el evento con `publico = TRUE` por defecto.
-- **Kanban Drag-and-Drop Fix**: Se implementaron las funciones HTML5 de corrección de drag-and-drop en `admin/calendario.php` (allowDrop, drag, drop).
-- **Intranet Dashboard Público**: Se integró un panel central `.intranet-grid` en `public/index.php` con grid de accesos rápidos animados y full-width (se oculta el sidebar seteando `$hideSidebar = true`). 
-- **Animaciones UI**: Se incorpora IntersectionObserver para reveals de items al scrollear (`.reveal-up`) en el Dashboard.
-- **Gestor de Anuncios y Banners**: CRUD disponible en `admin/anuncios.php`. Se permite usar la tabla `anuncios` para guardar texto y un `banner_url` opcional que se carga vía ajax.
+- **Intranet Dashboard Público**: Se integró un panel central `.intranet-grid` en `public/index.php` con grid de accesos rápidos animados y full-width (se oculta el sidebar seteando `$hideSidebar = true`). Ajustes finos: Ext. "314 y/o 114" y botón Topbar Cerrar Sesión.
+- **Formularios y Calendario (Vistas Públicas)**: Tanto `public/nueva_solicitud.php` como `public/calendario.php` fueron inmersos al diseño de la Intranet Full-Width. Incorporan tarjetas con sombra suave premium, `box-shadow` y opacidad sin recuadros grises, además de animaciones Reveal-Up y minimización de лого institucionales.
+- **Animaciones UI**: Se incorpora IntersectionObserver para reveals de items al scrollear (`.reveal-up`) en el Dashboard, Nueva Solicitud y Calendario.
+- **Gestor de Anuncios y Banners**: CRUD disponible en `admin/anuncios.php`. Se superó limitación de directorios en PHP usando `dirname(__DIR__, 2)` para procesar descargas de banners transparentes.
 
 ## Contexto Importante
 - **BASE_URL**: Crucial para la conectividad entre módulos. Se detecta dinámicamente en `helpers.php`.
