@@ -482,7 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 observer.unobserve(entry.target);
             }
         });
-    }, { root: null, rootMargin: "0px 0px -50px 0px", threshold: 0.1 });
+    }, { root: null, rootMargin: "0px 0px 0px 0px", threshold: 0.1 });
     reveals.forEach(el => revealOnScroll.observe(el));
 });
 </script>

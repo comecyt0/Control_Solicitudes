@@ -353,6 +353,16 @@ if ($usuariologueado) {
             opacity: 1;
             transform: translateY(0);
         }
+        .responsive-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .responsive-grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 
     <form method="POST" action="" enctype="multipart/form-data" novalidate>
@@ -403,7 +413,7 @@ if ($usuariologueado) {
                 <p class="text-muted" style="margin-bottom: 16px; font-size: 0.9rem;">
                     <i class="fa-solid fa-circle-info"></i> Estos datos se obtienen automáticamente de tu sesión activa.
                 </p>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="responsive-grid-2">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Nombre Completo</label>
                         <input type="text" class="form-control" value="<?= esc($solicitanteNombre) ?>" readonly style="background-color: #f8fafc; cursor: not-allowed; border-color: #e2e8f0;">
@@ -413,7 +423,7 @@ if ($usuariologueado) {
                         <input type="text" class="form-control" value="<?= esc($solicitanteArea) ?>" readonly style="background-color: #f8fafc; cursor: not-allowed; border-color: #e2e8f0;">
                     </div>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px;">
+                <div class="responsive-grid-2" style="margin-top: 16px;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label class="form-label">Correo Electrónico</label>
                         <input type="email" class="form-control" value="<?= esc($solicitanteEmail) ?>" readonly style="background-color: #f8fafc; cursor: not-allowed; border-color: #e2e8f0;">
@@ -479,7 +489,7 @@ if ($usuariologueado) {
 
                 <!-- CAJA: Registrar Nuevo Equipo -->
                 <div id="caja_registrar_equipo" style="display: <?= (empty($_SESSION['user_id']) && empty($_SESSION['admin_id'])) ? 'block' : 'none' ?>;">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="responsive-grid-2">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="eq_marca">Marca / Fabricante <span class="required">*</span></label>
                             <input type="text" id="eq_marca" name="eq_marca" class="form-control" placeholder="Ej. HP, Dell, Apple">
@@ -489,7 +499,7 @@ if ($usuariologueado) {
                             <input type="text" id="eq_modelo" name="eq_modelo" class="form-control">
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 16px;">
+                    <div class="responsive-grid-2" style="margin-top: 16px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" for="eq_num_serie">Número de Serie</label>
                             <input type="text" id="eq_num_serie" name="eq_num_serie" class="form-control">
@@ -641,7 +651,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 observer.unobserve(entry.target);
             }
         });
-    }, { root: null, rootMargin: "0px 0px -50px 0px", threshold: 0.1 });
+    }, { root: null, rootMargin: "0px 0px 0px 0px", threshold: 0.1 });
     reveals.forEach(el => revealOnScroll.observe(el));
 });
 /**

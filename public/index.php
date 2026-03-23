@@ -59,6 +59,22 @@ $extraHead  = '
     color: rgba(102, 35, 49, 0.1);
 }
 
+@media (max-width: 768px) {
+    .intranet-hero {
+        flex-direction: column-reverse;
+        text-align: center;
+        padding: 24px;
+        gap: 20px;
+    }
+    .intranet-hero-content h1 {
+        font-size: 1.6rem;
+    }
+    .intranet-hero-icon {
+        font-size: 4rem;
+        margin-bottom: 10px;
+    }
+}
+
 .intranet-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -370,7 +386,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }, {
         root: null,
-        rootMargin: "0px 0px -50px 0px",
+        rootMargin: "0px 0px 0px 0px",
         threshold: 0.1
     });
 
