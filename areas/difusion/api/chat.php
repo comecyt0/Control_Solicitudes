@@ -179,17 +179,46 @@ if ($accion === 'enviar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // ------------------------------------------------------------------
 // ADMINS: Lista de administradores activos para el panel de DMs
-// Incluye inicial y rol para el UI
+// Si estamos en un área específica, solo mostrar compañeros del área.
 // ------------------------------------------------------------------
 if ($accion === 'admins') {
-    $stmt = $pdo->query(
-        "SELECT id, nombre, rol,
-                UPPER(SUBSTRING(nombre FROM 1 FOR 1)) AS inicial
-         FROM administradores
-         WHERE activo = true
-         ORDER BY nombre"
-    );
-    $admins = $stmt->fetchAll();
+    // Detectar área activa del admin logueado
+    $areaSlug = $_SESSION['area_slug_activa'] ?? 'sistemas';
+
+    if ($areaSlug !== 'sistemas') {
+        // Filtrar por cve_area según slug: buscar en cat_personal el email del admin y cruzar con administradores del mismo área
+        $stmt = $pdo->prepare(
+            "SELECT a.id, a.nombre, a.rol,
+                    UPPER(SUBSTRING(a.nombre FROM 1 FOR 1)) AS inicial
+             FROM administradores a
+             INNER JOIN cat_personal cp ON (a.email = cp.correo_institucional OR a.email = cp.correo_personal)
+             WHERE a.activo = true
+               AND cp.cve_area = (
+                   SELECT cp2.cve_area FROM cat_personal cp2
+                   WHERE cp2.correo_institucional = :email OR cp2.correo_personal = :email2
+                   LIMIT 1
+               )
+             ORDER BY a.nombre"
+        );
+        $adminEmail = $_SESSION['admin_email'] ?? '';
+        $stmt->execute([':email' => $adminEmail, ':email2' => $adminEmail]);
+        $admins = $stmt->fetchAll();
+        // Fallback: si no hay coincidencias devolver todos del área
+        if (empty($admins)) {
+            $stmt2 = $pdo->query("SELECT id, nombre, rol, UPPER(SUBSTRING(nombre FROM 1 FOR 1)) AS inicial FROM administradores WHERE activo = true ORDER BY nombre");
+            $admins = $stmt2->fetchAll();
+        }
+    } else {
+        $stmt = $pdo->query(
+            "SELECT id, nombre, rol,
+                    UPPER(SUBSTRING(nombre FROM 1 FOR 1)) AS inicial
+             FROM administradores
+             WHERE activo = true
+             ORDER BY nombre"
+        );
+        $admins = $stmt->fetchAll();
+    }
+
     echo json_encode(['ok' => true, 'admins' => $admins]);
     exit;
 }

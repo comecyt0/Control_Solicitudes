@@ -41,7 +41,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Por favor, complete todos los campos.';
         } elseif (iniciarSesion($email, $password)) {
             reiniciarIntentosLogin();
-            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . BASE_URL . 'public/index.php"></head><body>Autenticado. <a href="' . BASE_URL . 'public/index.php">Click aquí</a></body></html>'; exit;
+            // Detectar si el admin pertenece a un área específica (no Sistemas)
+            // Si es de área, mandarlo directo al router que lo llega a su dashboard
+            $pdoLogin = getConnection();
+            $stmtArea = $pdoLogin->prepare("SELECT cve_area FROM cat_personal WHERE correo_institucional = ? OR correo_personal = ? LIMIT 1");
+            $stmtArea->execute([$email, $email]);
+            $cveAreaLogin = (int) $stmtArea->fetchColumn();
+            // cve_area 1 = Sistemas → Hub Global; resto = su propio dashboard vía router
+            $destLogin = ($cveAreaLogin > 1) ? BASE_URL . 'public/router.php' : BASE_URL . 'public/index.php';
+            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . $destLogin . '"></head><body>Autenticado. <a href="' . $destLogin . '">Click aquí</a></body></html>'; exit;
+
         } elseif (iniciarSesionUsuario($email, $password)) {
             reiniciarIntentosLogin();
             echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . BASE_URL . 'public/index.php"></head><body>Autenticado. <a href="' . BASE_URL . 'public/index.php">Click aquí</a></body></html>'; exit;
