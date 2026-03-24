@@ -3,6 +3,11 @@
 ## Visión General
 Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite a usuarios externos solicitar espacios de calendario y a administradores gestionar dichas solicitudes.
 
+## Credenciales de Acceso Actuales
+- **Administrador principal**: `desarrollo.comecyt@edomex.gob.mx` / `F3rn4nd0`
+- **Las credenciales de demo documentadas en README.md ya no son válidas en producción.**
+
+
 ## Arquitectura
 - **Backend**: PHP 8.1 (Vanilla)
 - **Base de Datos**: PostgreSQL 15
@@ -73,6 +78,14 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 
 - **🚫 CSRF void-vs-bool en APIs JSON (`api/perfil.php`)**: La función `validarCsrfPost()` en `helpers.php` es de tipo `:void` y llama `mostrarError()` (que emite HTML). Si una API JSON la llama como `if (!validarCsrfPost())`, PHP no puede negar un valor void, y el HTML de error rompe el `JSON.parse()` cliente. **Solución**: Validar CSRF inline dentro de las APIs JSON comparando `$_POST['csrf_token']` con `$_SESSION['csrf_token']` directamente. Además, las APIs AJAX que leen `$_SESSION` deben llamar `inicializarSesion()` explícitamente al inicio, antes de leer cualquier dato de sesión.
 - **📅 Calendario — Desbordamiento de Celdas**: El `<div class="calendar-cell">` es un contenedor `display:flex` dentro de un `display:grid`. Sin `overflow:hidden` y `width:100%` en la celda, los hijos flex se expanden al ancho del texto o la columna colapsa. La combinación `width:100% + min-width:0 + overflow:hidden` en `.calendar-cell` fuerza al grid a repartir el espacio correctamente y constriñe el contenido (ellipsis). El fix global está en `assets/css/admin_extra.css`.
+- **🎂 Cumpleaños — Foto de Perfil en Calendario (Fase 3, 2026-03-24)**:
+  - **Bug Fix**: El emoji 🎂 se mostraba como texto literal `\u{1F382}` porque en PHP las comillas simples NO interpolan escapes Unicode. Corregido a dobles comillas: `"\u{1F382}"`. Regla: **siempre dobles comillas para strings con escapes Unicode en PHP**.
+  - **Feature**: La query SQL de cumpleaños ahora incluye `foto_perfil` de `cat_personal`.
+  - **Feature**: Las notas doradas de cumpleaños en el calendario muestran un mini-avatar circular (foto real si existe, ícono placeholder si no).
+  - **Feature**: Al hacer clic en el ojo de una nota de cumpleaños, se abre `modalVerCumple` (en lugar del genérico `modalVerEvento`), con: foto circular con borde dorado, nombre completo, edad calculada dinámicamente, fecha de cumpleaños y mensaje de felicitación.
+  - **Campos añadidos al array de evento**: `foto_perfil`, `nombre_cumple`, `edad` (calculada como `$anio - $anioNacimiento`).
+  - **Alcance**: Aplicado en `admin/calendario.php` y los 19 calendarios de área en `areas/*/calendario.php`.
+
 - **🎂 Cumpleaños en Calendario — Filtrar solo por Día y Mes**: La query de cumpleaños usa `EXTRACT(MONTH FROM fecha_nacimiento) = :mes` y luego extrae el día con `format('d')`. Esto ignora el año del registro, mostrando correctamente los cumpleaños de personas con nacimiento en años anteriores. Aplicado en `admin/calendario.php` y en los 19 calendarios de área via script PowerShell batch.
 
 - **🚨 Loop de Redirección Infinito (ERR_TOO_MANY_REDIRECTS) en Login local/Docker 🚨**:
