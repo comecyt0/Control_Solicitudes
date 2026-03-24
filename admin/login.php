@@ -15,7 +15,8 @@ inicializarSesion();
 
 // Si ya hay sesion activa
 if (!empty($_SESSION['admin_id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['ss_id'])) {
-    redirigir('public/index.php');
+    echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . BASE_URL . 'public/index.php"></head><body>Redirigiendo al hub... <a href="' . BASE_URL . 'public/index.php">Click aquí</a></body></html>';
+    exit;
 }
 
 $error   = '';
@@ -37,13 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Por favor, complete todos los campos.';
         } elseif (iniciarSesion($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('public/index.php');
+            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . BASE_URL . 'public/index.php"></head><body>Autenticado. <a href="' . BASE_URL . 'public/index.php">Click aquí</a></body></html>'; exit;
         } elseif (iniciarSesionUsuario($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('public/index.php');
+            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . BASE_URL . 'public/index.php"></head><body>Autenticado. <a href="' . BASE_URL . 'public/index.php">Click aquí</a></body></html>'; exit;
         } elseif (iniciarSesionSS($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('public/index.php');
+            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . BASE_URL . 'public/index.php"></head><body>Autenticado. <a href="' . BASE_URL . 'public/index.php">Click aquí</a></body></html>'; exit;
         } else {
             registrarIntentoFallido();
             // Mensaje generico para no revelar existencia de cuenta

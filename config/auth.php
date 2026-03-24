@@ -220,8 +220,8 @@ function verificarSesionUsuario(): void
     inicializarSesion();
     enviarHeadersSeguridad();
 
-    // Administradores pueden usar el portal público también
-    if (!empty($_SESSION['admin_id'])) {
+    // Administradores y Servicio Social pueden usar el portal público también
+    if (!empty($_SESSION['admin_id']) || !empty($_SESSION['ss_id'])) {
         return;
     }
 
