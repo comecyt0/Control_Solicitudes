@@ -529,6 +529,18 @@ const SOLICITUD_ID_COMENTARIOS = <?= (int)$sol['id'] ?>;
 const CSRF_TOKEN_COMENTARIOS = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>';
 const BASE_URL_COMENTARIOS    = '<?= BASE_URL ?>';
 
+// Depuración en consola
+console.log('UI Evidencias cargando para solicitud: ' + SOLICITUD_ID_COMENTARIOS);
+if (typeof COMECyTUI === 'undefined') {
+    console.error('ALERTA: COMECyTUI no se cargó correctamente.');
+    window.COMECyTUI = {
+        alert: (m) => alert(m),
+        confirm: (m, ok) => { if(confirm(m)) ok(); },
+        prompt: (m, ok) => { let v = prompt(m); if(v !== null) ok(v); },
+        toast: (m) => console.log('Toast: ' + m)
+    };
+}
+
 function cargarComentarios() {
     fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php?solicitud_id=' + SOLICITUD_ID_COMENTARIOS)
         .then(r => r.json())
@@ -667,36 +679,48 @@ function eliminarEvidencia(id) {
 }
 
 function abrirModalEvidencia() {
-    COMECyTUI.prompt('Ingresa una descripción breve o comentario para esta evidencia:', (comentario) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.jpg,.jpeg,.png,.pdf,.docx,.doc,.xls,.xlsx,.zip';
-        input.onchange = e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const fd = new FormData();
-            fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-            fd.append('accion', 'agregar');
-            fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
-            fd.append('comentario', comentario);
-            fd.append('archivo', file);
-            
-            COMECyTUI.toast('Subiendo archivo...', 'info');
-            fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.ok) {
-                        COMECyTUI.toast('Evidencia guardada exitosamente', 'success');
-                        cargarEvidencias();
-                    } else {
-                        COMECyTUI.alert(d.error, 'Error de Carga');
-                    }
-                })
-                .catch(() => COMECyTUI.toast('Error de conexión', 'error'));
-        };
-        input.click();
-    }, { titulo: 'Nueva Evidencia', placeholder: 'Ej. Reporte técnico inicial...' });
+    console.log('Abriendo modal de evidencia...');
+    try {
+        COMECyTUI.prompt('Ingresa una descripción breve o comentario para esta evidencia:', (comentario) => {
+            console.log('Comentario recibido: ' + comentario);
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.jpg,.jpeg,.png,.pdf,.docx,.doc,.xls,.xlsx,.zip';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) {
+                    console.log('Carga cancelada: no hay archivo.');
+                    return;
+                }
+                
+                const fd = new FormData();
+                fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+                fd.append('accion', 'agregar');
+                fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
+                fd.append('comentario', comentario);
+                fd.append('archivo', file);
+                
+                COMECyTUI.toast('Subiendo archivo...', 'info');
+                fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
+                    .then(r => r.json())
+                    .then(d => {
+                        if (d.ok) {
+                            COMECyTUI.toast('Evidencia guardada exitosamente', 'success');
+                            cargarEvidencias();
+                        } else {
+                            COMECyTUI.alert(d.error, 'Error de Carga');
+                        }
+                    })
+                    .catch(() => COMECyTUI.toast('Error de conexión', 'error'));
+            };
+            input.click();
+        }, { titulo: 'Nueva Evidencia', placeholder: 'Ej. Reporte técnico inicial...' });
+    } catch (e) {
+        console.error('Fallo crítico al abrir modal:', e);
+        // Fallback al nativo si todo falla
+        let c = prompt('Error en UI. Comentario para evidencia:');
+        if (c !== null) { /* lógica manual rápida */ }
+    }
 }
 
 // Cargar datos iniciales

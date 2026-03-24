@@ -78,7 +78,7 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin_extra.css">
-    <script src="<?= BASE_URL ?>assets/js/ui-frames.js"></script>
+    <script src="<?= BASE_URL ?>assets/js/ui-frames.js?v=<?= time() ?>"></script>
     <?php if (isset($extraHead)) echo $extraHead; ?>
 </head>
 <body class="layout-admin<?= $darkMode ? ' dark-mode' : '' ?>" id="bodyRoot">
