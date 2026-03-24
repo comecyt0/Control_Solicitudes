@@ -27,8 +27,8 @@ if (!empty($_SESSION['admin_id'])) {
     $rol = 'admin';
     // Buscar cve_area a través de email en cat_personal
     $email = $_SESSION['admin_email'] ?? '';
-    $stmt = $pdo->prepare("SELECT cve_area FROM cat_personal WHERE email = ? LIMIT 1");
-    $stmt->execute([$email]);
+    $stmt = $pdo->prepare("SELECT cve_area FROM cat_personal WHERE correo_institucional = ? OR correo_personal = ? LIMIT 1");
+    $stmt->execute([$email, $email]);
     $cve_area = (int)$stmt->fetchColumn();
     // Si no tiene cve_area, forzamos sistemas (1)
     if (!$cve_area) $cve_area = 1;

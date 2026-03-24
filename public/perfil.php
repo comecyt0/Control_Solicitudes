@@ -38,17 +38,16 @@ $datos_perfil = [];
 if ($rol === 'admin') {
     $stmt = $pdo->prepare("SELECT a.id, a.nombre, a.email, a.rol, cp.cve_area, cp.fecha_nacimiento, cp.foto_perfil, cp.perfil_en_revision, ca.des_area AS area_nombre 
                            FROM administradores a 
-                           LEFT JOIN cat_personal cp ON a.email = cp.email 
+                           LEFT JOIN cat_personal cp ON (a.email = cp.correo_institucional OR a.email = cp.correo_personal)
                            LEFT JOIN cat_areas ca ON cp.cve_area = ca.cve_area 
                            WHERE a.id = ?");
     $stmt->execute([$id_actor]);
     $datos_perfil = $stmt->fetch(PDO::FETCH_ASSOC);
 } elseif ($rol === 'usuario') {
-    $stmt = $pdo->prepare("SELECT u.id, cp.nombre, cp.email, cp.cve_area, cp.fecha_nacimiento, cp.foto_perfil, cp.perfil_en_revision, ca.des_area AS area_nombre 
-                           FROM usuarios u 
-                           INNER JOIN cat_personal cp ON u.email = cp.email 
+    $stmt = $pdo->prepare("SELECT cp.cve_personal as id, cp.nombre, COALESCE(cp.correo_institucional, cp.correo_personal) AS email, cp.cve_area, cp.fecha_nacimiento, cp.foto_perfil, cp.perfil_en_revision, ca.des_area AS area_nombre 
+                           FROM cat_personal cp 
                            LEFT JOIN cat_areas ca ON cp.cve_area = ca.cve_area 
-                           WHERE u.id = ?");
+                           WHERE cp.cve_personal = ?");
     $stmt->execute([$id_actor]);
     $datos_perfil = $stmt->fetch(PDO::FETCH_ASSOC);
 } elseif ($rol === 'servicio_social') {

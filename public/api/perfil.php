@@ -118,7 +118,8 @@ try {
                 $sqlP .= ", foto_perfil = ?";
                 $paramsP[] = $foto_nombre;
             }
-            $sqlP .= " WHERE email = ?";
+            $sqlP .= " WHERE correo_institucional = ? OR correo_personal = ?";
+            $paramsP[] = $email_actor;
             $paramsP[] = $email_actor;
             
             $stmtP = $pdo->prepare($sqlP);
@@ -127,7 +128,7 @@ try {
             // Si el admin acaba de registrar su foto y no estaba, lo guardamos o creamos
             // Asumiremos que si no se actualizó nada, es porque no existe en cat_personal.
             if ($stmtP->rowCount() === 0) {
-                 $stmtI = $pdo->prepare("INSERT INTO cat_personal (nombre, email, cve_area, fecha_nacimiento, foto_perfil) VALUES (?, ?, ?, ?, ?)");
+                 $stmtI = $pdo->prepare("INSERT INTO cat_personal (nombre, correo_institucional, cve_area, fecha_nacimiento, foto_perfil, password_hash, activo, cve_estatus) VALUES (?, ?, ?, ?, ?, 'n/a', TRUE, 1)");
                  $stmtI->execute([$nombre, $email_actor, $cve_area, $fecha_nacimiento, $foto_nombre]);
             }
         }
@@ -145,7 +146,7 @@ try {
         
         $json_cambios = json_encode($cambios, JSON_UNESCAPED_UNICODE);
         
-        $stmtP = $pdo->prepare("UPDATE cat_personal SET perfil_en_revision = TRUE, cambios_tmp = ? WHERE email = (SELECT email FROM usuarios WHERE id = ?)");
+        $stmtP = $pdo->prepare("UPDATE cat_personal SET perfil_en_revision = TRUE, cambios_tmp = ? WHERE cve_personal = ?");
         $stmtP->execute([$json_cambios, $id_actor]);
         
     } elseif ($rol === 'servicio_social') {
