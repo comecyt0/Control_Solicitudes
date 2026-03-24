@@ -14,7 +14,7 @@ if (!isset($activeMenu)) $activeMenu = '';
 
 $adminNombre = getNombreAdmin();
 
-// --- Cortafuegos de Ingeniería (Routing Firewall) Phase 3 ---
+// --- Cortafuegos de Ingeniería (Routing Firewall) Phase 4 ---
 if (isset($_SESSION['area_slug_activa'])) {
     $script_path = $_SERVER['SCRIPT_NAME'];
     $slug_esperado = $_SESSION['area_slug_activa'];
@@ -26,6 +26,19 @@ if (isset($_SESSION['area_slug_activa'])) {
             header("Location: " . BASE_URL . "public/router.php");
             exit;
         }
+
+        // BLOQUEO DE ÁREAS EN DESARROLLO:
+        // Si el área NO es Difusión (ya funcional) y el usuario está en /areas/
+        // Solo puede ver el dashboard.php. Cualquier otro archivo redirecciona al dashboard.
+        $areas_funcionales = ['sistemas', 'difusion'];
+        if (!in_array($slug_esperado, $areas_funcionales)) {
+            $current_file = basename($script_path);
+            if ($current_file !== 'dashboard.php') {
+                header("Location: dashboard.php");
+                exit;
+            }
+        }
+
     } else if (strpos($script_path, '/admin/') !== false) {
         // O si intenta acceder al admin de sistemas puro pero su slug NO es sistemas
         if ($slug_esperado !== 'sistemas') {
@@ -161,18 +174,6 @@ try {
             </a>
             <a href="<?= BASE_URL ?>areas/difusion/calendario_editorial.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
                 <i class="fa-solid fa-calendar-week nav-icon"></i><span>Calendario Editorial</span>
-            </a>
-        </div>
-
-        <?php elseif ($slug_menu === 'juridico'): ?>
-        <!-- Menu Exclusivo Jurídico -->
-        <div class="nav-group">
-            <span class="nav-group-label">Módulos Legales</span>
-            <a href="<?= BASE_URL ?>areas/juridico/documentos.php" class="nav-link <?= $activeMenu === 'documentos' ? 'active' : '' ?>">
-                <i class="fa-solid fa-file-contract nav-icon"></i><span>Normateca y Contratos</span>
-            </a>
-            <a href="<?= BASE_URL ?>areas/juridico/circulares.php" class="nav-link <?= $activeMenu === 'circulares' ? 'active' : '' ?>">
-                <i class="fa-solid fa-scale-balanced nav-icon"></i><span>Circulares Oficiales</span>
             </a>
         </div>
 

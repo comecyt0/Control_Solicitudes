@@ -133,3 +133,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
     - **Navegación Unificada**: La barra de navegación de meses y los botones de acción ("Hoy", "Anterior", "Siguiente") ahora comparten el mismo diseño de bordes redondeados y tipografía institucional.
     - **Kanban Pro**: El tablero de tareas de Difusión fue rediseñado para igualar la calidad del administrador global, incluyendo badges dinámicos y estados de hover en las tarjetas de tareas.
     - **Aislamiento de Datos**: Se mantiene la lógica de filtrado por área (`cve_area`) para asegurar que cada departamento solo acceda a su información privada, mientras visualiza los eventos institucionales públicos en el mismo entorno de alta fidelidad.
+
+- **Protección de Áreas en Desarrollo (Fase 4.1, 2026-03-25)**:
+    - **Banner de Placeholder**: Se implementó una vista premium de "Área en Desarrollo" en todos los `dashboard.php` de la carpeta `areas/` (excepto Difusión). Esto evita que usuarios de módulos no terminados vean el dashboard administrativo global por error.
+    - **Cortafuegos de Ruteo (v4)**: Se extendió el `header_admin.php` con un firewall que detecta si el área del usuario está marcada como "en desarrollo". Si es así, bloquea el acceso a cualquier archivo operativo (solicitudes, reportes, etc.) y redirige automáticamente al Dashboard.
+    - **Sidebar Inteligente**: El menú lateral ahora oculta dinámicamente secciones de gestión (Personal, Equipos, Reportes) para áreas en construcción, reduciendo la confusión y el riesgo de acceso a datos sensibles.
+    - **Control Centralizado**: La lista de áreas funcionales se gestiona desde `$areas_funcionales` en el header, permitiendo habilitar módulos uno a uno conforme se completan.
