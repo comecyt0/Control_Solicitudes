@@ -167,6 +167,10 @@ $extraHead  = '
 .card-calendario .intranet-card-icon { background: rgba(180, 83, 9, 0.1); color: #b45309; }
 .card-calendario:hover .intranet-card-icon { background: #b45309; color: #fff; }
 
+.card-difusion::before { background: #e11d48; }
+.card-difusion .intranet-card-icon { background: rgba(225, 29, 72, 0.1); color: #e11d48; }
+.card-difusion:hover .intranet-card-icon { background: #e11d48; color: #fff; }
+
 .panels-grid {
     display: grid;
     grid-template-columns: 1.7fr 1fr;
@@ -245,8 +249,8 @@ require_once __DIR__ . '/../includes/header_user.php';
 
 <div class="intranet-hero reveal-up">
     <div class="intranet-hero-content">
-        <h1>¡Bienvenido/a, <?= esc($usuarioNombre) ?>!</h1>
-        <p>Dashboard central de servicios técnicos COMECyT. Gestiona tus requerimientos y mantente enterado de los últimos comunicados institucionales.</p>
+        <h1>¡Bienvenido/a a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
+        <p>Dashboard central de servicios e información institucional del COMECyT. Gestiona tus requerimientos técnicos, explora galerías multimedia y mantente enterado de los últimos comunicados oficiales.</p>
         
         <?php if (!empty($_SESSION['admin_id']) || !empty($_SESSION['ss_id'])): ?>
         <div style="margin-top: 24px;">
@@ -310,6 +314,14 @@ require_once __DIR__ . '/../includes/header_user.php';
         </div>
         <div class="intranet-card-title">Calendario</div>
         <div class="intranet-card-desc">Consulta eventos públicos o solicita agendar espacios institucionales de manera interactiva.</div>
+    </a>
+    
+    <a href="<?= BASE_URL ?>public/galeria_institucional.php" class="intranet-card card-difusion reveal-up" style="transition-delay: 0.5s;">
+        <div class="intranet-card-icon">
+            <i class="fa-solid fa-photo-film"></i>
+        </div>
+        <div class="intranet-card-title">Galería Institucional</div>
+        <div class="intranet-card-desc">Repositorio oficial de infografías, sketches y material publicitario (Departamento de Difusión).</div>
     </a>
 </div>
 

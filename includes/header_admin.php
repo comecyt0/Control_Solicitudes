@@ -92,98 +92,95 @@ try {
     </div>
 
     <nav class="sidebar-nav" aria-label="Menu principal">
+        <?php $slug_menu = $_SESSION['area_slug_activa'] ?? 'sistemas'; ?>
+        
         <div class="nav-group">
             <span class="nav-group-label">Principal</span>
-            <a href="<?= BASE_URL ?>admin/dashboard.php"
+            <a href="<?= BASE_URL ?><?= $slug_menu === 'sistemas' ? 'admin' : 'areas/'.$slug_menu ?>/dashboard.php"
                class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
                 <i class="fa-solid fa-chart-pie nav-icon"></i>
                 <span>Dashboard</span>
             </a>
         </div>
 
+        <?php if ($slug_menu === 'sistemas'): ?>
+        <!-- Menu Exclusivo Unidad de Sistemas -->
         <div class="nav-group">
             <span class="nav-group-label">Gestion</span>
-            <a href="<?= BASE_URL ?>admin/solicitudes.php"
-               class="nav-link <?= $activeMenu === 'solicitudes' ? 'active' : '' ?>">
-                <i class="fa-solid fa-list-ul nav-icon"></i>
-                <span>Todas las Solicitudes</span>
+            <a href="<?= BASE_URL ?>admin/solicitudes.php" class="nav-link <?= $activeMenu === 'solicitudes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-list-ul nav-icon"></i><span>Todas las Solicitudes</span>
             </a>
-            <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=pendiente"
-               class="nav-link <?= $activeMenu === 'pendientes' ? 'active' : '' ?>">
-                <i class="fa-solid fa-clock nav-icon"></i>
-                <span>Pendientes</span>
+            <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=pendiente" class="nav-link <?= $activeMenu === 'pendientes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-clock nav-icon"></i><span>Pendientes</span>
             </a>
-            <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=en_proceso"
-               class="nav-link <?= $activeMenu === 'en_proceso' ? 'active' : '' ?>">
-                <i class="fa-solid fa-bolt nav-icon"></i>
-                <span>En Proceso</span>
+            <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=en_proceso" class="nav-link <?= $activeMenu === 'en_proceso' ? 'active' : '' ?>">
+                <i class="fa-solid fa-bolt nav-icon"></i><span>En Proceso</span>
             </a>
-            <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=completada"
-               class="nav-link <?= $activeMenu === 'completadas' ? 'active' : '' ?>">
-                <i class="fa-solid fa-circle-check nav-icon"></i>
-                <span>Completadas</span>
-            </a>
-            <a href="<?= BASE_URL ?>admin/administradores.php"
-               class="nav-link <?= $activeMenu === 'administradores' ? 'active' : '' ?>">
-                <i class="fa-solid fa-users-gear nav-icon"></i>
-                <span>Administradores</span>
-            </a>
-
-            <a href="<?= BASE_URL ?>admin/calendario.php"
-               class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>" style="display:flex; justify-content:space-between; align-items:center;">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <i class="fa-solid fa-calendar-days nav-icon"></i>
-                    <span>Calendario</span>
-                </div>
-                <?php if ($countCalendario > 0): ?>
-                    <span class="badge badge-error" style="background:#ef4444; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;">
-                        <?= $countCalendario ?>
-                    </span>
-                <?php endif; ?>
-            </a>
-            <a href="<?= BASE_URL ?>admin/reportes.php"
-               class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
-                <i class="fa-solid fa-chart-line nav-icon"></i>
-                <span>Reportes</span>
+            <a href="<?= BASE_URL ?>admin/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-chart-line nav-icon"></i><span>Reportes</span>
             </a>
         </div>
-
         <div class="nav-group">
             <span class="nav-group-label">Intranet</span>
-            <a href="<?= BASE_URL ?>admin/anuncios.php"
-               class="nav-link <?= $activeMenu === 'anuncios' ? 'active' : '' ?>">
-                <i class="fa-solid fa-bullhorn nav-icon"></i>
-                <span>Gestión de Anuncios</span>
+            <a href="<?= BASE_URL ?>admin/anuncios.php" class="nav-link <?= $activeMenu === 'anuncios' ? 'active' : '' ?>">
+                <i class="fa-solid fa-bullhorn nav-icon"></i><span>Gestión de Anuncios</span>
+            </a>
+            <a href="<?= BASE_URL ?>admin/calendario.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-days nav-icon"></i><span>Calendario Global</span>
             </a>
         </div>
-
         <div class="nav-group">
             <span class="nav-group-label">Gestión ERP</span>
-            <a href="<?= BASE_URL ?>admin/personal.php"
-               class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
-                <i class="fa-solid fa-address-card nav-icon"></i>
-                <span>Personal</span>
+            <a href="<?= BASE_URL ?>admin/personal.php" class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
+                <i class="fa-solid fa-address-card nav-icon"></i><span>Personal</span>
             </a>
-            <a href="<?= BASE_URL ?>admin/correos.php"
-               class="nav-link <?= $activeMenu === 'correos' ? 'active' : '' ?>">
-                <i class="fa-solid fa-envelope-open-text nav-icon"></i>
-                <span>Correos Oficiales</span>
+            <a href="<?= BASE_URL ?>admin/equipos.php" class="nav-link <?= $activeMenu === 'equipos' ? 'active' : '' ?>">
+                <i class="fa-solid fa-laptop-code nav-icon"></i><span>Control de Equipos</span>
             </a>
-            <a href="<?= BASE_URL ?>admin/equipos.php"
-               class="nav-link <?= $activeMenu === 'equipos' ? 'active' : '' ?>">
-                <i class="fa-solid fa-laptop-code nav-icon"></i>
-                <span>Control de Equipos</span>
+        </div>
+        <div class="nav-group">
+            <span class="nav-group-label">Servicio Social</span>
+            <a href="<?= BASE_URL ?>admin/servicio_social.php" class="nav-link <?= $activeMenu === 'servicio_social' ? 'active' : '' ?>">
+                <i class="fa-solid fa-graduation-cap nav-icon"></i><span>Servicio Social</span>
             </a>
         </div>
 
+        <?php elseif ($slug_menu === 'difusion'): ?>
+        <!-- Menu Exclusivo Difusión y Comunicación Social -->
         <div class="nav-group">
-            <span class="nav-group-label">Servicio Social</span>
-            <a href="<?= BASE_URL ?>admin/servicio_social.php"
-               class="nav-link <?= $activeMenu === 'servicio_social' ? 'active' : '' ?>">
-                <i class="fa-solid fa-graduation-cap nav-icon"></i>
-                <span>Servicio Social</span>
+            <span class="nav-group-label">Módulos de Difusión</span>
+            <a href="<?= BASE_URL ?>areas/difusion/repositorio.php" class="nav-link <?= $activeMenu === 'repositorio' ? 'active' : '' ?>">
+                <i class="fa-solid fa-photo-film nav-icon"></i><span>Repositorio Multimedia</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/difusion/anuncios.php" class="nav-link <?= $activeMenu === 'anuncios' ? 'active' : '' ?>">
+                <i class="fa-solid fa-bullhorn nav-icon"></i><span>Publicador de Banners</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/difusion/calendario_editorial.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-week nav-icon"></i><span>Calendario Editorial</span>
             </a>
         </div>
+
+        <?php elseif ($slug_menu === 'juridico'): ?>
+        <!-- Menu Exclusivo Jurídico -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos Legales</span>
+            <a href="<?= BASE_URL ?>areas/juridico/documentos.php" class="nav-link <?= $activeMenu === 'documentos' ? 'active' : '' ?>">
+                <i class="fa-solid fa-file-contract nav-icon"></i><span>Normateca y Contratos</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico/circulares.php" class="nav-link <?= $activeMenu === 'circulares' ? 'active' : '' ?>">
+                <i class="fa-solid fa-scale-balanced nav-icon"></i><span>Circulares Oficiales</span>
+            </a>
+        </div>
+
+        <?php else: ?>
+        <!-- Menu Fallback para Áreas en Construcción -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos en Desarrollo</span>
+            <a href="#" class="nav-link" style="opacity:0.5; cursor:not-allowed;">
+                <i class="fa-solid fa-hammer nav-icon"></i><span>Más herramientas pronto</span>
+            </a>
+        </div>
+        <?php endif; ?>
 
         <div class="nav-group">
             <span class="nav-group-label">Acceso Publico</span>

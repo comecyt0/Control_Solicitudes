@@ -1,11 +1,7 @@
 <?php
 /**
  * COMECyT Control de Solicitudes
- * Panel de Administracion — Dashboard
- *
- * Muestra estadisticas generales del sistema:
- * totales por estatus, urgentes activos, distribucion por tipo,
- * y las solicitudes mas recientes.
+ * Panel de Administración — Dashboard (Departamento de Difusión)
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -16,269 +12,71 @@ verificarSesionAdmin();
 
 $pdo = getConnection();
 
-// -------------------------------------------------------
-// Consultas de estadisticas
-// -------------------------------------------------------
+// Estadísticas de Difusión
+$stmtM = $pdo->query("SELECT tipo, COUNT(*) as total FROM df_multimedia GROUP BY tipo");
+$porTipo = $stmtM->fetchAll(PDO::FETCH_ASSOC) ?: [];
+$totalArchivos = array_sum(array_column($porTipo, 'total'));
 
-// Conteo por estatus
-$stmtEstatus = $pdo->query(
-    "SELECT estatus, COUNT(*) AS total
-     FROM solicitudes
-     GROUP BY estatus"
-);
-$porEstatus = [];
-foreach ($stmtEstatus as $row) {
-    $porEstatus[$row['estatus']] = (int) $row['total'];
-}
-$totalSolicitudes = array_sum($porEstatus);
-$totalActivas     = ($porEstatus['pendiente'] ?? 0) + ($porEstatus['en_proceso'] ?? 0);
-$totalCompletadas = $porEstatus['completada'] ?? 0;
+$stmtR = $pdo->query("SELECT id, titulo, tipo, fecha_creacion FROM df_multimedia ORDER BY fecha_creacion DESC LIMIT 5");
+$recientes = $stmtR->fetchAll(PDO::FETCH_ASSOC);
 
-// Urgentes activas
-$stmtUrgentes = $pdo->query(
-    "SELECT COUNT(*) AS total
-     FROM solicitudes
-     WHERE prioridad = 'urgente' AND estatus NOT IN ('completada', 'cancelada')"
-);
-$urgentesActivas = (int) $stmtUrgentes->fetchColumn();
-
-// Conteo por tipo
-$stmtTipo = $pdo->query(
-    "SELECT tipo, COUNT(*) AS total
-     FROM solicitudes
-     GROUP BY tipo
-     ORDER BY total DESC"
-);
-$porTipo = $stmtTipo->fetchAll();
-
-// Solicitudes recientes (ultimas 8)
-$stmtRecientes = $pdo->query(
-    "SELECT id, folio, tipo, solicitante, area, prioridad, estatus, fecha_creacion
-     FROM solicitudes
-     ORDER BY fecha_creacion DESC
-     LIMIT 8"
-);
-$recientes = $stmtRecientes->fetchAll();
-
-// -------------------------------------------------------
-// Preparar datos para grafica de barras
-// -------------------------------------------------------
-$maxTipo = !empty($porTipo) ? max(array_column($porTipo, 'total')) : 1;
-
-$coloresTipo = [
-    'mantenimiento' => '#F59E0B',
-    'atencion'      => '#A78BFA',
-    'soporte'       => '#22D3EE',
-    'administracion'=> '#4ADE80',
-];
-
-// -------------------------------------------------------
-// Variables para la vista
-// -------------------------------------------------------
-$pageTitle  = 'Dashboard';
+$pageTitle  = 'Dashboard de Difusión';
 $activeMenu = 'dashboard';
-$helpPage   = 'dashboard';
 
 require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
-<!-- Tarjetas de estadisticas -->
+<div class="intranet-hero reveal-up" style="background: linear-gradient(135deg, rgba(225, 29, 72, 0.05) 0%, rgba(190, 18, 60, 0.1) 100%);">
+    <div class="intranet-hero-content">
+        <h1 style="color: #be123c;">Panel Editorial y de Difusión</h1>
+        <p>Estás en el corazón del Departamento de Difusión. Desde aquí puedes gestionar la biblioteca de medios oficiales, publicar banners y programar el calendario editorial del COMECyT.</p>
+    </div>
+    <div class="intranet-hero-icon" style="color: rgba(225, 29, 72, 0.15);">
+        <i class="fa-solid fa-camera-retro"></i>
+    </div>
+</div>
+
 <div class="stats-grid">
-    <a href="<?= BASE_URL ?>admin/solicitudes.php" class="stat-card stat-total">
-        <div class="stat-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+    <div class="stat-card" style="border-top: 4px solid #e11d48;">
+        <div class="stat-icon" style="color: #e11d48; background: rgba(225, 29, 72, 0.1);"><i class="fa-solid fa-photo-film"></i></div>
         <div class="stat-info">
-            <div class="stat-value"><?= $totalSolicitudes ?></div>
-            <div class="stat-label">Total Solicitudes</div>
+            <div class="stat-value"><?= $totalArchivos ?></div>
+            <div class="stat-label">Archivos Subidos</div>
         </div>
-    </a>
-    <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=pendiente" class="stat-card stat-activas">
-        <div class="stat-icon"><i class="fa-solid fa-bolt"></i></div>
-        <div class="stat-info">
-            <div class="stat-value"><?= $totalActivas ?></div>
-            <div class="stat-label">Activas</div>
-        </div>
-    </a>
-    <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=completada" class="stat-card stat-completadas">
-        <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
-        <div class="stat-info">
-            <div class="stat-value"><?= $totalCompletadas ?></div>
-            <div class="stat-label">Completadas</div>
-        </div>
-    </a>
-    <a href="<?= BASE_URL ?>admin/solicitudes.php?prioridad=urgente" class="stat-card stat-urgentes">
-        <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-        <div class="stat-info">
-            <div class="stat-value"><?= $urgentesActivas ?></div>
-            <div class="stat-label">Urgentes Activas</div>
-        </div>
-    </a>
-</div>
-
-<!-- Graficas y tabla recientes -->
-<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-
-    <!-- Grafica de solicitudes por tipo -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title">
-                <i class="fa-solid fa-chart-bar"></i>
-                Solicitudes por Tipo
-            </h2>
-        </div>
-        <?php if (!empty($porTipo)): ?>
-            <?php foreach ($porTipo as $item): ?>
-                <?php
-                    $pct   = $maxTipo > 0 ? round(($item['total'] / $maxTipo) * 100) : 0;
-                    $color = $coloresTipo[$item['tipo']] ?? '#9D9BAA';
-                ?>
-                <div class="chart-bar-row">
-                    <div class="chart-bar-label">
-                        <i class="<?= getIconoTipo($item['tipo']) ?>" style="color: <?= $color ?>; width:14px;"></i>
-                        <?= esc(getEtiqueta('tipo', $item['tipo'])) ?>
-                    </div>
-                    <div class="chart-bar-track">
-                        <div class="chart-bar-fill" style="width: <?= $pct ?>%; background: <?= $color ?>;"></div>
-                    </div>
-                    <div class="chart-bar-count"><?= $item['total'] ?></div>
-                </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <p class="text-muted fs-sm">Sin datos disponibles.</p>
-        <?php endif; ?>
     </div>
-
-    <!-- Distribucion por estatus -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title">
-                <i class="fa-solid fa-chart-pie"></i>
-                Distribucion por Estatus
-            </h2>
-        </div>
-        <div style="position: relative; height: 260px; width: 100%; display: flex; justify-content: center; align-items: center; padding: 10px;">
-            <canvas id="estatusPieChart"></canvas>
+    <div class="stat-card" style="border-top: 4px solid #14b8a6;">
+        <div class="stat-icon" style="color: #14b8a6; background: rgba(20, 184, 166, 0.1);"><i class="fa-solid fa-bullhorn"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">Gestión</div>
+            <div class="stat-label">Banners Activos</div>
         </div>
     </div>
 </div>
 
-<!-- Tabla de solicitudes recientes -->
-<div class="card">
+<div class="card reveal-up">
     <div class="card-header">
-        <h2 class="card-title">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            Solicitudes Recientes
-        </h2>
-        <a href="<?= BASE_URL ?>admin/solicitudes.php" class="btn btn-outline btn-sm">
-            Ver todas <i class="fa-solid fa-arrow-right"></i>
-        </a>
+        <h2 class="card-title"><i class="fa-solid fa-cloud-arrow-up"></i> Últimos Archivos Agregados al Repositorio</h2>
+        <a href="<?= BASE_URL ?>areas/difusion/repositorio.php" class="btn btn-outline btn-sm">Ir al Repositorio Digital</a>
     </div>
-
-    <?php if (!empty($recientes)): ?>
     <div class="table-wrapper">
+        <?php if (!empty($recientes)): ?>
         <table>
-            <thead>
-                <tr>
-                    <th>Folio</th>
-                    <th>Tipo</th>
-                    <th>Solicitante</th>
-                    <th>Area</th>
-                    <th>Prioridad</th>
-                    <th>Estatus</th>
-                    <th>Fecha</th>
-                    <th></th>
-                </tr>
-            </thead>
+            <thead><tr><th>ID</th><th>Título</th><th>Tipo</th><th>Fecha</th></tr></thead>
             <tbody>
-                <?php foreach ($recientes as $sol): ?>
+                <?php foreach ($recientes as $r): ?>
                 <tr>
-                    <td>
-                        <a href="<?= BASE_URL ?>admin/detalle.php?id=<?= $sol['id'] ?>"
-                           class="folio-link">
-                            <?= esc($sol['folio']) ?>
-                        </a>
-                    </td>
-                    <td>
-                        <span class="badge <?= getBadgeClase('tipo', $sol['tipo']) ?>">
-                            <i class="<?= getIconoTipo($sol['tipo']) ?>"></i>
-                            <?= esc(getEtiqueta('tipo', $sol['tipo'])) ?>
-                        </span>
-                    </td>
-                    <td><?= esc($sol['solicitante']) ?></td>
-                    <td><?= esc($sol['area']) ?></td>
-                    <td>
-                        <span class="badge <?= getBadgeClase('prioridad', $sol['prioridad']) ?>">
-                            <?= esc(getEtiqueta('prioridad', $sol['prioridad'])) ?>
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge <?= getBadgeClase('estatus', $sol['estatus']) ?>">
-                            <i class="<?= getIconoEstatus($sol['estatus']) ?>"></i>
-                            <?= esc(getEtiqueta('estatus', $sol['estatus'])) ?>
-                        </span>
-                    </td>
-                    <td class="text-muted fs-sm"><?= formatearFecha($sol['fecha_creacion']) ?></td>
-                    <td>
-                        <a href="<?= BASE_URL ?>admin/detalle.php?id=<?= $sol['id'] ?>"
-                           class="btn btn-outline btn-icon" title="Ver detalle">
-                            <i class="fa-solid fa-eye"></i>
-                        </a>
-                    </td>
+                    <td>#<?= $r['id'] ?></td>
+                    <td style="font-weight: 600;"><?= esc($r['titulo']) ?></td>
+                    <td><span class="badge" style="background:#f1f5f9; color:#475569; border: 1px solid #cbd5e1;"><?= esc($r['tipo']) ?></span></td>
+                    <td><?= formatearFecha($r['fecha_creacion']) ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
+        <?php else: ?>
+        <p style="padding: 20px; color: #64748b; text-align: center;">El repositorio multimedia está vacío.</p>
+        <?php endif; ?>
     </div>
-    <?php else: ?>
-    <div class="empty-state">
-        <i class="fa-solid fa-inbox"></i>
-        <h3>Sin solicitudes registradas</h3>
-        <p>Las solicitudes apareceran aqui cuando sean enviadas.</p>
-    </div>
-    <?php endif; ?>
 </div>
 
-<?php
-$estatusLabels = [];
-$estatusData = [];
-$estatusColors = [];
-$estatusConfig = [
-    'pendiente'  => ['label' => 'Pendiente',  'color' => '#FCD34D'],
-    'en_proceso' => ['label' => 'En Proceso',  'color' => '#60A5FA'],
-    'completada' => ['label' => 'Completada',  'color' => '#4ADE80'],
-    'cancelada'  => ['label' => 'Cancelada',   'color' => '#F87171'],
-];
-foreach ($estatusConfig as $est => $cfg) {
-    $estatusLabels[] = $cfg['label'];
-    $estatusData[] = $porEstatus[$est] ?? 0;
-    $estatusColors[] = $cfg['color'];
-}
-?>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('estatusPieChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: <?= json_encode($estatusLabels) ?>,
-            datasets: [{
-                data: <?= json_encode($estatusData) ?>,
-                backgroundColor: <?= json_encode($estatusColors) ?>,
-                borderWidth: 0,
-                hoverOffset: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#bbb' }
-                }
-            }
-        }
-    });
-});
-</script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
