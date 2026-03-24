@@ -16,9 +16,9 @@
  * @note DATE_FORMAT() es MySQL solamente. En PostgreSQL usamos TO_CHAR().
  */
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../includes/helpers.php';
-require_once __DIR__ . '/../../config/auth.php';
+require_once __DIR__ . '/../../../config/database.php';
+require_once __DIR__ . '/../../../includes/helpers.php';
+require_once __DIR__ . '/../../../config/auth.php';
 
 // Garantizar JSON siempre
 header('Content-Type: application/json; charset=utf-8');

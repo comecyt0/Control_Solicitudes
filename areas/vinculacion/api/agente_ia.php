@@ -7,8 +7,8 @@
  * GET:  { ping } → {"ok":true}
  */
 
-require_once __DIR__ . '/../../config/database.php'; // carga .env → $_ENV
-require_once __DIR__ . '/../../config/auth.php';
+require_once __DIR__ . '/../../../config/database.php'; // carga .env → $_ENV
+require_once __DIR__ . '/../../../config/auth.php';
 
 // ── Seguridad: solo admins ──────────────────────────────────────────
 verificarSesionAdmin();

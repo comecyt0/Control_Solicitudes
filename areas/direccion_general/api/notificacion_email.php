@@ -7,7 +7,7 @@
  * Función principal: enviarNotificacionEstatus()
  */
 
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../../config/database.php';
 
 /**
  * Enviar email de notificación al solicitante cuando cambia el estatus de su solicitud.

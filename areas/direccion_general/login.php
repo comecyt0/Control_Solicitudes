@@ -7,9 +7,9 @@
  * Si la sesion ya esta activa, redirige al dashboard.
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 inicializarSesion();
 
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/login.css">
 </head>
 <body>
-<?php require_once __DIR__ . '/../includes/loader.php'; ?>
+<?php require_once __DIR__ . '/../../includes/loader.php'; ?>
 <div class="login-wrapper">
 
     <!-- Marca institucional -->

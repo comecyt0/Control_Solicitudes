@@ -8,9 +8,9 @@
  * El cambio de estatus se procesa via POST en esta misma pagina (PRG pattern).
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 verificarSesionAdmin();
 
@@ -164,7 +164,7 @@ $activeMenu = $filtroEst === 'pendiente' ? 'pendientes'
             : ($filtroEst === 'completada' ? 'completadas' : 'solicitudes'));
 $helpPage   = 'solicitudes';
 
-require_once __DIR__ . '/../includes/header_admin.php';
+require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <?php if ($mensajeFlash): ?>
@@ -439,4 +439,4 @@ function abrirModalEstatus(id, folio, estatusActual) {
 }
 </script>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

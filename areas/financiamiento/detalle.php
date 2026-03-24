@@ -8,9 +8,9 @@
  * Permite cambiar el estatus directamente desde esta vista.
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/api/notificacion_email.php';
 
 verificarSesionAdmin();
@@ -130,7 +130,7 @@ $pageTitle  = 'Detalle — ' . $sol['folio'];
 $activeMenu = 'solicitudes';
 $helpPage   = 'detalle';
 
-require_once __DIR__ . '/../includes/header_admin.php';
+require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <a href="<?= BASE_URL ?>admin/solicitudes.php" class="back-link">
@@ -578,4 +578,4 @@ function aplicarPlantilla(contenido) {
 cargarComentarios();
 </script>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

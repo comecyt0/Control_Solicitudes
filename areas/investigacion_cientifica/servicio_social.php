@@ -4,9 +4,9 @@
  * Tabs: Usuarios SS | Tablero Kanban SS | Reportes de asistencia
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 verificarSesionAdmin();
 
@@ -87,7 +87,7 @@ foreach ($kanbanTareas as $t) $kanbanPorCol[$t['columna']][] = $t;
 
 $pageTitle  = 'Servicio Social';
 $activeMenu = 'servicio_social';
-require_once __DIR__ . '/../includes/header_admin.php';
+require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <!-- Tabs -->
@@ -873,4 +873,4 @@ function cerrarModalEvidenciasAdmin() {
 }
 </script>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

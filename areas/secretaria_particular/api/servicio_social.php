@@ -5,9 +5,9 @@
  * Solo accesible para administradores autenticados.
  */
 
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../../includes/helpers.php';
-require_once __DIR__ . '/../../config/auth.php';
+require_once __DIR__ . '/../../../config/database.php';
+require_once __DIR__ . '/../../../includes/helpers.php';
+require_once __DIR__ . '/../../../config/auth.php';
 
 verificarSesionAdmin();
 header('Content-Type: application/json; charset=utf-8');

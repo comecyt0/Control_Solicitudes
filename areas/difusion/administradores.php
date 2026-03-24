@@ -7,9 +7,9 @@
  * al panel de control de otros administradores.
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 verificarSesionAdmin();
 
@@ -123,7 +123,7 @@ $pageTitle  = 'Gestión de Administradores';
 $activeMenu = 'administradores';
 $helpPage   = 'administradores';
 
-require_once __DIR__ . '/../includes/header_admin.php';
+require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <?php if ($mensajeFlash): ?>
@@ -328,4 +328,4 @@ function abrirModalEditarAdmin(id, nombre, email, rol) {
 }
 </script>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

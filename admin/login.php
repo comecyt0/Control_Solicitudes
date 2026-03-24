@@ -37,13 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Por favor, complete todos los campos.';
         } elseif (iniciarSesion($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('public/router.php');
+            redirigir('public/index.php');
         } elseif (iniciarSesionUsuario($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('public/router.php');
+            redirigir('public/index.php');
         } elseif (iniciarSesionSS($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('public/router.php');
+            redirigir('public/index.php');
         } else {
             registrarIntentoFallido();
             // Mensaje generico para no revelar existencia de cuenta

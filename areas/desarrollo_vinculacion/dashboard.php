@@ -8,9 +8,9 @@
  * y las solicitudes mas recientes.
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 verificarSesionAdmin();
 
@@ -79,7 +79,7 @@ $pageTitle  = 'Dashboard';
 $activeMenu = 'dashboard';
 $helpPage   = 'dashboard';
 
-require_once __DIR__ . '/../includes/header_admin.php';
+require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <!-- Tarjetas de estadisticas -->
@@ -281,4 +281,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

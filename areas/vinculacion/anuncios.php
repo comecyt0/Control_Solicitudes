@@ -4,9 +4,9 @@
  * Panel de Administración — Gestión de Anuncios
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 verificarSesionAdmin();
 
@@ -20,7 +20,7 @@ $pageTitle  = 'Gestión de Anuncios';
 $activeMenu = 'anuncios';
 $helpPage   = 'anuncios';
 
-require_once __DIR__ . '/../includes/header_admin.php';
+require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <div class="card mb-16">
@@ -233,4 +233,4 @@ function eliminarAnuncio(id) {
 }
 </script>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>

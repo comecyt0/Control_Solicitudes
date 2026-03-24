@@ -7,9 +7,9 @@
  * solicitantes registrados en el sistema.
  */
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/helpers.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../includes/helpers.php';
+require_once __DIR__ . '/../../config/auth.php';
 
 verificarSesionAdmin();
 
@@ -137,8 +137,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $rowFoto = $stmtFoto->fetch();
         if ($rowFoto && !empty($rowFoto['cambios_tmp'])) {
             $cambiosRech = json_decode($rowFoto['cambios_tmp'], true);
-            if (!empty($cambiosRech['foto_perfil']) && file_exists(__DIR__ . '/../public/uploads/avatares/' . $cambiosRech['foto_perfil'])) {
-                @unlink(__DIR__ . '/../public/uploads/avatares/' . $cambiosRech['foto_perfil']);
+            if (!empty($cambiosRech['foto_perfil']) && file_exists(__DIR__ . '/../../public/uploads/avatares/' . $cambiosRech['foto_perfil'])) {
+                @unlink(__DIR__ . '/../../public/uploads/avatares/' . $cambiosRech['foto_perfil']);
             }
         }
         header('Location: ' . BASE_URL . 'admin/personal.php?flash=perfil_rechazado');
@@ -229,7 +229,7 @@ $pageTitle  = 'Gestión de Personal';
 $activeMenu = 'personal';
 $helpPage   = 'personal';
 
-require_once __DIR__ . '/../includes/header_admin.php';
+require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <?php if ($mensajeFlash): ?>
@@ -603,4 +603,4 @@ function abrirModalEditar(data) {
 }
 </script>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../../includes/footer.php'; ?>
