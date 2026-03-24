@@ -116,11 +116,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Problema**: El footer del sidebar era demasiado transparente y los botones carecían de distinción profesional.
   - **Mejora**: Se aplicó un fondo sólido `#1a1c23` (Charcoal Premium) con un sutil `box-shadow` superior. Los botones de Perfil y Cerrar Sesión ahora tienen fondos individuales `#2d2f39`, bordes definidos y estados hover con `translateY(-1px)` y sombras profundas, mejorando la ergonomía visual.
 
-- **Sincronización de Calendario Editorial (Fase 4, 2026-03-24)**:
-    - **Fatal Error Fix**: Se extrajo el modal de cumpleaños a `admin/modales/modal_cumple.php`, haciéndolo un componente compartido consultable desde Diferas departamentos (Sistemas, Difusión, Hub Público).
-    - **Unificación de Datos**: El calendario editorial ahora realiza un `UNION` con la tabla global `eventos` (para eventos institucionales) y con los cumpleaños dinámicos de `cat_personal`, garantizando que el personal de Difusión vea la agenda completa.
-    - **Refactor UI (COMECyTUI)**: Se eliminó la dependencia de Bootstrap en `areas/difusion/calendario_editorial.php`. Los modales ahora usan el sistema nativo `.modal-backdrop` y `.modal`, evitando que los diálogos se desplacen al final de la página (problema de frames).
-    - **Consistencia Visual**: Las píldoras de eventos y el grid del calendario editorial son ahora 100% consistentes con el calendario administrativo central.
+- **Refinamiento UI Calendario Editorial (2026-03-24)**:
+    - **Indicador de Hoy**: Se simplificó el resaltado del día actual, eliminando el borde que recorría toda la celda. Ahora se utiliza únicamente un indicador circular (bolita) de color primario en el número del día, mejorando la limpieza visual de la cuadrícula.
+    - **Diseño Post-it 3D**: Las píldoras de eventos ahora emulan fielmente una nota adhesiva real. Se incorporó un pliegue (`::after`) en la esquina inferior derecha y una animación hover con `scale(1.03)` y `rotate(-1deg)` para dar tridimensionalidad.
+    - **Consistencia de Sombras**: Se ajustaron los `box-shadow` iniciales y en hover para dar sensación de profundidad y realismo (papel real).
 
 - **Sistema de Gestión de Evidencias (Fase 4, 2026-03-24)**:
     - **Staff/Sistemas**: En `admin/detalle.php`, se habilitó la carga de evidencias (fotos, PDF, documentos) con descripciones obligatorias capturadas mediante `COMECyTUI.prompt`.

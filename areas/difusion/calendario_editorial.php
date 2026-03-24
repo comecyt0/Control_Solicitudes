@@ -272,21 +272,59 @@ $extraHead = '
 .nav-btn-group { display: flex; gap: 0.5rem; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #f1f5f9; gap: 1px; }
 .calendar-day-name { padding: 1rem; text-align: center; font-weight: 700; font-size: 0.8rem; color: #64748b; text-transform: uppercase; background: #f8fafc; }
-.calendar-cell { min-height: 140px; padding: 0.6rem; background: #fff; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.2s; }
+.calendar-cell { min-height: 140px; padding: 0.6rem; background: #fff; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.2s; position: relative; }
 .calendar-cell:hover { background: #fafafa; }
-.calendar-cell.today { border: 2px solid var(--color-primary); box-shadow: inset 0 0 10px rgba(225,29,72,0.05); }
-.day-number { font-weight: 700; color: #475569; align-self: flex-end; }
-.calendar-cell.today .day-number { background: var(--color-primary); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+/* Indicador de hoy: solo bolita en el número, no borde en la celda */
+.calendar-cell.today { background: #fff; }
+.day-number { font-weight: 700; color: #475569; align-self: flex-end; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s; }
+.calendar-cell.today .day-number { background: var(--color-primary); color: white; box-shadow: 0 2px 4px rgba(225,29,72,0.3); }
 
-/* Sticky Notes */
-.evento-pildora { font-size: 0.72rem; padding: 6px 8px; border-radius: 2px 2px 10px 2px; color: #1e293b; margin-bottom: 3px; position: relative; box-shadow: 2px 2px 4px rgba(0,0,0,0.05); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: 3px solid transparent; }
-.evento-pildora:hover { transform: scale(1.02); z-index: 5; }
+/* Diseño de Post-it Premium con pliegue */
+.evento-pildora { 
+    font-size: 0.72rem; 
+    padding: 6px 10px 6px 8px; 
+    border-radius: 2px 2px 12px 2px; 
+    color: #1e293b; 
+    margin-bottom: 4px; 
+    position: relative; 
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.06), inset -5px -5px 15px rgba(0,0,0,0.02); 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    white-space: nowrap; 
+    border-top: 3px solid transparent;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Pliegue de página post-it */
+.evento-pildora::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    border-width: 0 0 10px 10px;
+    border-style: solid;
+    border-color: rgba(0,0,0,0.06) white;
+    box-shadow: -1px -1px 2px rgba(0,0,0,0.04);
+}
+
+.evento-pildora:hover { 
+    transform: scale(1.03) translateY(-2px) rotate(-1deg); 
+    box-shadow: 4px 8px 15px rgba(0,0,0,0.1); 
+    z-index: 10; 
+}
+.evento-titulo { font-weight: 700; display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; }
+
 .nota-azul { background: #e0f2fe; border-top-color: #0284c7; }
 .nota-verde { background: #dcfce7; border-top-color: #16a34a; }
 .nota-dorado { background: #fef08a; border-top-color: #ca8a04; }
 .nota-rojo { background: #fee2e2; border-top-color: #dc2626; }
 /* Editorial */
 .nota-difusion { background: #fff1f2; border-top-color: #e11d48; }
+
+.cumple-mini-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ca8a04; }
+.cumple-mini-placeholder { background: #fef08a; color: #ca8a04; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; }
 
 /* Kanban */
 .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; padding: 1.5rem 0; }
