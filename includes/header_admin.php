@@ -78,6 +78,7 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin_extra.css">
+    <script src="<?= BASE_URL ?>assets/js/ui-frames.js"></script>
     <?php if (isset($extraHead)) echo $extraHead; ?>
 </head>
 <body class="layout-admin<?= $darkMode ? ' dark-mode' : '' ?>" id="bodyRoot">
@@ -1119,7 +1120,7 @@ try {
     };
     window.confirmarTarea = function () {
         const titulo = document.getElementById('chatTareaTitulo').value.trim();
-        if (!titulo) { alert('El título es obligatorio.'); return; }
+        if (!titulo) { COMECyTUI.alert('El título de la tarea es obligatorio.', 'Validación'); return; }
         const fd = new FormData();
         fd.append('csrf_token', csrfToken);
         fd.append('accion',      'crear_tarea');
@@ -1135,9 +1136,9 @@ try {
                     cerrarModalTarea(); 
                     cargarMensajes(true, false); 
                     if(window.COMECyTNotif) window.COMECyTNotif.alerta('chat');
-                } else alert('Error: ' + (d.error || 'Desconocido')); 
+                } else COMECyTUI.alert('Error: ' + (d.error || 'Desconocido'), 'Error al crear'); 
             })
-            .catch(() => alert('Error de conexión'));
+            .catch(() => COMECyTUI.toast('Error de conexión', 'error'));
     };
 
     // -? Modal: Nuevo Evento --------------------------------------?
@@ -1158,7 +1159,7 @@ try {
     window.confirmarEvento = function () {
         const titulo = document.getElementById('chatEventoTitulo').value.trim();
         const inicio = document.getElementById('chatEventoInicio').value;
-        if (!titulo || !inicio) { alert('Título y fecha inicio son obligatorios.'); return; }
+        if (!titulo || !inicio) { COMECyTUI.alert('El título y la fecha de inicio son campos obligatorios.', 'Validación'); return; }
         const fd = new FormData();
         fd.append('csrf_token',   csrfToken);
         fd.append('accion',       'crear_evento');
@@ -1174,9 +1175,9 @@ try {
                     cerrarModalEvento(); 
                     cargarMensajes(true, false); 
                     if(window.COMECyTNotif) window.COMECyTNotif.alerta('chat');
-                } else alert('Error: ' + (d.error || 'Desconocido')); 
+                } else COMECyTUI.alert('Error: ' + (d.error || 'Desconocido'), 'Error al agendar'); 
             })
-            .catch(() => alert('Error de conexión'));
+            .catch(() => COMECyTUI.toast('Error de conexión', 'error'));
     };
 
     // -? Drag & Drop + Resize del panel v4.1 ----------------------?
