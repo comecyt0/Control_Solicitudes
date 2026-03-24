@@ -213,8 +213,9 @@ try {
     <style>
     .sidebar-footer {
         padding: 1.25rem 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(0, 0, 0, 0.15);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        background: #1a1c23; /* Fondo sólido profesional */
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
     }
     .admin-info {
         display: flex;
@@ -226,43 +227,48 @@ try {
         width: 38px; height: 38px;
         background: linear-gradient(135deg, #662331, #8b2f42);
         color: white;
-        border-radius: 10px;
+        border-radius: 12px;
         display: flex; align-items: center; justify-content: center;
         font-size: 1.1rem; flex-shrink: 0;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
     }
     .admin-details {
         min-width: 0; flex: 1;
         display: flex; flex-direction: column;
     }
     .admin-name {
-        font-weight: 700; font-size: 0.85rem; color: #fff;
+        font-weight: 700; font-size: 0.88rem; color: #f8fafc;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         line-height: 1.2;
     }
     .admin-role {
-        font-size: 0.72rem; color: rgba(255,255,255,0.5);
-        text-transform: capitalize;
+        font-size: 0.7rem; color: #94a3b8;
+        text-transform: uppercase; letter-spacing: 0.03em;
+        margin-top: 2px;
     }
     .footer-actions {
         display: flex; gap: 8px;
     }
     .btn-footer-link {
-        flex: 1; height: 34px;
+        flex: 1; height: 36px;
         display: flex; align-items: center; justify-content: center;
-        background: rgba(255,255,255,0.05);
-        color: rgba(255,255,255,0.7);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 8px; text-decoration: none;
-        transition: all 0.2s; font-size: 0.9rem;
+        background: #2d2f39;
+        color: #e2e8f0;
+        border: 1px solid #3f414a;
+        border-radius: 10px; text-decoration: none;
+        transition: all 0.25s ease; font-size: 0.95rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .btn-footer-link:hover {
-        background: rgba(255,255,255,0.15);
-        color: #fff; border-color: rgba(255,255,255,0.2);
+        background: #3f414a;
+        color: #fff; border-color: #52545d;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     .btn-danger-soft:hover {
-        background: rgba(239, 68, 68, 0.2);
-        color: #f87171; border-color: rgba(239, 68, 68, 0.3);
+        background: #7f1d1d;
+        color: #fecaca; border-color: #991b1b;
     }
     </style>
 </aside>

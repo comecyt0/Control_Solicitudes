@@ -107,7 +107,26 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución Mobile-First**: Se implementó `@media (max-width: 650px)` en `header_admin.php`, haciendo el panel `width: 100%`, moviendo el sidebar a vista completa y añadiendo un botón de retroceso (`chat-mobile-back`) para navegar entre la lista de administradores y los mensajes.
 
 - **🚀 Unificación de Acceso por Área (Multi-tenant)**:
-  - **Problema**: El personal (no admin) con área asignada no era redirigido correctamente y no tenía acceso visual ni técnico a los dashboards de su área desde el hub público.
-  - **Acceso Híbrido**: `verificarSesionAdmin()` en `config/auth.php` ahora permite el acceso si existe `admin_id` O `user_id`, permitiendo que el personal legítimo consulte las herramientas de su departamento.
-  - **Router Inteligente**: Se habilitó `public/router.php` para el rol `usuario`. Ahora, cualquier usuario con `cve_area > 1` es canalizado a la carpeta de su área (ej. `areas/difusion/dashboard.php`) automáticamente al loguearse.
-  - **Interfaz Adaptativa**: El header público ahora muestra dinámicamente el botón "Mi Área" o "Panel de Admin" basándose en el `cve_area` de la sesión, facilitando el salto a la gestión departamental.
+    - **Problema**: El personal (no admin) con área asignada no era redirigido correctamente y no tenía acceso visual ni técnico a los dashboards de su área desde el hub público.
+    - **Acceso Híbrido**: `verificarSesionAdmin()` en `config/auth.php` ahora permite el acceso si existe `admin_id` O `user_id`, permitiendo que el personal legítimo consulte las herramientas de su departamento.
+    - **Router Inteligente**: Se habilitó `public/router.php` para el rol `usuario`. Ahora, cualquier usuario con `cve_area > 1` es canalizado a la carpeta de su área (ej. `areas/difusion/dashboard.php`) automáticamente al loguearse.
+    - **Interfaz Adaptativa**: El header público ahora muestra dinámicamente el botón "Mi Área" o "Panel de Admin" basándose en el `cve_area` de la sesión, facilitando el salto a la gestión departamental.
+
+- **🖌️ Rediseño Sidebar Footer (Fase 4, 2026-03-24)**: 
+  - **Problema**: El footer del sidebar era demasiado transparente y los botones carecían de distinción profesional.
+  - **Mejora**: Se aplicó un fondo sólido `#1a1c23` (Charcoal Premium) con un sutil `box-shadow` superior. Los botones de Perfil y Cerrar Sesión ahora tienen fondos individuales `#2d2f39`, bordes definidos y estados hover con `translateY(-1px)` y sombras profundas, mejorando la ergonomía visual.
+
+- **📊 Calendario Editorial con Kanban Nativo (Fase 4, 2026-03-24)**:
+  - **Sincronización Total**: El calendario de `areas/difusion/calendario_editorial.php` se reconstruyó para ser idéntico en diseño y UX al `admin/calendario.php`.
+  - **Independencia de Datos**: 
+    - **Eventos**: Consume exclusivamente `df_eventos_editoriales`.
+    - **Kanban**: Se integró el tablero de 3 columnas (Drag & Drop) filtrando `sb_kanban_tareas` por la `cve_area` del usuario logueado.
+  - **Migración de DB**: Se añadió la columna `cve_area` a `sb_kanban_tareas` para permitir este aislamiento sin duplicar tablas de estructura de tareas.
+  - **Automatización**: Al crear tareas desde el calendario o el chat de un área, se asigna automáticamente su `cve_area`, garantizando que cada departamento gestione su propio flujo de trabajo de forma privada.
+
+- **💬 Chat de Equipo — Segmentación por Área**:
+  - **Filtro Estricto**: El canal "General" del chat ahora es "General del Área". Solo muestra mensajes de administradores que comparten el mismo `cve_area`.
+  - **Directos**: El listado de administradores para DMs también está filtrado, permitiendo solo la comunicación interna departamental según la solicitud del usuario.
+
+- **📂 Constante `ROOT` missing**: Muchos scripts API (perfil, multimedia) usaban la constante `ROOT` para subir archivos, pero esta no estaba definida globalmente. Se definió centralmente en `config/database.php` como `dirname(__DIR__)` para asegurar que las rutas absolutas de servidor funcionen siempre en Docker y Windows.
+- **🔗 Fetch AJAX con URLs Relativas**: En `public/perfil.php`, el `fetch("api/perfil.php")` fallaba (404) si el usuario accedía desde una URL profunda como `/areas/difusion/dashboard.php`. **Solución**: Se cambió el `action` del formulario a una URL absoluta usando `<?= BASE_URL ?>public/api/perfil.php`, garantizando que el endpoint sea alcanzable desde cualquier contexto de navegación.

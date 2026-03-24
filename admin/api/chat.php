@@ -240,10 +240,10 @@ if ($accion === 'crear_tarea' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmtT = $pdo->prepare(
-        "INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a)
-         VALUES (?, ?, ?, 'pendiente', ?, ?) RETURNING id"
+        "INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area)
+         VALUES (?, ?, ?, 'pendiente', ?, ?, ?) RETURNING id"
     );
-    $stmtT->execute([$titulo, $descripcion, $color, $adminId, $asignadoA]);
+    $stmtT->execute([$titulo, $descripcion, $color, $adminId, $asignadoA, $cveArea]);
     $tareaId = (int) $stmtT->fetchColumn();
 
     $msgTexto = "📌 Nueva tarea: \"$titulo\"";

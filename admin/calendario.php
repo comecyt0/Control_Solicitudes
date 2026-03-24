@@ -71,8 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
         
         if ($titulo) {
-            $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a) VALUES (?, ?, ?, 'pendiente', ?, ?)");
-            $stmt->execute([$titulo, $descripcion, $color, $_SESSION['admin_id'], $asignado_a]);
+            $cveArea = (int) ($_SESSION['admin_cve_area'] ?? 1);
+            $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
+            $stmt->execute([$titulo, $descripcion, $color, $_SESSION['admin_id'], $asignado_a, $cveArea]);
             header('Location: ' . BASE_URL . 'admin/calendario.php?flash=tarea_creada#kanban');
             exit;
         }

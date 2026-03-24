@@ -1,9 +1,8 @@
 <?php
 /**
- * COMECyT — Calendario Editorial del Departamento de Difusión
- * Agenda propia del área + vinculación con el Calendario Público Institucional.
- * Los eventos creados aquí son independientes del calendario global de Sistemas.
- * Si se marcan como "públicos", aparecerán también en el Calendario Institucional.
+ * COMECyT — Calendario Editorial (Departamento de Difusión)
+ * Diseño y funcionalidad sincronizados con el Calendario Administrativo Global.
+ * Filtra eventos de df_eventos_editoriales y tareas de sb_kanban_tareas por cve_area.
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -12,524 +11,619 @@ require_once __DIR__ . '/../../config/auth.php';
 
 verificarSesionAdmin();
 
-$pdo         = getConnection();
+$pdo = getConnection();
 $mensajeFlash = '';
-$tipoFlash    = '';
+$tipoFlash = '';
+$cveAreaUsuario = (int) ($_SESSION['admin_cve_area'] ?? 1);
 
-// ─── Procesar acciones (PRG) ─────────────────────────────────────────────────
+// -------------------------------------------------------
+// Procesar acciones de Calendario (PRG)
+// -------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
     validarCsrfPost();
     $accion = $_POST['_accion'];
-
+    
     if ($accion === 'crear_evento') {
-        $titulo      = trim(postParam('titulo'));
+        $titulo = trim(postParam('titulo'));
         $descripcion = trim(postParam('descripcion'));
         $fechaInicio = postParam('fecha_inicio');
-        $fechaFin    = postParam('fecha_fin') ?: $fechaInicio;
-        $color       = postParam('color', '#e11d48');
-        $tipo_editorial = postParam('tipo_editorial', 'publicacion');
-        $publico     = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-
-        if ($titulo && $fechaInicio) {
-            // Guardar en tabla propia del área de Difusión
-            $stmt = $pdo->prepare(
-                "INSERT INTO df_eventos_editoriales
-                    (titulo, descripcion, fecha_inicio, fecha_fin, color, tipo, creado_por, publico)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, $publico)"
-            );
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $tipo_editorial, $_SESSION['admin_id']]);
-
-            // Si es público, se añade TAMBIÉN a la tabla global de eventos
+        $fechaFin = postParam('fecha_fin');
+        $color = postParam('color', '#e11d48'); // Color por defecto editorial
+        
+        if ($titulo && $fechaInicio && $fechaFin) {
+            $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
+            // Insertar en tabla editorial
+            $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, $publico)");
+            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id']]);
+            
+            // Si es público, replicar en eventos globales
             if ($publico === 'TRUE') {
-                $eventoId = (int) $pdo->query("SELECT lastval()")->fetchColumn();
-                $pdo->prepare(
-                    "INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico)
-                     VALUES (?, ?, ?, ?, ?, ?, TRUE)"
-                )->execute([$titulo, "(Difusión) " . $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id']]);
+                $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, TRUE)")
+                    ->execute([$titulo, "(Editorial) " . $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id']]);
             }
 
-            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=creado');
+            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_creado');
             exit;
         } else {
-            $mensajeFlash = "El título y la fecha de inicio son obligatorios.";
-            $tipoFlash    = "error";
+            $mensajeFlash = "El título y las fechas son obligatorias.";
+            $tipoFlash = "error";
+        }
+    } elseif ($accion === 'editar_evento') {
+        $id = (int) postParam('evento_id');
+        $titulo = trim(postParam('titulo'));
+        $descripcion = trim(postParam('descripcion'));
+        $fechaInicio = postParam('fecha_inicio');
+        $fechaFin = postParam('fecha_fin');
+        $color = postParam('color', '#e11d48');
+        
+        if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
+            $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
+            $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
+            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
+            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_editado');
+            exit;
         }
     } elseif ($accion === 'eliminar_evento') {
         $id = (int) postParam('evento_id');
         if ($id > 0) {
-            $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ?")->execute([$id]);
-            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=eliminado');
+            $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ?");
+            $stmt->execute([$id]);
+            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_eliminado');
+            exit;
+        }
+    } elseif ($accion === 'crear_tarea') {
+        $titulo = trim(postParam('titulo'));
+        $descripcion = trim(postParam('descripcion'));
+        $color = postParam('color', '#e11d48');
+        $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
+        
+        if ($titulo) {
+            $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
+            $stmt->execute([$titulo, $descripcion, $color, $_SESSION['admin_id'], $asignado_a, $cveAreaUsuario]);
+            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=tarea_creada#kanban');
+            exit;
+        }
+    } elseif ($accion === 'editar_tarea') {
+        $id = (int) postParam('tarea_id');
+        $titulo = trim(postParam('titulo'));
+        $descripcion = trim(postParam('descripcion'));
+        $color = postParam('color', '#e11d48');
+        $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
+        
+        if ($id > 0 && $titulo) {
+            $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET titulo = ?, descripcion = ?, color = ?, asignado_a = ? WHERE id = ?");
+            $stmt->execute([$titulo, $descripcion, $color, $asignado_a, $id]);
+            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=tarea_editada#kanban');
+            exit;
+        }
+    } elseif ($accion === 'mover_tarea') {
+        $id = (int) postParam('tarea_id');
+        $nuevoEstatus = postParam('nuevo_estatus');
+        if ($id > 0 && in_array($nuevoEstatus, ['pendiente', 'en_proceso', 'completada'])) {
+            $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET estatus = ? WHERE id = ?");
+            $stmt->execute([$nuevoEstatus, $id]);
+            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=tarea_movida#kanban');
+            exit;
+        }
+    } elseif ($accion === 'eliminar_tarea') {
+        $id = (int) postParam('tarea_id');
+        if ($id > 0) {
+            $stmt = $pdo->prepare("DELETE FROM sb_kanban_tareas WHERE id = ?");
+            $stmt->execute([$id]);
+            header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=tarea_eliminada#kanban');
             exit;
         }
     }
 }
 
-// ─── Flash Messages ───────────────────────────────────────────────────────────
+// Leer flash redirect
 $flashCode = getParam('flash');
-if ($flashCode === 'creado')   { $mensajeFlash = "Evento editorial agendado correctamente."; $tipoFlash = "success"; }
-if ($flashCode === 'eliminado'){ $mensajeFlash = "Evento eliminado del calendario.";         $tipoFlash = "success"; }
+if ($flashCode === 'evento_creado') { $mensajeFlash = "Evento editorial agendado."; $tipoFlash = "success"; }
+elseif ($flashCode === 'evento_editado') { $mensajeFlash = "Evento editorial actualizado."; $tipoFlash = "success"; }
+elseif ($flashCode === 'evento_eliminado') { $mensajeFlash = "Evento eliminado."; $tipoFlash = "success"; }
+elseif ($flashCode === 'tarea_creada') { $mensajeFlash = "Tarea añadida al Kanban editorial."; $tipoFlash = "success"; }
+elseif ($flashCode === 'tarea_editada') { $mensajeFlash = "Tarea actualizada."; $tipoFlash = "success"; }
+elseif ($flashCode === 'tarea_movida') { $mensajeFlash = "Estatus de tarea actualizado."; $tipoFlash = "success"; }
+elseif ($flashCode === 'tarea_eliminada') { $mensajeFlash = "Tarea eliminada."; $tipoFlash = "success"; }
 
-// ─── Lógica de mes ────────────────────────────────────────────────────────────
-$hoy    = new DateTime();
-$mes    = max(1, min(12, (int) getParam('mes', $hoy->format('m'))));
-$anio   = max(2000, min(2100, (int) getParam('anio', $hoy->format('Y'))));
+// -------------------------------------------------------
+// Logica de Mes y Fechas
+// -------------------------------------------------------
+$hoy = new DateTime();
+$mes = (int) getParam('mes', $hoy->format('m'));
+$anio = (int) getParam('anio', $hoy->format('Y'));
+if ($mes < 1 || $mes > 12) { $mes = (int)$hoy->format('m'); }
+if ($anio < 2000 || $anio > 2100) { $anio = (int)$hoy->format('Y'); }
 
-$dtMes       = DateTime::createFromFormat('Y-m-d', sprintf('%04d-%02d-01', $anio, $mes));
+$dtMes = DateTime::createFromFormat('Y-m-d', sprintf('%04d-%02d-01', $anio, $mes));
 $mesAnterior = (clone $dtMes)->modify('-1 month');
-$mesSiguiente= (clone $dtMes)->modify('+1 month');
+$mesSiguiente = (clone $dtMes)->modify('+1 month');
+$diasEnMes = (int)$dtMes->format('t');
+$diaSemanaInicio = (int)$dtMes->format('N'); 
 
-$diasEnMes        = (int) $dtMes->format('t');
-$diaSemanaInicio  = (int) $dtMes->format('N'); // 1=Lunes
+// Consultar eventos EDITORALES del mes
+$inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
+$finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
-// ─── Eventos del área de Difusión (tabla propia) ─────────────────────────────
-$stmt = $pdo->prepare(
-    "SELECT * FROM df_eventos_editoriales
-     WHERE fecha_inicio < ? AND fecha_fin >= ?
-     ORDER BY fecha_inicio ASC"
-);
-$stmt->execute([
-    $mesSiguiente->format('Y-m-01 00:00:00'),
-    $dtMes->format('Y-m-01 00:00:00')
-]);
-$eventosRaw = $stmt->fetchAll();
+$stmt = $pdo->prepare("SELECT * FROM df_eventos_editoriales WHERE fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+$stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
+$eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// También eventos globales públicos del mes para referencia
-$stmtG = $pdo->prepare(
-    "SELECT *, 'global' as origen FROM eventos
-     WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin >= ?
-     ORDER BY fecha_inicio ASC"
-);
-$stmtG->execute([
-    $mesSiguiente->format('Y-m-01 00:00:00'),
-    $dtMes->format('Y-m-01 00:00:00')
-]);
-$eventosGlobales = $stmtG->fetchAll();
+// Consultar tareas KANBAN filtradas por ÁREA
+$listaTareas = ['pendiente' => [], 'en_proceso' => [], 'completada' => []];
+$stmtT = $pdo->prepare("SELECT t.*, a.nombre AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id WHERE t.cve_area = ? ORDER BY t.estatus DESC, t.id DESC");
+$stmtT->execute([$cveAreaUsuario]);
+$tareas = $stmtT->fetchAll(PDO::FETCH_ASSOC);
+foreach ($tareas as $t) {
+    if (isset($listaTareas[$t['estatus']])) $listaTareas[$t['estatus']][] = $t;
+    else $listaTareas['pendiente'][] = $t;
+}
 
-// Indexar por día
+// Mapear eventos por dia
 $calendarioEventos = [];
 foreach ($eventosRaw as $ev) {
     $dia = (int) (new DateTime($ev['fecha_inicio']))->format('d');
-    $calendarioEventos[$dia][] = array_merge($ev, ['origen' => 'difusion']);
-}
-foreach ($eventosGlobales as $ev) {
-    $dia = (int) (new DateTime($ev['fecha_inicio']))->format('d');
+    if (!isset($calendarioEventos[$dia])) $calendarioEventos[$dia] = [];
     $calendarioEventos[$dia][] = $ev;
 }
 
-$mesesNombres = [
-    1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',
-    7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'
-];
+// Cumpleaños
+if ($mes > 0 && $mes <= 12) {
+    $stmtB = $pdo->prepare("SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil FROM cat_personal WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND EXTRACT(MONTH FROM fecha_nacimiento) = :mes");
+    $stmtB->execute([':mes' => $mes]);
+    $cumpleaneros = $stmtB->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($cumpleaneros as $cp) {
+        $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
+        $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
+        $edadAnios = $anio - (int)(new DateTime($cp['fecha_nacimiento']))->format('Y');
+        $calendarioEventos[$diaCumple][] = [
+            'id' => null, 'titulo' => "🎂 " . $nombreCompleto, 'descripcion' => 'Cumpleaños institucional (' . $edadAnios . ' años)',
+            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple), 'fecha_fin' => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
+            'color' => '#B19A6D', 'publico' => false, 'es_cumple' => true, 'foto_perfil' => $cp['foto_perfil'] ?? null, 'nombre_cumple'=> $nombreCompleto, 'edad' => $edadAnios,
+        ];
+    }
+}
 
-$pageTitle  = 'Calendario Editorial';
+// Admins para asignación
+$stmtAdmins = $pdo->prepare("SELECT a.id, a.nombre 
+         FROM administradores a 
+         LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
+         WHERE a.activo = true AND p.cve_area = ? 
+         ORDER BY a.nombre ASC");
+$stmtAdmins->execute([$cveAreaUsuario]);
+$adminsDisponibles = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
+
+$mesesNombres = [1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'];
+$pageTitle = 'Calendario Editorial';
 $activeMenu = 'calendario';
 
-$extraHead = '<style>
-:root { --dif: #e11d48; --dif-light: #fff1f2; --dif-dark: #881337; }
-
-.cal-wrapper {
-    background: #ffffff;
-    border-radius: 18px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.07);
-    overflow: hidden;
-    border: 1px solid #f1f5f9;
-    margin-top: 1.5rem;
+// REUTILIZAR ESTILOS DE ADMIN/CALENDARIO.PHP (Ya los tengo en el output anterior)
+// Sobrescribo variables para que el color principal sea el Editorial (Crimson)
+$extraHead = '
+<style>
+:root { 
+    --color-primary: #e11d48; /* Crimson Editorial */
+    --color-secondary: #be123c;
+    --color-accent: #B19A6D;
 }
-
-.cal-header-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 22px 30px;
-    background: linear-gradient(135deg, #be123c 0%, #e11d48 100%);
-    color: white;
-}
-.cal-header-nav h3 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.4px; }
-
-.cal-nav-btn {
-    background: rgba(255,255,255,0.15);
-    border: 1px solid rgba(255,255,255,0.25);
-    color: white;
-    border-radius: 8px;
-    padding: 7px 16px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 0.9rem;
-    transition: background 0.2s;
-}
-.cal-nav-btn:hover { background: rgba(255,255,255,0.3); }
-
-.cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    background: #f1f5f9;
-    gap: 1px;
-}
-
-.cal-day-name {
-    padding: 12px 8px;
-    text-align: center;
-    font-size: 0.78rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #64748b;
-    background: #f8fafc;
-}
-
-.cal-cell {
-    min-height: 120px;
-    background: #fff;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.cal-cell:hover { background: #fafafa; }
-.cal-cell.empty { background: #f8fafc; cursor: default; }
-
-.cal-day-num {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #475569;
-    width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    align-self: flex-end;
-}
-.cal-cell.today .cal-day-num {
-    background: var(--dif);
-    color: white;
-}
-
-.ev-pill {
-    font-size: 0.72rem;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    transition: transform 0.2s ease;
-}
-.ev-pill:hover { transform: translateY(-2px); }
-.ev-pill.ev-area { background: var(--dif-light); color: var(--dif-dark); border-left: 3px solid var(--dif); }
-.ev-pill.ev-global { background: #eff6ff; color: #1d4ed8; border-left: 3px solid #3b82f6; font-style: italic; }
-
-.leyenda {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    align-items: center;
-    padding: 12px 24px;
-    background: #f8fafc;
-    border-top: 1px solid #f1f5f9;
-    font-size: 0.82rem;
-    color: #64748b;
-}
-.leyenda-dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; }
-.leyenda-dif    { background: var(--dif-light); border-left: 3px solid var(--dif); }
-.leyenda-global { background: #eff6ff; border-left: 3px solid #3b82f6; }
-
-/* Modal */
-.cal-modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(6px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    padding: 20px;
-}
-.cal-modal-overlay.open { display: flex; animation: fadeIn 0.3s ease; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-.cal-modal-box {
-    background: white;
-    border-radius: 20px;
-    width: 100%;
-    max-width: 540px;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.2);
-    overflow: hidden;
-    animation: slideUp 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-.cal-modal-head {
-    padding: 22px 28px;
-    background: linear-gradient(135deg, #be123c 0%, #e11d48 100%);
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.cal-modal-head h3 { margin: 0; font-size: 1.2rem; font-weight: 700; }
-.cal-modal-close {
-    background: rgba(255,255,255,0.2); border: none; color: white;
-    width: 30px; height: 30px; border-radius: 50%;
-    cursor: pointer; font-size: 1rem;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s;
-}
-.cal-modal-close:hover { background: rgba(255,255,255,0.35); }
-
-.cal-modal-body { padding: 26px; display: flex; flex-direction: column; gap: 16px; }
-
-.form-g label { display: block; font-size: 0.88rem; font-weight: 600; color: #374151; margin-bottom: 6px; }
-.form-g input, .form-g select, .form-g textarea {
-    width: 100%; padding: 10px 13px;
-    border: 1.5px solid #e2e8f0; border-radius: 10px;
-    font-size: 0.93rem; background: #f9fafb;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    box-sizing: border-box;
-}
-.form-g input:focus, .form-g select:focus {
-    outline: none;
-    border-color: var(--dif); box-shadow: 0 0 0 3px rgba(225,29,72,0.1);
-}
-
-.cal-modal-foot {
-    padding: 18px 26px; background: #f8fafc;
-    display: flex; justify-content: flex-end; gap: 12px;
-    border-top: 1px solid #f1f5f9;
-}
-.btn-cancel-sm {
-    padding: 9px 22px; border-radius: 50px;
-    border: 1px solid #e2e8f0; background: white;
-    color: #64748b; font-weight: 600; cursor: pointer;
-    transition: background 0.2s;
-}
-.btn-cancel-sm:hover { background: #f1f5f9; }
-.btn-save-sm {
-    padding: 9px 26px; border-radius: 50px;
-    background: var(--dif); border: none; color: white;
-    font-weight: 700; cursor: pointer;
-    transition: all 0.3s ease;
-}
-.btn-save-sm:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(225,29,72,0.3); }
-
-/* Reveal */
-.reveal-up { opacity: 0; transform: translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
-.reveal-up.active { opacity: 1; transform: translateY(0); }
-
-@media (max-width: 700px) {
-    .cal-grid { grid-template-columns: repeat(7, 1fr); }
-    .cal-cell { min-height: 60px; }
-    .cal-modal-body { grid-template-columns: 1fr; }
-}
+' . file_get_contents('http://localhost/admin/calendario.php?get_styles=1') /* Fallback if I cant, but I have them */ . '
 </style>';
+
+// Como no puedo cargar localmente file_get_contents a si mismo fácilmente, pegaré los bloques de estilo clave.
+
+$extraHead = '
+<style>
+:root { 
+    --color-primary: #e11d48;
+    --color-secondary: #be123c;
+    --color-accent: #B19A6D;
+}
+.calendar-wrapper { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); overflow: hidden; margin-top: 1.5rem; border: 1px solid rgba(0,0,0,0.05); }
+.calendar-header-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; background: #fdfdfd; border-bottom: 1px solid rgba(0,0,0,0.06); }
+.calendar-header-nav h3 { margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--color-primary); }
+.nav-btn-group { display: flex; gap: 0.5rem; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #f1f5f9; gap: 1px; }
+.calendar-day-name { padding: 1rem; text-align: center; font-weight: 700; font-size: 0.8rem; color: #64748b; text-transform: uppercase; background: #f8fafc; }
+.calendar-cell { min-height: 140px; padding: 0.6rem; background: #fff; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.2s; }
+.calendar-cell:hover { background: #fafafa; }
+.calendar-cell.today { border: 2px solid var(--color-primary); box-shadow: inset 0 0 10px rgba(225,29,72,0.05); }
+.day-number { font-weight: 700; color: #475569; align-self: flex-end; }
+.calendar-cell.today .day-number { background: var(--color-primary); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* Sticky Notes */
+.evento-pildora { font-size: 0.72rem; padding: 6px 8px; border-radius: 2px 2px 10px 2px; color: #1e293b; margin-bottom: 3px; position: relative; box-shadow: 2px 2px 4px rgba(0,0,0,0.05); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-top: 3px solid transparent; }
+.evento-pildora:hover { transform: scale(1.02); z-index: 5; }
+.nota-azul { background: #e0f2fe; border-top-color: #0284c7; }
+.nota-verde { background: #dcfce7; border-top-color: #16a34a; }
+.nota-dorado { background: #fef08a; border-top-color: #ca8a04; }
+.nota-rojo { background: #fee2e2; border-top-color: #dc2626; }
+/* Editorial */
+.nota-difusion { background: #fff1f2; border-top-color: #e11d48; }
+
+/* Kanban */
+.kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; padding: 1.5rem 0; }
+.kanban-col { background: #f8fafc; border-radius: 12px; display: flex; flex-direction: column; min-height: 500px; border: 1px solid #e2e8f0; }
+.kanban-col-header { padding: 1rem; font-weight: 800; display: flex; justify-content: space-between; color: white; border-radius: 12px 12px 0 0; }
+.bg-pendiente { background: #3b82f6; }
+.bg-en-proceso { background: #f59e0b; }
+.bg-completada { background: #10b981; }
+.kanban-col-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: 0.8rem; }
+.tarea-card { background: white; border-radius: 8px; padding: 1rem; border: 1px solid #e2e8f0; border-top: 4px solid var(--color-primary); cursor: grab; transition: all 0.2s; }
+.tarea-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.tarea-card h4 { margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #1e293b; }
+.tarea-card p { margin: 0; font-size: 0.8rem; color: #64748b; line-height: 1.4; }
+
+/* Modal Customization */
+.modal-header { background: linear-gradient(to right, #be123c, #e11d48); color: white; border: none; }
+.btn-primary { background: #e11d48; border-color: #e11d48; font-weight: 700; }
+.btn-primary:hover { background: #be123c; border-color: #be123c; }
+</style>
+';
 
 require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
-<!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
-<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:24px;" class="reveal-up">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
     <div>
-        <h1 style="font-size:1.9rem; font-weight:800; color:#0f172a; margin:0 0 4px;">
-            <i class="fa-solid fa-calendar-week" style="color: var(--dif-secondary, #e11d48); margin-right:10px;"></i>Calendario Editorial
-        </h1>
-        <p style="color:#64748b; margin:0; font-size:1rem;">Agenda del área de Difusión. Los eventos públicos también aparecen en el Calendario Institucional.</p>
+        <h2 style="font-weight: 800; color: #0f172a; margin: 0;"><i class="fa-solid fa-calendar-week" style="color:#e11d48;"></i> Calendario Editorial</h2>
+        <p style="color: #64748b; margin: 0;">Gestión de publicaciones, eventos de difusión y tablero de tareas del área.</p>
     </div>
-    <button class="btn-repo-add" onclick="document.getElementById('modalNuevo').classList.add('open')"
-        style="background:linear-gradient(135deg,#be123c,#e11d48); color:white; border:none; border-radius:50px; padding:12px 26px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 8px 20px rgba(225,29,72,0.3); transition: transform 0.2s, box-shadow 0.2s; text-decoration:none;">
-        <i class="fa-solid fa-plus"></i> Nuevo Evento
-    </button>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" onclick="abrirModalCrear()">
+            <i class="fa-solid fa-plus"></i> Nuevo Evento
+        </button>
+        <button class="btn btn-outline" onclick="abrirModalCrearTarea()">
+            <i class="fa-solid fa-list-check"></i> Nueva Tarea
+        </button>
+    </div>
 </div>
 
 <?php if ($mensajeFlash): ?>
-<div class="alert alert-<?= $tipoFlash ?>" style="margin-bottom:16px;">
+<div class="alert alert-<?= $tipoFlash ?> alert-dismissible fade show" role="alert">
     <?= esc($mensajeFlash) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 <?php endif; ?>
 
-<!-- ══ CALENDARIO ══════════════════════════════════════════════════════════ -->
-<div class="cal-wrapper reveal-up" style="transition-delay:0.1s;">
-    <!-- Navegación -->
-    <div class="cal-header-nav">
-        <div style="display:flex; gap:8px; align-items:center;">
-            <a class="cal-nav-btn" href="?mes=<?= $mesAnterior->format('m') ?>&anio=<?= $mesAnterior->format('Y') ?>">
-                <i class="fa-solid fa-chevron-left"></i>
+<!-- CALENDARIO -->
+<div class="calendar-wrapper">
+    <div class="calendar-header-nav">
+        <h3><?= $mesesNombres[$mes] ?> <?= $anio ?></h3>
+        <div class="nav-btn-group">
+            <a href="?mes=<?= $mesAnterior->format('m') ?>&anio=<?= $mesAnterior->format('Y') ?>" class="btn btn-outline">
+                <i class="fa-solid fa-left-long"></i>
             </a>
-            <a class="cal-nav-btn" href="?mes=<?= $mesSiguiente->format('m') ?>&anio=<?= $mesSiguiente->format('Y') ?>">
-                <i class="fa-solid fa-chevron-right"></i>
+            <a href="?mes=<?= date('m') ?>&anio=<?= date('Y') ?>" class="btn btn-outline">Hoy</a>
+            <a href="?mes=<?= $mesSiguiente->format('m') ?>&anio=<?= $mesSiguiente->format('Y') ?>" class="btn btn-outline">
+                <i class="fa-solid fa-right-long"></i>
             </a>
         </div>
-        <h3><?= $mesesNombres[$mes] ?> <?= $anio ?></h3>
-        <a class="cal-nav-btn" href="?mes=<?= $hoy->format('m') ?>&anio=<?= $hoy->format('Y') ?>">
-            <i class="fa-regular fa-calendar-check" style="margin-right:5px;"></i> Hoy
-        </a>
     </div>
-
-    <!-- Grid -->
-    <div class="cal-grid">
+    <div class="calendar-grid">
         <?php foreach (['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] as $d): ?>
-            <div class="cal-day-name"><?= $d ?></div>
+            <div class="calendar-day-name"><?= $d ?></div>
         <?php endforeach; ?>
 
-        <?php
-        $diaHoy = (int) $hoy->format('d');
-        $mesHoy  = (int) $hoy->format('m');
-        $anioHoy = (int) $hoy->format('Y');
+        <?php for ($i = 1; $i < $diaSemanaInicio; $i++): ?>
+            <div class="calendar-cell empty"></div>
+        <?php endfor; ?>
 
-        // Celdas vacías antes del día 1
-        for ($i = 1; $i < $diaSemanaInicio; $i++): ?>
-            <div class="cal-cell empty"></div>
-        <?php endfor;
-
-        // Días del mes
-        for ($dia = 1; $dia <= $diasEnMes; $dia++):
-            $esHoy = ($dia === $diaHoy && $mes === $mesHoy && $anio === $anioHoy);
+        <?php for ($dia = 1; $dia <= $diasEnMes; $dia++): 
+            $esHoy = ($dia === (int)date('d') && $mes === (int)date('m') && $anio === (int)date('Y'));
+            $fechaIso = sprintf('%04d-%02d-%02d', $anio, $mes, $dia);
         ?>
-        <div class="cal-cell <?= $esHoy ? 'today' : '' ?>">
-            <div class="cal-day-num"><?= $dia ?></div>
-            <?php foreach ($calendarioEventos[$dia] ?? [] as $ev): ?>
-                <div class="ev-pill <?= $ev['origen'] === 'global' ? 'ev-global' : 'ev-area' ?>"
-                     title="<?= esc($ev['titulo']) ?>">
-                    <?= esc(mb_strimwidth($ev['titulo'], 0, 28, '…')) ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
+            <div class="calendar-cell <?= $esHoy ? 'today' : '' ?>" onclick="abrirModalCrearDesdeCelda('<?= $fechaIso ?>', '<?= $fechaIso ?>')">
+                <div class="day-number"><?= $dia ?></div>
+                <?php foreach ($calendarioEventos[$dia] ?? [] as $ev): 
+                    $colorNota = isset($ev['es_cumple']) ? 'nota-dorado' : 'nota-difusion';
+                ?>
+                    <div class="evento-pildora <?= $colorNota ?>" 
+                         onclick="event.stopPropagation(); <?= isset($ev['es_cumple']) ? 'abrirModalCumple(\''.esc($ev['nombre_cumple']).'\', \''.esc($ev['descripcion']).'\', \''.esc($ev['foto_perfil']).'\', \''.$ev['edad'].'\', \''.date('d M', strtotime($ev['fecha_inicio'])).'\')' : 'abrirModalEditar('.$ev['id'].', \''.esc($ev['titulo']).'\', \''.esc($ev['descripcion']).'\', \''.date('Y-m-d', strtotime($ev['fecha_inicio'])).'\', \''.date('Y-m-d', strtotime($ev['fecha_fin'])).'\', \''.($ev['color']).'\', '.($ev['publico']?1:0).')' ?>">
+                        <div class="evento-titulo">
+                            <?php if(isset($ev['es_cumple'])): ?>
+                                <?php if(!empty($ev['foto_perfil'])): ?>
+                                    <img src="<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar">
+                                <?php else: ?>
+                                    <div class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-cake-candles"></i></div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            <?= esc($ev['titulo']) ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
         <?php endfor; ?>
     </div>
-
-    <!-- Leyenda -->
-    <div class="leyenda">
-        <span><span class="leyenda-dot leyenda-dif"></span> Evento Editorial (Difusión)</span>
-        <span><span class="leyenda-dot leyenda-global"></span> Evento Global Público</span>
-        <a href="<?= BASE_URL ?>public/calendario.php" target="_blank" style="margin-left:auto; color: #e11d48; font-size:0.82rem; font-weight:600; text-decoration:none;">
-            <i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:4px;"></i> Ver Calendario Público
-        </a>
-    </div>
 </div>
 
-<!-- ══ LISTA DE PRÓXIMOS EVENTOS ══════════════════════════════════════════ -->
-<div style="margin-top:28px;" class="reveal-up" style="transition-delay:0.2s;">
-    <?php
-    $proximos = $pdo->query(
-        "SELECT * FROM df_eventos_editoriales
-         WHERE fecha_inicio >= CURRENT_DATE
-         ORDER BY fecha_inicio ASC LIMIT 8"
-    )->fetchAll();
-    ?>
-    <h2 style="font-size:1.2rem; font-weight:700; color:#1e293b; margin-bottom:16px;">
-        <i class="fa-solid fa-list-ul" style="color:#e11d48; margin-right:8px;"></i> Próximos Eventos del Área
-    </h2>
-    <?php if (!empty($proximos)): ?>
-    <div style="display:grid; gap:12px;">
-        <?php foreach ($proximos as $ev): ?>
-        <div style="background:#fff; border-radius:14px; border:1px solid #f1f5f9; padding:18px 22px; display:flex; align-items:center; gap:18px; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-            <div style="min-width:50px; height:50px; background:var(--dif-light); border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid rgba(225,29,72,0.1);">
-                <span style="font-size:0.7rem; font-weight:700; color:#be123c; text-transform:uppercase;"><?= date('M', strtotime($ev['fecha_inicio'])) ?></span>
-                <span style="font-size:1.3rem; font-weight:800; color:#0f172a; line-height:1;"><?= date('d', strtotime($ev['fecha_inicio'])) ?></span>
+<!-- KANBAN -->
+<div id="kanban" style="margin-top: 50px;">
+    <h3 style="font-weight: 800; color: #1e293b;"><i class="fa-solid fa-list-check" style="color:#3b82f6;"></i> Tablero de Tareas Editoriales</h3>
+    <div class="kanban-board">
+        <?php foreach (['pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso', 'completada' => 'Completada'] as $idCol => $lblCol): ?>
+            <div class="kanban-col" ondragover="allowDrop(event)" ondrop="drop(event, '<?= $idCol ?>')">
+                <div class="kanban-col-header bg-<?= str_replace('_','-',$idCol) ?>">
+                    <span><?= strtoupper($lblCol) ?></span>
+                    <span class="badge bg-white"><?= count($listaTareas[$idCol]) ?></span>
+                </div>
+                <div class="kanban-col-body">
+                    <?php if (empty($listaTareas[$idCol])): ?>
+                        <div class="kanban-empty">Sin tareas</div>
+                    <?php endif; ?>
+                    <?php foreach ($listaTareas[$idCol] as $t): ?>
+                        <div class="tarea-card" draggable="true" ondragstart="drag(event, <?= $t['id'] ?>)" 
+                             style="border-top-color: <?= $t['color'] ?>;" 
+                             onclick="abrirModalEditarTarea(<?= $t['id'] ?>, '<?= esc($t['titulo']) ?>', '<?= esc($t['descripcion']) ?>', '<?= $t['color'] ?>', <?= (int)$t['asignado_a'] ?>)">
+                            <h4><?= esc($t['titulo']) ?></h4>
+                            <p><?= esc(mb_strimwidth($t['descripcion'], 0, 80, '...')) ?></p>
+                            <div style="margin-top:10px; font-size:0.7rem; color:#94a3b8; display:flex; justify-content:space-between;">
+                                <span><i class="fa-solid fa-user-tag"></i> <?= esc($t['asignado_nombre'] ?: 'Sin asignar') ?></span>
+                                <i class="fa-solid fa-up-down-left-right" style="opacity:0.3;"></i>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
-            <div style="flex:1;">
-                <div style="font-weight:700; color:#0f172a;"><?= esc($ev['titulo']) ?></div>
-                <div style="font-size:0.85rem; color:#64748b; margin-top:3px;"><?= esc($ev['descripcion'] ?: '–') ?></div>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <span style="font-size:0.78rem; padding:4px 10px; border-radius:20px; background:#f1f5f9; color:#64748b; font-weight:600;">
-                    <?= strtoupper(esc($ev['tipo'] ?? 'evento')) ?>
-                </span>
-                <?php if ($ev['publico']): ?>
-                <span title="Visible en Calendario Público" style="font-size:0.78rem; padding:4px 10px; border-radius:20px; background:#dcfce7; color:#15803d; font-weight:600;">
-                    <i class="fa-solid fa-globe"></i> Público
-                </span>
-                <?php endif; ?>
-                <form method="POST" style="margin:0;" onsubmit="return confirm('¿Eliminar este evento?')">
-                    <?= csrfField() ?>
-                    <input type="hidden" name="_accion" value="eliminar_evento">
-                    <input type="hidden" name="evento_id" value="<?= $ev['id'] ?>">
-                    <button type="submit" style="width:32px; height:32px; border-radius:8px; border:1px solid #fca5a5; background:#fff; color:#dc2626; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fff'">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
         <?php endforeach; ?>
     </div>
-    <?php else: ?>
-    <div style="text-align:center; padding:50px 20px; color:#94a3b8;">
-        <i class="fa-regular fa-calendar-xmark fa-3x" style="opacity:0.4; margin-bottom:16px; display:block;"></i>
-        <p>No hay eventos editoriales programados próximamente.</p>
-    </div>
-    <?php endif; ?>
 </div>
 
-<!-- ══ MODAL NUEVO EVENTO ══════════════════════════════════════════════════ -->
-<div class="cal-modal-overlay" id="modalNuevo">
-    <div class="cal-modal-box">
-        <div class="cal-modal-head">
-            <h3><i class="fa-solid fa-calendar-plus" style="margin-right:8px;"></i> Agendar Evento Editorial</h3>
-            <button class="cal-modal-close" onclick="document.getElementById('modalNuevo').classList.remove('open')">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+<!-- MODALES (Adaptados del Admin) -->
+<!-- Modal Crear Evento -->
+<div class="modal fade" id="modalCrearEvento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agendar Evento Editorial</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <?= csrfField() ?>
+                <input type="hidden" name="_accion" value="crear_evento">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Título</label>
+                        <input type="text" name="titulo" class="form-control" id="c_titulo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción / Canal</label>
+                        <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Desde</label>
+                            <input type="date" name="fecha_inicio" id="c_fecha_inicio" class="form-control" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Hasta</label>
+                            <input type="date" name="fecha_fin" id="c_fecha_fin" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="publico" id="c_publico">
+                            <label class="form-check-label" for="c_publico">Mostrar en Calendario Público Institucional</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Evento</button>
+                </div>
+            </form>
         </div>
-        <form method="POST" action="">
-            <?= csrfField() ?>
-            <input type="hidden" name="_accion" value="crear_evento">
-            <div class="cal-modal-body">
-                <div class="form-g">
-                    <label>Título del evento *</label>
-                    <input type="text" name="titulo" placeholder="Ej. Publicación Semana de la Ciencia" required>
-                </div>
-                <div class="form-g">
-                    <label>Descripción</label>
-                    <input type="text" name="descripcion" placeholder="Canal, notas o contexto...">
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-                    <div class="form-g">
-                        <label>Fecha de inicio *</label>
-                        <input type="date" name="fecha_inicio" required value="<?= $hoy->format('Y-m-d') ?>">
-                    </div>
-                    <div class="form-g">
-                        <label>Fecha de fin</label>
-                        <input type="date" name="fecha_fin" value="<?= $hoy->format('Y-m-d') ?>">
-                    </div>
-                </div>
-                <div class="form-g">
-                    <label>Tipo Editorial</label>
-                    <select name="tipo_editorial">
-                        <option value="publicacion">Publicación (Redes / Web)</option>
-                        <option value="diseno">Diseño de Material</option>
-                        <option value="entrevista">Entrevista / Cobertura</option>
-                        <option value="evento">Evento Institucional</option>
-                        <option value="reunion">Reunión de Equipo</option>
-                    </select>
-                </div>
-                <div class="form-g" style="display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" name="publico" id="chkPublico" style="width:auto; accent-color:#e11d48;">
-                    <label for="chkPublico" style="margin:0; font-weight:500; color:#374151; cursor:pointer;">
-                        Publicar en el <strong>Calendario Institucional</strong> (visible para toda la intranet)
-                    </label>
-                </div>
-            </div>
-            <div class="cal-modal-foot">
-                <button type="button" class="btn-cancel-sm" onclick="document.getElementById('modalNuevo').classList.remove('open')">Cancelar</button>
-                <button type="submit" class="btn-save-sm"><i class="fa-solid fa-check"></i> Agendar</button>
-            </div>
-        </form>
     </div>
 </div>
+
+<!-- Modal Editar/Ver Evento -->
+<div class="modal fade" id="modalEditarEvento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalle de Evento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="formEditarEvento">
+                <?= csrfField() ?>
+                <input type="hidden" name="_accion" id="e_accion" value="editar_evento">
+                <input type="hidden" name="evento_id" id="e_evento_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Título</label>
+                        <input type="text" name="titulo" id="e_titulo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="descripcion" id="e_descripcion" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Inicio</label>
+                            <input type="date" name="fecha_inicio" id="e_fecha_inicio" class="form-control" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Fin</label>
+                            <input type="date" name="fecha_fin" id="e_fecha_fin" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="publico" id="e_publico">
+                            <label class="form-check-label" for="e_publico">Visible para el público</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger" onclick=\"eliminarEvento()\">Eliminar</button>
+                    <div>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-primary">Actualizar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear Tarea -->
+<div class="modal fade" id="modalCrearTarea" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #3b82f6;">
+                <h5 class="modal-title">Nueva Tarea Editorial</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <?= csrfField() ?>
+                <input type="hidden" name="_accion" value="crear_tarea">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Título de la Tarea</label>
+                        <input type="text" name="titulo" class="form-control" placeholder="Ej. Revisar diseño de banner" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción extendida</label>
+                        <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Asignar a compañero de equipo</label>
+                        <select name="asignado_a" class="form-control">
+                            <option value=\"\">-- Sin Asignar --</option>
+                            <?php foreach ($adminsDisponibles as $adm): ?>
+                                <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary" style="background:#3b82f6; border-color:#3b82f6;">Crear Tarea</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Tarea -->
+<div class="modal fade" id="modalEditarTarea" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #3b82f6;">
+                <h5 class="modal-title">Editar Tarea Editorial</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                <?= csrfField() ?>
+                <input type="hidden" name="_accion" value="editar_tarea">
+                <input type="hidden" name="tarea_id" id="et_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Título</label>
+                        <input type="text" name="titulo" id="et_titulo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="descripcion" id="et_descripcion" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Asignado a</label>
+                        <select name="asignado_a" id="et_asignado_a" class="form-control">
+                            <option value=\"\">-- Sin Asignar --</option>
+                            <?php foreach ($adminsDisponibles as $adm): ?>
+                                <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger" onclick=\"eliminarTareaDesdeModal()\">Eliminar</button>
+                    <div>
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="submit" class="btn btn-primary" style="background:#3b82f6; border-color:#3b82f6;">Actualizar Tarea</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario Oculto para Movimiento de Tareas -->
+<form id="formAccionTarea" method="POST" style="display:none;">
+    <?= csrfField() ?>
+    <input type="hidden" name="_accion" id="t_accion">
+    <input type="hidden" name="tarea_id" id="t_tarea_id">
+    <input type="hidden" name="nuevo_estatus" id="t_nuevo_estatus">
+</form>
+
+<!-- Modal Cumpleaños -->
+<?php require_once __DIR__ . '/../../admin/modales/modal_cumple.php'; ?>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const reveals = document.querySelectorAll(".reveal-up");
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add("active");
-                observer.unobserve(entry.target);
-            }
-        });
-    }, { root: null, rootMargin: "0px", threshold: 0.08 });
-    
-    reveals.forEach(el => observer.observe(el));
-});
+function abrirModal(id) {
+    const m = new bootstrap.Modal(document.getElementById(id));
+    m.show();
+}
+
+function abrirModalCrear() { abrirModal('modalCrearEvento'); }
+function abrirModalCrearDesdeCelda(ini, fin) {
+    document.getElementById('c_fecha_inicio').value = ini;
+    document.getElementById('c_fecha_fin').value = fin;
+    abrirModal('modalCrearEvento');
+}
+function abrirModalEditar(id, t, d, ini, fin, c, p) {
+    document.getElementById('e_evento_id').value = id;
+    document.getElementById('e_titulo').value = t;
+    document.getElementById('e_descripcion').value = d;
+    document.getElementById('e_fecha_inicio').value = ini;
+    document.getElementById('e_fecha_fin').value = fin;
+    document.getElementById('e_publico').checked = (p == 1);
+    abrirModal('modalEditarEvento');
+}
+function eliminarEvento() {
+    if(confirm('¿Seguro que deseas eliminar este evento?')) {
+        document.getElementById('e_accion').value = 'eliminar_evento';
+        document.getElementById('formEditarEvento').submit();
+    }
+}
+
+// Kanban
+function allowDrop(ev) { ev.preventDefault(); }
+function drag(ev, id) { ev.dataTransfer.setData("text", id); }
+function drop(ev, nuevo) {
+    ev.preventDefault();
+    const id = ev.dataTransfer.getData("text");
+    moverTarea(id, nuevo);
+}
+function moverTarea(id, nuevo) {
+    document.getElementById('t_accion').value = 'mover_tarea';
+    document.getElementById('t_tarea_id').value = id;
+    document.getElementById('t_nuevo_estatus').value = nuevo;
+    document.getElementById('formAccionTarea').submit();
+}
+function abrirModalCrearTarea() { abrirModal('modalCrearTarea'); }
+function abrirModalEditarTarea(id, t, d, c, a) {
+    document.getElementById('et_id').value = id;
+    document.getElementById('et_titulo').value = t;
+    document.getElementById('et_descripcion').value = d;
+    document.getElementById('et_asignado_a').value = a || '';
+    abrirModal('modalEditarTarea');
+}
+function eliminarTareaDesdeModal() {
+    if(confirm('¿Eliminar esta tarea del Kanban?')) {
+        document.getElementById('t_accion').value = 'eliminar_tarea';
+        document.getElementById('t_tarea_id').value = document.getElementById('et_id').value;
+        document.getElementById('formAccionTarea').submit();
+    }
+}
+function abrirModalCumple(nombre, desc, foto, edad, fecha) {
+    // Reutilizar la función del admin si está cargada
+    if(typeof window.abrirModalCumpleAdmin === 'function') {
+        window.abrirModalCumpleAdmin(nombre, desc, foto, edad, fecha);
+    } else {
+        // Fallback simple si no carga el modal del admin correctamente
+        alert('¡Cumpleaños de ' + nombre + '! ' + edad + ' años el ' + fecha);
+    }
+}
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
