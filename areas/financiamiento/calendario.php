@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * COMECyT Control de Solicitudes
  * Panel de Administracion — Calendario / Agenda Institucional
@@ -201,7 +201,7 @@ foreach ($eventosRaw as $ev) {
 // Consultar cumpleanos del personal del mes actual
 if ($mes > 0 && $mes <= 12) {
     $stmtB = $pdo->prepare(
-        "SELECT nombre, appat, apmat, fecha_nacimiento
+        "SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil, foto_perfil
          FROM cat_personal
          WHERE activo = TRUE
            AND fecha_nacimiento IS NOT NULL
@@ -218,6 +218,9 @@ if ($mes > 0 && $mes <= 12) {
             'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple),
             'fecha_fin'    => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
             'publico' => false, 'es_cumple' => true,
+            'foto_perfil'  => $cp['foto_perfil'] ?? null,
+            'nombre_cumple'=> $nombreCompleto,
+            'edad'         => $edadAnios,
         ];
     }
 }$mesesNombres = [

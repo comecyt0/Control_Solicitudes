@@ -204,7 +204,7 @@ foreach ($eventosRaw as $ev) {
 // -------------------------------------------------------
 if ($mes > 0 && $mes <= 12) {
     $stmtB = $pdo->prepare(
-        "SELECT nombre, appat, apmat, fecha_nacimiento
+        "SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil
          FROM cat_personal
          WHERE activo = TRUE
            AND fecha_nacimiento IS NOT NULL
@@ -216,15 +216,21 @@ if ($mes > 0 && $mes <= 12) {
     foreach ($cumpleaneros as $cp) {
         $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
         $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
+        // Calcular edad
+        $anioNacimiento = (int)(new DateTime($cp['fecha_nacimiento']))->format('Y');
+        $edadAnios = $anio - $anioNacimiento;
         $calendarioEventos[$diaCumple][] = [
             'id'           => null,
-            'titulo'       => '\u{1F382} ' . $nombreCompleto,
-            'descripcion'  => 'Cumpleaños institucional',
+            'titulo'       => "\u{1F382} " . $nombreCompleto,
+            'descripcion'  => 'Cumpleaños institucional (' . $edadAnios . ' años)',
             'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple),
             'fecha_fin'    => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
             'color'        => '#B19A6D', // nota-dorado
             'publico'      => false,
             'es_cumple'    => true,
+            'foto_perfil'  => $cp['foto_perfil'] ?? null,
+            'nombre_cumple'=> $nombreCompleto,
+            'edad'         => $edadAnios,
         ];
     }
 }
@@ -462,6 +468,32 @@ $extraHead = '
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Mini-avatar para cumpleaños en la nota */
+.cumple-mini-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid #ca8a04;
+    flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.cumple-mini-placeholder {
+    background: #fef08a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: #ca8a04;
+}
+
+/* Nota de cumpleaños ligeramente más estilizada */
+.evento-pildora.es-cumple {
+    border-top-color: #ca8a04;
 }
 
 /* Hora del Post-It */
@@ -839,8 +871,38 @@ require_once __DIR__ . '/../includes/header_admin.php';
                     <?php foreach ($calendarioEventos[$dia] as $ev): ?>
                         <?php 
                             $claseNota = $mapaColoresNotas[$ev['color']] ?? 'nota-azul';
+                            $esCumple  = !empty($ev['es_cumple']);
+                            // Construir URL de foto para el modal
+                            $fotoUrl   = '';
+                            if ($esCumple && !empty($ev['foto_perfil'])) {
+                                $fotoUrl = BASE_URL . 'public/uploads/avatares/' . $ev['foto_perfil'];
+                            }
                         ?>
-                         <div class="evento-pildora <?= $claseNota ?>" title="<?= esc($ev['titulo']) ?>">
+                         <div class="evento-pildora <?= $claseNota ?><?= $esCumple ? ' es-cumple' : '' ?>" title="<?= esc($ev['titulo']) ?>">
+                              <?php if ($esCumple): ?>
+                              <!-- Fila de Cumpleaños con miniavatar -->
+                              <div class="evento-titulo cumple-titulo" style="display:flex;align-items:center;gap:6px;">
+                                  <?php if (!empty($fotoUrl)): ?>
+                                      <img src="<?= esc($fotoUrl) ?>" alt="" class="cumple-mini-avatar">
+                                  <?php else: ?>
+                                      <span class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span>
+                                  <?php endif; ?>
+                                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🎂 <?= esc($ev['nombre_cumple']) ?></span>
+                              </div>
+                              <div class="evento-acciones">
+                                 <button type="button" class="btn-evento-accion" title="Ver Cumpleañero"
+                                         onclick="event.stopPropagation(); abrirModalCumple(
+                                             '<?= esc(addslashes($ev['nombre_cumple'] ?? '')) ?>',
+                                             '<?= esc(addslashes($ev['descripcion'] ?? '')) ?>',
+                                             '<?= esc($fotoUrl) ?>',
+                                             '<?= $ev['edad'] ?? 0 ?>',
+                                             '<?= date('d/m', strtotime($ev['fecha_inicio'])) ?>'
+                                         )">
+                                     <i class="fa-solid fa-eye"></i>
+                                 </button>
+                              </div>
+                              <?php else: ?>
+                              <!-- Nota de evento normal -->
                               <div class="evento-titulo">
                                   <?php if ($ev['publico']): ?>
                                       <i class="fa-solid fa-eye text-primary" title="Visible en Calendario Público"></i>
@@ -873,6 +935,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
                                      <i class="fa-solid fa-pen"></i>
                                  </button>
                              </div>
+                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -1086,6 +1149,85 @@ require_once __DIR__ . '/../includes/header_admin.php';
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-primary" onclick="cerrarModal('modalVerEvento')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Ver Cumpleaños (Solo lectura con foto) -->
+<div class="modal-backdrop" id="modalVerCumple">
+    <div class="modal" style="max-width: 440px;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%); border-bottom: 1px solid #fcd34d;">
+            <h3 class="modal-title" style="color: #92400e;">
+                🎂 <span id="mc_nombre">Cumpleaños</span>
+            </h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalVerCumple')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body" style="text-align:center; padding: 2rem 1.5rem;">
+            <!-- Foto del cumpleañero -->
+            <div id="mc_foto_wrap" style="margin-bottom: 1.25rem;">
+                <img id="mc_foto" src="" alt="Foto" style="
+                    width: 120px; height: 120px;
+                    border-radius: 50%;
+                    object-fit: cover;
+                    border: 4px solid #fcd34d;
+                    box-shadow: 0 0 0 6px rgba(251,191,36,0.2), 0 8px 24px rgba(0,0,0,0.12);
+                    display: block;
+                    margin: 0 auto;
+                ">
+                <div id="mc_foto_placeholder" style="
+                    width: 120px; height: 120px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #fde68a, #fbbf24);
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto;
+                    border: 4px solid #fcd34d;
+                    box-shadow: 0 0 0 6px rgba(251,191,36,0.2), 0 8px 24px rgba(0,0,0,0.12);
+                    font-size: 3rem;
+                ">🎂</div>
+            </div>
+            <!-- Nombre y edad -->
+            <h2 id="mc_nombre_grande" style="margin: 0 0 0.25rem; font-size: 1.3rem; font-weight: 800; color: #1e293b; line-height: 1.3;"></h2>
+            <p id="mc_edad_label" style="margin: 0 0 1rem; color: #78350f; font-size: 1rem; font-weight: 600;"></p>
+            <!-- Fecha -->
+            <div style="
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: #fef3c7;
+                border: 1px solid #fde68a;
+                border-radius: 999px;
+                padding: 6px 18px;
+                font-size: 0.9rem;
+                color: #92400e;
+                font-weight: 600;
+                margin-bottom: 1.5rem;
+            ">
+                <i class="fa-solid fa-calendar-heart"></i>
+                <span id="mc_fecha"></span>
+            </div>
+            <!-- Mensaje celebración -->
+            <div style="
+                background: linear-gradient(135deg, #fef9c3, #fde68a);
+                border-radius: 12px;
+                padding: 1rem;
+                font-size: 0.9rem;
+                color: #78350f;
+                line-height: 1.5;
+                border: 1px solid rgba(251,191,36,0.4);
+            ">
+                <i class="fa-solid fa-party-horn" style="color: #d97706;"></i>
+                <strong>¡Feliz Cumpleaños!</strong><br>
+                Recuerda felicitar a tu compañero/a en este día especial.
+            </div>
+        </div>
+        <div class="modal-footer" style="justify-content: center;">
+            <button type="button" class="btn btn-primary" onclick="cerrarModal('modalVerCumple')">
+                <i class="fa-solid fa-heart"></i> ¡Muchas Felicidades!
+            </button>
         </div>
     </div>
 </div>
@@ -1376,6 +1518,27 @@ function abrirModalVer(titulo, desc, ini, fin) {
     document.getElementById('v_horario').textContent = ini + ' - ' + fin;
     document.getElementById('v_descripcion').textContent = desc || 'Sin detalles adicionales registrados.';
     abrirModal('modalVerEvento');
+}
+
+function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
+    document.getElementById('mc_nombre').textContent = nombre;
+    document.getElementById('mc_nombre_grande').textContent = nombre;
+    document.getElementById('mc_edad_label').textContent = '¡Celebra sus ' + edad + ' años!';
+    document.getElementById('mc_fecha').textContent = fecha;
+
+    const imgEl   = document.getElementById('mc_foto');
+    const phEl    = document.getElementById('mc_foto_placeholder');
+
+    if (fotoUrl && fotoUrl.trim() !== '') {
+        imgEl.src = fotoUrl;
+        imgEl.style.display = 'block';
+        phEl.style.display  = 'none';
+    } else {
+        imgEl.style.display = 'none';
+        phEl.style.display  = 'flex';
+    }
+
+    abrirModal('modalVerCumple');
 }
 
 function abrirModalEditar(id, titulo, desc, ini, fin, color, publico) {
