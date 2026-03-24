@@ -149,6 +149,54 @@ $stmt = $pdo->prepare("SELECT * FROM df_eventos_editoriales WHERE fecha_inicio <
 $stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Consultar eventos INSTITUCIONALES (Públicos)
+$stmtG = $pdo->prepare("SELECT * FROM eventos WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+$stmtG->execute([$finMesBusqueda, $inicioMesBusqueda]);
+$eventosGlobales = $stmtG->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($eventosGlobales as $eg) {
+    // Si el título empieza con (Editorial), probablemente es una réplica, la saltamos para no duplicar
+    if (strpos($eg['titulo'], '(Editorial)') === 0) continue;
+    
+    $eg['es_institucional'] = true;
+    if (empty($eg['color'])) $eg['color'] = '#64748b'; // Gris para institucionales
+    $eventosRaw[] = $eg;
+}
+
+// Mapear eventos por dia
+$calendarioEventos = [];
+foreach ($eventosRaw as $ev) {
+    $dIni = new DateTime($ev['fecha_inicio']);
+    $dia = (int)$dIni->format('d');
+    if (!isset($calendarioEventos[$dia])) $calendarioEventos[$dia] = [];
+    $calendarioEventos[$dia][] = $ev;
+}
+
+// Consultar CUMPLEAÑOS (Lógica compartida con Admin)
+if ($mes > 0 && $mes <= 12) {
+    $stmtB = $pdo->prepare("SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil FROM cat_personal WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND EXTRACT(MONTH FROM fecha_nacimiento) = :mes");
+    $stmtB->execute([':mes' => $mes]);
+    $cumpleaneros = $stmtB->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($cumpleaneros as $cp) {
+        $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
+        $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
+        $anioNacimiento = (int)(new DateTime($cp['fecha_nacimiento']))->format('Y');
+        $calendarioEventos[$diaCumple][] = [
+            'id'           => null,
+            'titulo'       => "\u{1F382} " . $nombreCompleto,
+            'descripcion'  => 'Cumpleaños institucional',
+            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple),
+            'fecha_fin'    => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
+            'color'        => '#B19A6D',
+            'publico'      => false,
+            'es_cumple'    => true,
+            'foto_perfil'  => $cp['foto_perfil'] ?? null,
+            'nombre_cumple'=> $nombreCompleto,
+            'edad'         => ($anio - $anioNacimiento)
+        ];
+    }
+}
+
 // Consultar tareas KANBAN filtradas por ÁREA
 $listaTareas = ['pendiente' => [], 'en_proceso' => [], 'completada' => []];
 $stmtT = $pdo->prepare("SELECT t.*, a.nombre AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id WHERE t.cve_area = ? ORDER BY t.estatus DESC, t.id DESC");
@@ -253,10 +301,44 @@ $extraHead = '
 .tarea-card h4 { margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #1e293b; }
 .tarea-card p { margin: 0; font-size: 0.8rem; color: #64748b; line-height: 1.4; }
 
-/* Modal Customization */
-.modal-header { background: linear-gradient(to right, #be123c, #e11d48); color: white; border: none; }
-.btn-primary { background: #e11d48; border-color: #e11d48; font-weight: 700; }
-.btn-primary:hover { background: #be123c; border-color: #be123c; }
+/* Modal Customization (Override to match COMECyTUI) */
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-backdrop.active { display: flex; animation: fadeIn 0.25s ease; }
+.modal {
+    background: #fff;
+    width: 100%;
+    max-width: 550px;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    overflow: hidden;
+    position: relative;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+.modal-header {
+    background: linear-gradient(135deg, #662331, #8b2f42);
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.modal-title { margin: 0; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.modal-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.25rem; }
+.modal-body { padding: 24px; overflow-y: auto; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; justify-content: flex-end; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 ';
 
@@ -368,182 +450,172 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     </div>
 </div>
 
-<!-- MODALES (Adaptados del Admin) -->
+<!-- MODALES (COMECyTUI Standard) -->
 <!-- Modal Crear Evento -->
-<div class="modal fade" id="modalCrearEvento" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Agendar Evento Editorial</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <?= csrfField() ?>
-                <input type="hidden" name="_accion" value="crear_evento">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Título</label>
-                        <input type="text" name="titulo" class="form-control" id="c_titulo" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción / Canal</label>
-                        <textarea name="descripcion" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Desde</label>
-                            <input type="date" name="fecha_inicio" id="c_fecha_inicio" class="form-control" required>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Hasta</label>
-                            <input type="date" name="fecha_fin" id="c_fecha_fin" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="publico" id="c_publico">
-                            <label class="form-check-label" for="c_publico">Mostrar en Calendario Público Institucional</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Evento</button>
-                </div>
-            </form>
+<div class="modal-backdrop" id="modalCrearEvento">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-plus-circle"></i> Agendar Evento Editorial</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalCrearEvento')"><i class="fa-solid fa-xmark"></i></button>
         </div>
+        <form method="POST">
+            <?= csrfField() ?>
+            <input type="hidden" name="_accion" value="crear_evento">
+            <div class="modal-body">
+                <div class="form-group mb-16">
+                    <label class="form-label">Título</label>
+                    <input type="text" name="titulo" class="form-control" id="c_titulo" required>
+                </div>
+                <div class="form-group mb-16">
+                    <label class="form-label">Descripción / Canal</label>
+                    <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;" class="mb-16">
+                    <div class="form-group">
+                        <label class="form-label">Desde</label>
+                        <input type="date" name="fecha_inicio" id="c_fecha_inicio" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Hasta</label>
+                        <input type="date" name="fecha_fin" id="c_fecha_fin" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group" style="padding: 12px; background: rgba(59,130,246,0.08); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="publico" id="c_publico" style="width:18px; height:18px;">
+                    <label for="c_publico" style="margin:0; font-weight:600; color:#1e40af; cursor:pointer;">Mostrar en Calendario Público Institucional</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="cerrarModal('modalCrearEvento')">Cerrar</button>
+                <button type="submit" class="btn btn-primary">Guardar Evento</button>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Modal Editar/Ver Evento -->
-<div class="modal fade" id="modalEditarEvento" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detalle de Evento</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST" id="formEditarEvento">
-                <?= csrfField() ?>
-                <input type="hidden" name="_accion" id="e_accion" value="editar_evento">
-                <input type="hidden" name="evento_id" id="e_evento_id">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Título</label>
-                        <input type="text" name="titulo" id="e_titulo" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea name="descripcion" id="e_descripcion" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Inicio</label>
-                            <input type="date" name="fecha_inicio" id="e_fecha_inicio" class="form-control" required>
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Fin</label>
-                            <input type="date" name="fecha_fin" id="e_fecha_fin" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="publico" id="e_publico">
-                            <label class="form-check-label" for="e_publico">Visible para el público</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer d-flex justify-content-between">
-                    <button type="button" class="btn btn-outline-danger" onclick=\"eliminarEvento()\">Eliminar</button>
-                    <div>
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="submit" class="btn btn-primary">Actualizar</button>
-                    </div>
-                </div>
-            </form>
+<!-- Modal Ver/Editar Evento -->
+<div class="modal-backdrop" id="modalEditarEvento">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa-solid fa-calendar-day"></i> Detalle de Evento</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalEditarEvento')"><i class="fa-solid fa-xmark"></i></button>
         </div>
+        <form method="POST" id="formEditarEvento">
+            <?= csrfField() ?>
+            <input type="hidden" name="_accion" id="e_accion" value="editar_evento">
+            <input type="hidden" name="evento_id" id="e_evento_id">
+            <div class="modal-body">
+                <div class="form-group mb-16">
+                    <label class="form-label">Título</label>
+                    <input type="text" name="titulo" id="e_titulo" class="form-control" required>
+                </div>
+                <div class="form-group mb-16">
+                    <label class="form-label">Descripción</label>
+                    <textarea name="descripcion" id="e_descripcion" class="form-control" rows="3"></textarea>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;" class="mb-16">
+                    <div class="form-group">
+                        <label class="form-label">Inicio</label>
+                        <input type="date" name="fecha_inicio" id="e_fecha_inicio" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fin</label>
+                        <input type="date" name="fecha_fin" id="e_fecha_fin" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group" style="padding: 12px; background: rgba(59,130,246,0.08); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="publico" id="e_publico" style="width:18px; height:18px;">
+                    <label for="e_publico" style="margin:0; font-weight:600; color:#1e40af; cursor:pointer;">Visible para el público</label>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-danger" onclick="eliminarEvento()">Eliminar</button>
+                <div>
+                    <button type="button" class="btn btn-outline" onclick="cerrarModal('modalEditarEvento')">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Modal Crear Tarea -->
-<div class="modal fade" id="modalCrearTarea" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header" style="background: #3b82f6;">
-                <h5 class="modal-title">Nueva Tarea Editorial</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <?= csrfField() ?>
-                <input type="hidden" name="_accion" value="crear_tarea">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Título de la Tarea</label>
-                        <input type="text" name="titulo" class="form-control" placeholder="Ej. Revisar diseño de banner" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción extendida</label>
-                        <textarea name="descripcion" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Asignar a compañero de equipo</label>
-                        <select name="asignado_a" class="form-control">
-                            <option value=\"\">-- Sin Asignar --</option>
-                            <?php foreach ($adminsDisponibles as $adm): ?>
-                                <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="submit" class="btn btn-primary" style="background:#3b82f6; border-color:#3b82f6;">Crear Tarea</button>
-                </div>
-            </form>
+<!-- Modal Nueva Tarea -->
+<div class="modal-backdrop" id="modalCrearTarea">
+    <div class="modal">
+        <div class="modal-header" style="background: #3b82f6;">
+            <h3 class="modal-title"><i class="fa-solid fa-plus-circle"></i> Nueva Tarea Editorial</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalCrearTarea')"><i class="fa-solid fa-xmark"></i></button>
         </div>
+        <form method="POST">
+            <?= csrfField() ?>
+            <input type="hidden" name="_accion" value="crear_tarea">
+            <div class="modal-body">
+                <div class="form-group mb-16">
+                    <label class="form-label">Título de la Tarea</label>
+                    <input type="text" name="titulo" class="form-control" placeholder="Ej. Revisar diseño de banner" required>
+                </div>
+                <div class="form-group mb-16">
+                    <label class="form-label">Descripción extendida</label>
+                    <textarea name="descripcion" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Asignar a compañero de equipo</label>
+                    <select name="asignado_a" class="form-control">
+                        <option value="">-- Sin Asignar --</option>
+                        <?php foreach ($adminsDisponibles as $adm): ?>
+                            <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="cerrarModal('modalCrearTarea')">Cerrar</button>
+                <button type="submit" class="btn btn-primary" style="background:#3b82f6; border-color:#3b82f6;">Crear Tarea</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <!-- Modal Editar Tarea -->
-<div class="modal fade" id="modalEditarTarea" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header" style="background: #3b82f6;">
-                <h5 class="modal-title">Editar Tarea Editorial</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <?= csrfField() ?>
-                <input type="hidden" name="_accion" value="editar_tarea">
-                <input type="hidden" name="tarea_id" id="et_id">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Título</label>
-                        <input type="text" name="titulo" id="et_titulo" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea name="descripcion" id="et_descripcion" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Asignado a</label>
-                        <select name="asignado_a" id="et_asignado_a" class="form-control">
-                            <option value=\"\">-- Sin Asignar --</option>
-                            <?php foreach ($adminsDisponibles as $adm): ?>
-                                <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer d-flex justify-content-between">
-                    <button type="button" class="btn btn-outline-danger" onclick=\"eliminarTareaDesdeModal()\">Eliminar</button>
-                    <div>
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="submit" class="btn btn-primary" style="background:#3b82f6; border-color:#3b82f6;">Actualizar Tarea</button>
-                    </div>
-                </div>
-            </form>
+<div class="modal-backdrop" id="modalEditarTarea">
+    <div class="modal">
+        <div class="modal-header" style="background: #3b82f6;">
+            <h3 class="modal-title"><i class="fa-solid fa-pen"></i> Editar Tarea Editorial</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalEditarTarea')"><i class="fa-solid fa-xmark"></i></button>
         </div>
+        <form method="POST">
+            <?= csrfField() ?>
+            <input type="hidden" name="_accion" value="editar_tarea">
+            <input type="hidden" name="tarea_id" id="et_id">
+            <div class="modal-body">
+                <div class="form-group mb-16">
+                    <label class="form-label">Título</label>
+                    <input type="text" name="titulo" id="et_titulo" class="form-control" required>
+                </div>
+                <div class="form-group mb-16">
+                    <label class="form-label">Descripción</label>
+                    <textarea name="descripcion" id="et_descripcion" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Asignado a</label>
+                    <select name="asignado_a" id="et_asignado_a" class="form-control">
+                        <option value="">-- Sin Asignar --</option>
+                        <?php foreach ($adminsDisponibles as $adm): ?>
+                            <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline" style="color:var(--color-danger); border-color:var(--color-danger);" onclick="eliminarTareaDesdeModal()">
+                    <i class="fa-solid fa-trash"></i> Eliminar
+                </button>
+                <div>
+                    <button type="button" class="btn btn-outline" onclick="cerrarModal('modalEditarTarea')">Cerrar</button>
+                    <button type="submit" class="btn btn-primary" style="background:#3b82f6; border-color:#3b82f6;">Actualizar Tarea</button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -560,8 +632,10 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 
 <script>
 function abrirModal(id) {
-    const m = new bootstrap.Modal(document.getElementById(id));
-    m.show();
+    document.getElementById(id).classList.add('active');
+}
+function cerrarModal(id) {
+    document.getElementById(id).classList.remove('active');
 }
 
 function abrirModalCrear() { abrirModal('modalCrearEvento'); }
@@ -569,6 +643,30 @@ function abrirModalCrearDesdeCelda(ini, fin) {
     document.getElementById('c_fecha_inicio').value = ini;
     document.getElementById('c_fecha_fin').value = fin;
     abrirModal('modalCrearEvento');
+}
+function abrirModalVer(titulo, desc, ini, fin) {
+    document.getElementById('e_titulo').value = titulo;
+    document.getElementById('e_descripcion').value = desc;
+    document.getElementById('e_fecha_inicio').value = ini;
+    document.getElementById('e_fecha_fin').value = fin;
+    abrirModal('modalEditarEvento');
+}
+function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
+    document.getElementById('mc_nombre').textContent = nombre;
+    document.getElementById('mc_nombre_grande').textContent = nombre;
+    document.getElementById('mc_edad_label').textContent = '¡Celebra sus ' + edad + ' años!';
+    document.getElementById('mc_fecha').textContent = fecha;
+    const imgEl = document.getElementById('mc_foto');
+    const phEl = document.getElementById('mc_foto_placeholder');
+    if (fotoUrl && fotoUrl.trim() !== '') {
+        imgEl.src = fotoUrl;
+        imgEl.style.display = 'block';
+        phEl.style.display = 'none';
+    } else {
+        imgEl.style.display = 'none';
+        phEl.style.display = 'flex';
+    }
+    abrirModal('modalVerCumple');
 }
 function abrirModalEditar(id, t, d, ini, fin, c, p) {
     document.getElementById('e_evento_id').value = id;
@@ -579,6 +677,7 @@ function abrirModalEditar(id, t, d, ini, fin, c, p) {
     document.getElementById('e_publico').checked = (p == 1);
     abrirModal('modalEditarEvento');
 }
+
 function eliminarEvento() {
     COMECyTUI.confirm('¿Deseas borrar permanentemente este evento de la agenda editorial?', () => {
         document.getElementById('e_accion').value = 'eliminar_evento';
@@ -614,15 +713,6 @@ function eliminarTareaDesdeModal() {
         document.getElementById('t_tarea_id').value = document.getElementById('et_id').value;
         document.getElementById('formAccionTarea').submit();
     }, null, { titulo: 'Eliminar Tarea' });
-}
-function abrirModalCumple(nombre, desc, foto, edad, fecha) {
-    // Reutilizar la función del admin si está cargada
-    if(typeof window.abrirModalCumpleAdmin === 'function') {
-        window.abrirModalCumpleAdmin(nombre, desc, foto, edad, fecha);
-    } else {
-        // Fallback usando COMECyTUI si no carga el modal del admin correctamente
-        COMECyTUI.info('¡Hoy celebra ' + nombre + ' sus ' + edad + ' años!\n\nFecha: ' + fecha, 'Cumpleaños Institucional');
-    }
 }
 </script>
 

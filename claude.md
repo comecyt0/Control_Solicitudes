@@ -116,27 +116,16 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Problema**: El footer del sidebar era demasiado transparente y los botones carecían de distinción profesional.
   - **Mejora**: Se aplicó un fondo sólido `#1a1c23` (Charcoal Premium) con un sutil `box-shadow` superior. Los botones de Perfil y Cerrar Sesión ahora tienen fondos individuales `#2d2f39`, bordes definidos y estados hover con `translateY(-1px)` y sombras profundas, mejorando la ergonomía visual.
 
-- **📊 Calendario Editorial con Kanban Nativo (Fase 4, 2026-03-24)**:
-  - **Sincronización Total**: El calendario de `areas/difusion/calendario_editorial.php` se reconstruyó para ser idéntico en diseño y UX al `admin/calendario.php`.
-  - **Independencia de Datos**: 
-    - **Eventos**: Consume exclusivamente `df_eventos_editoriales`.
-    - **Kanban**: Se integró el tablero de 3 columnas (Drag & Drop) filtrando `sb_kanban_tareas` por la `cve_area` del usuario logueado.
-  - **Migración de DB**: Se añadió la columna `cve_area` a `sb_kanban_tareas` para permitir este aislamiento sin duplicar tablas de estructura de tareas.
-  - **Automatización**: Al crear tareas desde el calendario o el chat de un área, se asigna automáticamente su `cve_area`, garantizando que cada departamento gestione su propio flujo de trabajo de forma privada.
+- **Sincronización de Calendario Editorial (Fase 4, 2026-03-24)**:
+    - **Fatal Error Fix**: Se extrajo el modal de cumpleaños a `admin/modales/modal_cumple.php`, haciéndolo un componente compartido consultable desde Diferas departamentos (Sistemas, Difusión, Hub Público).
+    - **Unificación de Datos**: El calendario editorial ahora realiza un `UNION` con la tabla global `eventos` (para eventos institucionales) y con los cumpleaños dinámicos de `cat_personal`, garantizando que el personal de Difusión vea la agenda completa.
+    - **Refactor UI (COMECyTUI)**: Se eliminó la dependencia de Bootstrap en `areas/difusion/calendario_editorial.php`. Los modales ahora usan el sistema nativo `.modal-backdrop` y `.modal`, evitando que los diálogos se desplacen al final de la página (problema de frames).
+    - **Consistencia Visual**: Las píldoras de eventos y el grid del calendario editorial son ahora 100% consistentes con el calendario administrativo central.
 
-- **💬 Chat de Equipo — Segmentación por Área**:
-  - **Filtro Estricto**: El canal "General" del chat ahora es "General del Área". Solo muestra mensajes de administradores que comparten el mismo `cve_area`.
-  - **Directos**: El listado de administradores para DMs también está filtrado, permitiendo solo la comunicación interna departamental según la solicitud del usuario.
+- **Sistema de Gestión de Evidencias (Fase 4, 2026-03-24)**:
+    - **Staff/Sistemas**: En `admin/detalle.php`, se habilitó la carga de evidencias (fotos, PDF, documentos) con descripciones obligatorias capturadas mediante `COMECyTUI.prompt`.
+    - **Cierre de Ciclo**: Al completar una solicitud, el modal de confirmación permite adjuntar el archivo de resolución final.
+    - **Transparencia**: Los solicitantes pueden ver y descargar estas evidencias en tiempo real desde la consulta pública (`public/consulta.php`).
 
-- **📎 Sistema de Evidencias y Adjuntos Staff (Fase 4, 2026-03-24)**:
-  - **Gestión de Seguimiento**: En el detalle de solicitud (`admin/detalle.php`), el personal de Sistemas puede cargar evidencias (imágenes, documentos, reportes) tanto de forma libre como al realizar cambios de estatus.
-  - **Integración con Flujo**: Al completar o actualizar un estatus, el modal de confirmación ahora permite adjuntar un archivo de prueba de resolución.
-  - **Visibilidad Pública**: Las evidencias cargadas por el staff son automáticamente visibles (en modo lectura) para el solicitante en `public/consulta.php`, permitiéndole descargar actas o capturas de la solución.
-  - **Robustez UI**: Se implementó `COMECyTUI.prompt` para capturar descripciones de evidencias sin usar pop-ups del navegador. Se añadió un rompe-caché dinámico (`?v=time()`) a `ui-frames.js` para asegurar la carga de la última versión de la interfaz en cualquier navegador.
-  - **Almacenamiento**: Los archivos se guardan con seguridad en `public/uploads/evidencias/` con nombres sanados y vinculados a la tabla `solicitud_evidencias`.
-
-- **📌 Mejoras en Navegación (Sidebar Admin)**:
-  - Se añadió el acceso directo **"Completadas"** en el grupo de Gestión del sidebar para la Unidad de Sistemas. Esto permite filtrar rápidamente las solicitudes resueltas sin pasar por la lista general de "Todas las Solicitudes".
-
-- **📂 Constante `ROOT` missing**: Muchos scripts API (perfil, multimedia) usaban la constante `ROOT` para subir archivos, pero esta no estaba definida globalmente. Se definió centralmente en `config/database.php` como `dirname(__DIR__)` para asegurar que las rutas absolutas de servidor funcionen siempre en Docker y Windows.
-- **🔗 Fetch AJAX con URLs Relativas**: En `public/perfil.php`, el `fetch("api/perfil.php")` fallaba (404) si el usuario accedía desde una URL profunda como `/areas/difusion/dashboard.php`. **Solución**: Se cambió el `action` del formulario a una URL absoluta usando `<?= BASE_URL ?>public/api/perfil.php`, garantizando que el endpoint sea alcanzable desde cualquier contexto de navegación.
+- **Corrección de Diseño en Detalle**:
+    - Se aplicó `word-wrap: break-word` y `overflow-wrap: anywhere` en `.timeline-comment` para evitar que nombres de archivos extremadamente largos deformen el layout de seguimiento.
