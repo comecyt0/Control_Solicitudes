@@ -257,97 +257,294 @@ $activeMenu = 'calendario';
 // Sobrescribo variables para que el color principal sea el Editorial (Crimson)
 $extraHead = '
 <style>
-:root { 
-    --color-primary: #e11d48; /* Crimson Editorial */
-    --color-secondary: #be123c;
-    --color-accent: #B19A6D;
-}
-' . file_get_contents('http://localhost/admin/calendario.php?get_styles=1') /* Fallback if I cant, but I have them */ . '
-</style>';
-
-// Como no puedo cargar localmente file_get_contents a si mismo fácilmente, pegaré los bloques de estilo clave.
-
-$extraHead = '
-<style>
-:root { 
+/* Variables de Tema Editorial (Crimson) */
+:root {
     --color-primary: #e11d48;
-    --color-secondary: #be123c;
+    --color-primary-dark: #be123c;
+    --color-primary-light: #fb7185;
+    --color-primary-hover: #f43f5e;
     --color-accent: #B19A6D;
 }
-.calendar-wrapper { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); overflow: hidden; margin-top: 1.5rem; border: 1px solid rgba(0,0,0,0.05); }
-.calendar-header-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; background: #fdfdfd; border-bottom: 1px solid rgba(0,0,0,0.06); }
-.calendar-header-nav h3 { margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--color-primary); }
-.nav-btn-group { display: flex; gap: 0.5rem; }
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #f1f5f9; gap: 1px; }
-.calendar-day-name { padding: 1rem; text-align: center; font-weight: 700; font-size: 0.8rem; color: #64748b; text-transform: uppercase; background: #f8fafc; }
-.calendar-cell { min-height: 140px; padding: 0.6rem; background: #fff; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: background 0.2s; position: relative; }
-.calendar-cell:hover { background: #fafafa; }
-/* Indicador de hoy: solo bolita en el número, no borde en la celda */
-.calendar-cell.today { background: #fff; }
-.day-number { font-weight: 700; color: #475569; align-self: flex-end; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s; }
-.calendar-cell.today .day-number { background: var(--color-primary); color: white; box-shadow: 0 2px 4px rgba(225,29,72,0.3); }
 
-/* Diseño de Post-it Premium con pliegue */
-.evento-pildora { 
-    font-size: 0.72rem; 
-    padding: 6px 10px 6px 8px; 
-    border-radius: 2px 2px 12px 2px; 
-    color: #1e293b; 
-    margin-bottom: 4px; 
-    position: relative; 
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.06), inset -5px -5px 15px rgba(0,0,0,0.02); 
-    overflow: hidden; 
-    text-overflow: ellipsis; 
-    white-space: nowrap; 
-    border-top: 3px solid transparent;
-    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+/* Contenedor principal estilo App MacOS / iPadOS */
+.calendar-wrapper {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    margin-top: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Encabezado del calendario */
+.calendar-header-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    background: #fdfdfd;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.calendar-header-nav h3 {
+    margin: 0; 
+    font-size: 1.4rem; 
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: -0.01em;
+}
+
+/* Botonera de navegacion */
+.nav-btn-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+.calendar-header-nav .btn-outline {
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+}
+.calendar-header-nav .btn-outline:hover {
+    background: #f8fafc;
+    color: var(--color-primary);
+    border-color: #cbd5e1;
+}
+
+/* Grid del calendario */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: #f8fafc;
+    gap: 1px;
+}
+
+/* Cabecera de dias */
+.calendar-day-name {
+    padding: 1rem 0.5rem;
+    text-align: right;
+    font-weight: 800;
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #ffffff;
+}
+
+/* Celdas individuales */
+.calendar-cell {
+    min-height: 140px;
+    padding: 0.5rem;
+    background: #ffffff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    overflow: hidden;
+    min-width: 0;
+    width: 100%;
+}
+
+.calendar-cell:hover {
+    background: #fdfdfd;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02);
+}
+
+.calendar-cell.empty {
+    background: #f8fafc;
+    cursor: default;
+}
+
+/* Numeros de dia */
+.day-number {
+    font-weight: 700;
+    color: #334155;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    display: inline-flex;
+    justify-content: center;
+    align-self: flex-end;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.calendar-cell.today .day-number {
+    color: #fff;
+    background: var(--color-primary);
+    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.4);
+}
+
+/* STICKY NOTES (Post-its) */
+.evento-pildora {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 2px 2px 12px 2px;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05), inset -10px -10px 20px rgba(0,0,0,0.03);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    line-height: 1.3;
+    animation: fadeIn 0.3s ease-in-out;
     width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
-/* Pliegue de página post-it */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.evento-pildora:hover {
+    transform: scale(1.02) translateY(-2px) rotate(-1deg);
+    box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.1), inset -10px -10px 20px rgba(0,0,0,0.02);
+    z-index: 10;
+}
+
 .evento-pildora::after {
     content: "";
     position: absolute;
     bottom: 0;
     right: 0;
-    border-width: 0 0 10px 10px;
+    border-width: 0 0 12px 12px;
     border-style: solid;
     border-color: rgba(0,0,0,0.06) white;
-    box-shadow: -1px -1px 2px rgba(0,0,0,0.04);
+    box-shadow: -1px -1px 2px rgba(0,0,0,0.05);
+    border-radius: 0 0 0 2px;
 }
 
-.evento-pildora:hover { 
-    transform: scale(1.03) translateY(-2px) rotate(-1deg); 
-    box-shadow: 4px 8px 15px rgba(0,0,0,0.1); 
-    z-index: 10; 
+.evento-titulo {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-.evento-titulo { font-weight: 700; display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; }
 
-.nota-azul { background: #e0f2fe; border-top-color: #0284c7; }
-.nota-verde { background: #dcfce7; border-top-color: #16a34a; }
-.nota-dorado { background: #fef08a; border-top-color: #ca8a04; }
-.nota-rojo { background: #fee2e2; border-top-color: #dc2626; }
-/* Editorial */
-.nota-difusion { background: #fff1f2; border-top-color: #e11d48; }
+.cumple-mini-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid #ca8a04;
+    flex-shrink: 0;
+}
 
-.cumple-mini-avatar { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ca8a04; }
-.cumple-mini-placeholder { background: #fef08a; color: #ca8a04; font-size: 0.6rem; display: flex; align-items: center; justify-content: center; }
+.cumple-mini-placeholder {
+    background: #fef08a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: #ca8a04;
+    width: 22px; height: 22px; border-radius: 50%;
+}
 
-/* Kanban */
-.kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; padding: 1.5rem 0; }
-.kanban-col { background: #f8fafc; border-radius: 12px; display: flex; flex-direction: column; min-height: 500px; border: 1px solid #e2e8f0; }
-.kanban-col-header { padding: 1rem; font-weight: 800; display: flex; justify-content: space-between; color: white; border-radius: 12px 12px 0 0; }
-.bg-pendiente { background: #3b82f6; }
-.bg-en-proceso { background: #f59e0b; }
-.bg-completada { background: #10b981; }
-.kanban-col-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; gap: 0.8rem; }
-.tarea-card { background: white; border-radius: 8px; padding: 1rem; border: 1px solid #e2e8f0; border-top: 4px solid var(--color-primary); cursor: grab; transition: all 0.2s; }
-.tarea-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-.tarea-card h4 { margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #1e293b; }
-.tarea-card p { margin: 0; font-size: 0.8rem; color: #64748b; line-height: 1.4; }
+/* Colores Post-it */
+.nota-azul       { background: #e0f2fe; border-top: 3px solid #0284c7; }
+.nota-verde      { background: #dcfce7; border-top: 3px solid #16a34a; }
+.nota-dorado     { background: #fef08a; border-top: 3px solid #ca8a04; }
+.nota-rojo       { background: #fee2e2; border-top: 3px solid #dc2626; }
+.nota-difusion   { background: #fff1f2; border-top: 3px solid #e11d48; }
 
-/* Modal Customization (Override to match COMECyTUI) */
+/* KANBAN */
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+}
+
+.kanban-col {
+    background: #f1f5f9;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+
+.kanban-col-header {
+    padding: 1.25rem;
+    font-weight: 800;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
+
+.bg-pendiente { background-color: #3b82f6; }
+.bg-en-proceso { background-color: #f59e0b; }
+.bg-completada { background-color: #10b981; }
+
+.kanban-badge {
+    background: rgba(255,255,255,0.25);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+}
+
+.kanban-col-body {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tarea-card {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    border: 1px solid #e2e8f0;
+    padding: 1.25rem;
+    cursor: grab;
+    border-top: 5px solid var(--color-primary); 
+    transition: all 0.2s ease;
+}
+
+.tarea-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1);
+}
+
+.tarea-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.tarea-card p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+/* Estilos Modales */
 .modal-backdrop {
     display: none;
     position: fixed;
@@ -359,34 +556,36 @@ $extraHead = '
     justify-content: center;
     padding: 20px;
 }
-.modal-backdrop.active { display: flex; animation: fadeIn 0.25s ease; }
+.modal-backdrop.active { display: flex; animation: fadeIn 0.3s ease; }
 .modal {
     background: #fff;
     width: 100%;
     max-width: 550px;
-    border-radius: 16px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     overflow: hidden;
-    position: relative;
-    max-height: 90vh;
     display: flex;
     flex-direction: column;
 }
 .modal-header {
-    background: linear-gradient(135deg, #662331, #8b2f42);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
     color: #fff;
-    padding: 16px 20px;
+    padding: 1.25rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
-.modal-title { margin: 0; font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-.modal-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.25rem; }
-.modal-body { padding: 24px; overflow-y: auto; }
-.modal-footer { padding: 16px 24px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; justify-content: flex-end; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-</style>
-';
+.modal-title { margin: 0; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+.modal-close { background: none; border: none; color: rgba(255,255,255,0.8); cursor: pointer; font-size: 1.5rem; transition: color 0.2s; }
+.modal-close:hover { color: #fff; }
+.modal-body { padding: 1.5rem 2rem; overflow-y: auto; }
+.modal-footer { padding: 1.25rem 2rem; border-top: 1px solid #f1f5f9; background: #fafafa; display: flex; gap: 10px; justify-content: flex-end; }
+
+.form-label { font-weight: 700; color: #475569; font-size: 0.9rem; margin-bottom: 6px; display: block; }
+.form-control { border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; padding: 10px 14px; transition: all 0.2s; }
+.form-control:focus { border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1); background: #fff; outline: none; }
+
+</style>';
 
 require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
@@ -481,7 +680,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
             <div class="kanban-col" ondragover="allowDrop(event)" ondrop="drop(event, '<?= $idCol ?>')">
                 <div class="kanban-col-header bg-<?= str_replace('_','-',$idCol) ?>">
                     <span><?= strtoupper($lblCol) ?></span>
-                    <span class="badge bg-white"><?= count($listaTareas[$idCol]) ?></span>
+                    <span class="kanban-badge"><?= count($listaTareas[$idCol]) ?></span>
                 </div>
                 <div class="kanban-col-body">
                     <?php if (empty($listaTareas[$idCol])): ?>

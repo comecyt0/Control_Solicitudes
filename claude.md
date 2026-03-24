@@ -127,4 +127,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
     - **Transparencia**: Los solicitantes pueden ver y descargar estas evidencias en tiempo real desde la consulta pública (`public/consulta.php`).
 
 - **Corrección de Diseño en Detalle**:
-    - Se aplicó `word-wrap: break-word` y `overflow-wrap: anywhere` en `.timeline-comment` para evitar que nombres de archivos extremadamente largos deformen el layout de seguimiento.
+    - **Homologación de Calendarios (Fase 4, 2026-03-25)**: 
+    - **Sincronización Premium**: Se extrajeron los estilos visuales de `admin/calendario.php` y se aplicaron a `areas/difusion/calendario_editorial.php`. 
+    - **Post-its 3D**: Implementación de tarjetas de eventos con pliegue de página, sombreado realista y efectos de hover tridimensionales uniformes en todo el sistema.
+    - **Navegación Unificada**: La barra de navegación de meses y los botones de acción ("Hoy", "Anterior", "Siguiente") ahora comparten el mismo diseño de bordes redondeados y tipografía institucional.
+    - **Kanban Pro**: El tablero de tareas de Difusión fue rediseñado para igualar la calidad del administrador global, incluyendo badges dinámicos y estados de hover en las tarjetas de tareas.
+    - **Aislamiento de Datos**: Se mantiene la lógica de filtrado por área (`cve_area`) para asegurar que cada departamento solo acceda a su información privada, mientras visualiza los eventos institucionales públicos en el mismo entorno de alta fidelidad.
