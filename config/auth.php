@@ -112,7 +112,8 @@ function verificarSesionAdmin(): void
     inicializarSesion();
     enviarHeadersSeguridad();
 
-    if (empty($_SESSION['admin_id'])) {
+    // Permitir acceso si es Admin o si es Usuario de Área (Personal)
+    if (empty($_SESSION['admin_id']) && empty($_SESSION['user_id'])) {
         header('Location: ' . BASE_URL . 'admin/login.php');
         exit;
     }
@@ -145,9 +146,10 @@ function iniciarSesion(string $email, string $password): bool
 
     $pdo  = getConnection();
     $stmt = $pdo->prepare(
-        "SELECT id, nombre, email, password_hash, rol
-         FROM administradores
-         WHERE email = :email AND activo = true
+        "SELECT a.id, a.nombre, a.email, a.password_hash, a.rol, p.cve_area
+         FROM administradores a
+         LEFT JOIN cat_personal p ON p.correo_institucional = a.email OR p.correo_personal = a.email
+         WHERE a.email = :email AND a.activo = true
          LIMIT 1"
     );
     $stmt->execute([':email' => trim($email)]);
@@ -164,10 +166,11 @@ function iniciarSesion(string $email, string $password): bool
     // Regenerar ID de sesión para prevenir session fixation
     session_regenerate_id(true);
 
-    $_SESSION['admin_id']      = $admin['id'];
-    $_SESSION['admin_nombre']  = $admin['nombre'];
-    $_SESSION['admin_email']   = $admin['email'];
-    $_SESSION['admin_rol']     = $admin['rol'] ?? 'admin';
+    $_SESSION['admin_id']       = $admin['id'];
+    $_SESSION['admin_nombre']   = $admin['nombre'];
+    $_SESSION['admin_email']    = $admin['email'];
+    $_SESSION['admin_rol']      = $admin['rol'] ?? 'admin';
+    $_SESSION['admin_cve_area'] = (int)($admin['cve_area'] ?? 1);
     $_SESSION['ultimo_acceso'] = time();
 
     return true;

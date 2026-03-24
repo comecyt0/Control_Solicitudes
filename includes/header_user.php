@@ -119,9 +119,15 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
             <h1 <?php if (!empty($hideSidebar)) echo 'style="margin:0; font-size:1.1rem;"'; ?>><?= esc($pageTitle) ?></h1>
         </div>
         <div class="topbar-actions">
-            <?php if (!empty($_SESSION['admin_id'])): ?>
-                <a href="<?= BASE_URL ?>admin/dashboard.php" class="btn btn-outline btn-sm">
-                    <i class="fa-solid fa-shapes"></i> Panel de Admin
+            <?php 
+                $cve_area_actual = (int)($_SESSION['user_cve_area'] ?? $_SESSION['admin_cve_area'] ?? 1);
+                // Si el cve_area no está en sesión pero es admin, intentamos inferir o permitimos el botón estándar
+                if (!empty($_SESSION['admin_id']) || $cve_area_actual > 1):
+                    $labelPanel = !empty($_SESSION['admin_id']) ? 'Panel de Admin' : 'Mi Área';
+                    $urlPanel   = !empty($_SESSION['admin_id']) && $cve_area_actual <= 1 ? BASE_URL . 'admin/dashboard.php' : BASE_URL . 'public/router.php';
+            ?>
+                <a href="<?= $urlPanel ?>" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-shapes"></i> <?= $labelPanel ?>
                 </a>
             <?php endif; ?>
             <?php if (!empty($hideSidebar)): ?>

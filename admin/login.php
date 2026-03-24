@@ -41,19 +41,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Por favor, complete todos los campos.';
         } elseif (iniciarSesion($email, $password)) {
             reiniciarIntentosLogin();
-            // Detectar si el admin pertenece a un área específica (no Sistemas)
-            // Si es de área, mandarlo directo al router que lo llega a su dashboard
-            $pdoLogin = getConnection();
-            $stmtArea = $pdoLogin->prepare("SELECT cve_area FROM cat_personal WHERE correo_institucional = ? OR correo_personal = ? LIMIT 1");
-            $stmtArea->execute([$email, $email]);
-            $cveAreaLogin = (int) $stmtArea->fetchColumn();
-            // cve_area 1 = Sistemas → Hub Global; resto = su propio dashboard vía router
-            $destLogin = ($cveAreaLogin > 1) ? BASE_URL . 'public/router.php' : BASE_URL . 'public/index.php';
+            // Si el admin pertenece a un área específica, mandarlo al router
+            $cveAreaAdmin = (int) ($_SESSION['admin_cve_area'] ?? 1);
+            $destLogin = ($cveAreaAdmin > 1) ? BASE_URL . 'public/router.php' : BASE_URL . 'public/index.php';
             echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . $destLogin . '"></head><body>Autenticado. <a href="' . $destLogin . '">Click aquí</a></body></html>'; exit;
 
         } elseif (iniciarSesionUsuario($email, $password)) {
             reiniciarIntentosLogin();
-            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . BASE_URL . 'public/index.php"></head><body>Autenticado. <a href="' . BASE_URL . 'public/index.php">Click aquí</a></body></html>'; exit;
+            // Si el usuario pertenece a un área específica, mandarlo al router
+            $cveAreaUser = (int) ($_SESSION['user_cve_area'] ?? 1);
+            $destLoginUser = ($cveAreaUser > 1) ? BASE_URL . 'public/router.php' : BASE_URL . 'public/index.php';
+            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . $destLoginUser . '"></head><body>Autenticado. <a href="' . $destLoginUser . '">Click aquí</a></body></html>'; exit;
         } elseif (iniciarSesionSS($email, $password)) {
             reiniciarIntentosLogin();
             echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . BASE_URL . 'servicio_social/dashboard.php"></head><body>Autenticado SS. <a href="' . BASE_URL . 'servicio_social/dashboard.php">Click aquí</a></body></html>'; exit;

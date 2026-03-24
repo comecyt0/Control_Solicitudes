@@ -76,15 +76,16 @@ $mapaAreas = [
 
 $destino = $mapaAreas[$cve_area] ?? 'admin'; // Fallback a sistemas
 
-// Si es usuario estándar y el destino no es 'admin', de momento lo mandamos a ver su historial o lo regresamos.
-// Sin embargo, el boton "Mi Panel" solo era para ADMIN o SS.
-if ($rol === 'usuario') {
-    redirigir('public/historial.php');
-}
-
 // Guardamos en sesión el slug o área validada para chequeo en headers clónicos
 $_SESSION['area_slug_activa'] = $destino === 'admin' ? 'sistemas' : explode('/', $destino)[1];
 $_SESSION['cve_area_activa'] = $cve_area;
+
+// Si el usuario es Personal Regular (rol 'usuario'), también le definimos el nombre del área para el UI
+if ($rol === 'usuario') {
+    $stmtN = $pdo->prepare("SELECT des_area FROM cat_areas WHERE cve_area = ? LIMIT 1");
+    $stmtN->execute([$cve_area]);
+    $_SESSION['user_area'] = (string)$stmtN->fetchColumn();
+}
 
 if ($rol === 'servicio_social' && $destino === 'admin') {
     // Si la carpeta es "admin", el servicio social tiene su propio panel "servicio_social/dashboard.php"
