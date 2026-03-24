@@ -198,6 +198,37 @@ foreach ($eventosRaw as $ev) {
     $calendarioEventos[$dia][] = $ev;
 }
 
+// -------------------------------------------------------
+// Consultar cumpleaños del personal del mes actual
+// Se filtra por MES y DÍA (ignorando el año del registro)
+// -------------------------------------------------------
+if ($mes > 0 && $mes <= 12) {
+    $stmtB = $pdo->prepare(
+        "SELECT nombre, appat, apmat, fecha_nacimiento
+         FROM cat_personal
+         WHERE activo = TRUE
+           AND fecha_nacimiento IS NOT NULL
+           AND EXTRACT(MONTH FROM fecha_nacimiento) = :mes"
+    );
+    $stmtB->execute([':mes' => $mes]);
+    $cumpleaneros = $stmtB->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($cumpleaneros as $cp) {
+        $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
+        $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
+        $calendarioEventos[$diaCumple][] = [
+            'id'           => null,
+            'titulo'       => '\u{1F382} ' . $nombreCompleto,
+            'descripcion'  => 'Cumpleaños institucional',
+            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple),
+            'fecha_fin'    => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
+            'color'        => '#B19A6D', // nota-dorado
+            'publico'      => false,
+            'es_cumple'    => true,
+        ];
+    }
+}
+
 $mesesNombres = [
     1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
     7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
@@ -293,6 +324,9 @@ $extraHead = '
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    overflow: hidden;     /* ← CLAVE: evita que el contenido desborde la celda */
+    min-width: 0;         /* ← necesario en flex para habilitar el truncado */
+    width: 0;             /* ← fuerza a la celda a repartir el espacio de la grid equitativamente */
 }
 
 .calendar-cell:hover {
@@ -334,20 +368,26 @@ $extraHead = '
 .evento-pildora {
     font-size: 0.75rem;
     padding: 0.5rem 0.6rem;
-    border-radius: 2px 2px 12px 2px; /* Efecto doblez esquina */
+    border-radius: 2px 2px 12px 2px;
     color: #1e293b;
     margin-bottom: 0.25rem;
     cursor: pointer;
     position: relative;
     box-shadow: 
         2px 2px 4px rgba(0, 0, 0, 0.05),
-        inset -10px -10px 20px rgba(0,0,0,0.03); /* Sombra interna para textura */
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Rebote en hover */
+        inset -10px -10px 20px rgba(0,0,0,0.03);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
     line-height: 1.3;
     animation: fadeIn 0.3s ease-in-out;
+    /* FIX OVERFLOW: limitar al ancho de la celda */
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 @keyframes fadeIn {

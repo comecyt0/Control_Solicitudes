@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * COMECyT Control de Solicitudes
  * Panel de Administracion — Calendario / Agenda Institucional
@@ -198,7 +198,29 @@ foreach ($eventosRaw as $ev) {
     $calendarioEventos[$dia][] = $ev;
 }
 
-$mesesNombres = [
+// Consultar cumpleanos del personal del mes actual
+if ($mes > 0 && $mes <= 12) {
+    $stmtB = $pdo->prepare(
+        "SELECT nombre, appat, apmat, fecha_nacimiento
+         FROM cat_personal
+         WHERE activo = TRUE
+           AND fecha_nacimiento IS NOT NULL
+           AND EXTRACT(MONTH FROM fecha_nacimiento) = :mes"
+    );
+    $stmtB->execute([':mes' => $mes]);
+    $cumpleaneros = $stmtB->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($cumpleaneros as $cp) {
+        $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
+        $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
+        $calendarioEventos[$diaCumple][] = [
+            'id' => null, 'titulo' => "\xF0\x9F\x8E\x82 " . $nombreCompleto,
+            'descripcion' => 'Cumpleanos', 'color' => '#B19A6D',
+            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple),
+            'fecha_fin'    => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
+            'publico' => false, 'es_cumple' => true,
+        ];
+    }
+}$mesesNombres = [
     1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
     7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
 ];

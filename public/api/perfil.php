@@ -8,6 +8,9 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
+// CRÍTICO: inicializar sesión ANTES de leer $_SESSION en contexto AJAX
+inicializarSesion();
+
 header('Content-Type: application/json');
 
 // 1. Identificar Rol
@@ -36,8 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST' || postParam('accion') !== 'actualizar
     exit;
 }
 
-if (!validarCsrfPost()) {
-    echo json_encode(['ok' => false, 'error' => 'Error de seguridad (CSRF). Intenta recargar la página.']);
+// Validación CSRF manual inline (validarCsrfPost() es void y emite HTML, incompatible con API JSON)
+$tokenPost    = $_POST['csrf_token'] ?? '';
+$tokenSession = $_SESSION['csrf_token'] ?? '';
+if (empty($tokenPost) || empty($tokenSession) || !hash_equals($tokenSession, $tokenPost)) {
+    error_log('[ALERTA DE SEGURIDAD] CSRF fallo en api/perfil.php desde IP: ' . ($_SERVER['REMOTE_ADDR'] ?? '?'));
+    http_response_code(403);
+    echo json_encode(['ok' => false, 'error' => 'Token de seguridad inválido. Recarga la página e intenta de nuevo.']);
     exit;
 }
 
