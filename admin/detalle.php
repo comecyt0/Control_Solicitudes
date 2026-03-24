@@ -56,6 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && postParam('_accion') === 'cambiar_e
             );
             $ins->execute([$id, $actual, $estatusNuevo, $comentario ?: null, $nombreAdmin]);
 
+            // Procesar evidencia si se subió una
+            if (isset($_FILES['evidencia_archivo']) && $_FILES['evidencia_archivo']['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES['evidencia_archivo'];
+                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                $allowed = ['jpg','jpeg','png','pdf','docx','doc','xls','xlsx','zip'];
+                if (in_array($ext, $allowed)) {
+                    $uploadDir = __DIR__ . '/../public/uploads/evidencias/';
+                    if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                    $newName = 'ev_status_' . $id . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                    if (move_uploaded_file($file['tmp_name'], $uploadDir . $newName)) {
+                        $stmtEv = $pdo->prepare("INSERT INTO solicitud_evidencias (solicitud_id, archivo_nombre, comentario, usuario_nombre) VALUES (?, ?, ?, ?)");
+                        $stmtEv->execute([$id, $newName, 'Adjunto al cambiar estatus a: ' . $estatusNuevo, $nombreAdmin]);
+                    }
+                }
+            }
+
             // Recargar solicitud para el email
             $stmtSolEmail = $pdo->prepare('SELECT * FROM solicitudes WHERE id = ?');
             $stmtSolEmail->execute([$id]);
@@ -330,6 +346,24 @@ require_once __DIR__ . '/../includes/header_admin.php';
         </div>
         <?php endif; ?>
 
+        <!-- Sección de Evidencias (Staff) -->
+        <div class="card mb-16" style="margin-top: 20px; border-left: 4px solid var(--color-primary);">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <i class="fa-solid fa-file-shield"></i>
+                    Evidencias y Adjuntos de Seguimiento
+                </h2>
+                <button class="btn btn-sm btn-outline" onclick="abrirModalEvidencia()" style="font-size: 0.7rem;">
+                    <i class="fa-solid fa-plus"></i> Cargar
+                </button>
+            </div>
+            <div class="card-body" style="padding: 15px;">
+                <div id="evidenciasLista" style="display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                    <!-- Dinámico -->
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Columna derecha: Historial + Comentarios -->
@@ -403,7 +437,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <form method="POST" action="">
+        <form method="POST" action="" enctype="multipart/form-data">
             <?= csrfField() ?>
             <input type="hidden" name="_accion" value="cambiar_estatus">
             <div class="modal-body">
@@ -438,6 +472,13 @@ require_once __DIR__ . '/../includes/header_admin.php';
                     <label class="form-label" for="comentario">Comentario</label>
                     <textarea name="comentario" id="comentario" class="form-control" rows="3"
                               placeholder="Descripcion de la accion realizada..."></textarea>
+                </div>
+                <div class="form-group" style="margin-top: 15px; background: rgba(102, 35, 49, 0.03); padding: 12px; border-radius: 8px; border: 1px dashed rgba(102, 35, 49, 0.2);">
+                    <label class="form-label" for="evidencia_archivo">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Adjuntar Evidencia (Opcional)
+                    </label>
+                    <input type="file" name="evidencia_archivo" id="evidencia_archivo" class="form-control" style="font-size: 0.85rem;">
+                    <p class="text-muted" style="font-size: 0.7rem; margin-top: 5px;">Imágenes, PDF, Office o ZIP.</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -574,8 +615,91 @@ function aplicarPlantilla(contenido) {
     }
 }
 
-// Cargar comentarios al mostrarse la página
+// ── Gestión de Evidencias ───────────────────────────────────────
+function cargarEvidencias() {
+    fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php?solicitud_id=' + SOLICITUD_ID_COMENTARIOS)
+        .then(r => r.json())
+        .then(data => {
+            const lista = document.getElementById('evidenciasLista');
+            if (!data.ok || !data.evidencias.length) {
+                lista.innerHTML = '<p class="text-muted fs-sm" style="grid-column: 1/-1; text-align: center; padding: 10px;">Sin evidencias cargadas.</p>';
+                return;
+            }
+            lista.innerHTML = data.evidencias.map(e => {
+                const isImg = ['jpg','jpeg','png'].includes(e.archivo_nombre.split('.').pop().toLowerCase());
+                return `
+                <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; background: #fff; position: relative;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--color-primary);">
+                            <i class="fa-solid ${isImg ? 'fa-image' : 'fa-file-lines'}"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 0.75rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${e.archivo_nombre}">
+                                ${e.archivo_nombre.substring(0, 15)}...
+                            </div>
+                            <div class="text-muted" style="font-size: 0.65rem;">${e.fecha_fmt}</div>
+                        </div>
+                    </div>
+                    ${e.comentario ? `<p style="font-size: 0.7rem; color: #64748b; margin: 8px 0; line-height: 1.2;">${escapeHtml(e.comentario)}</p>` : ''}
+                    <div style="display: flex; gap: 5px; margin-top: 8px;">
+                        <a href="${e.url}" target="_blank" class="btn btn-sm btn-outline" style="flex: 1; padding: 2px; font-size: 0.65rem;">Ver</a>
+                        <button onclick="eliminarEvidencia(${e.id})" class="btn btn-sm btn-outline" style="padding: 2px 6px; font-size: 0.65rem; color: #ef4444; border-color: #fca5a5;">
+                             <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        });
+}
+
+function eliminarEvidencia(id) {
+    if (!confirm('¿Eliminar esta evidencia?')) return;
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+    fd.append('accion', 'eliminar');
+    fd.append('evidencia_id', id);
+    fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(d => { if (d.ok) cargarEvidencias(); });
+}
+
+function abrirModalEvidencia() {
+    const comentario = prompt('Comentario opcional para la evidencia:');
+    if (comentario === null) return;
+    
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.jpg,.jpeg,.png,.pdf,.docx,.doc,.xls,.xlsx,.zip';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+        fd.append('accion', 'agregar');
+        fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
+        fd.append('comentario', comentario);
+        fd.append('archivo', file);
+        
+        COMECyTUI.toast('Subiendo archivo...', 'info');
+        fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
+            .then(r => r.json())
+            .then(d => {
+                if (d.ok) {
+                    COMECyTUI.toast('Evidencia guardada', 'success');
+                    cargarEvidencias();
+                } else {
+                    COMECyTUI.alert(d.error);
+                }
+            });
+    };
+    input.click();
+}
+
+// Cargar datos iniciales
 cargarComentarios();
+cargarEvidencias();
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

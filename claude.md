@@ -128,5 +128,11 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Filtro Estricto**: El canal "General" del chat ahora es "General del Área". Solo muestra mensajes de administradores que comparten el mismo `cve_area`.
   - **Directos**: El listado de administradores para DMs también está filtrado, permitiendo solo la comunicación interna departamental según la solicitud del usuario.
 
+- **📎 Sistema de Evidencias y Adjuntos Staff (Fase 4, 2026-03-24)**:
+  - **Gestión de Seguimiento**: En el detalle de solicitud (`admin/detalle.php`), el personal de Sistemas puede cargar evidencias (imágenes, documentos, reportes) tanto de forma libre como al realizar cambios de estatus.
+  - **Integración con Flujo**: Al completar o actualizar un estatus, el modal ahora incluye un campo opcional de adjunto, el cual se vincula automáticamente a la historia de la solicitud.
+  - **Almacenamiento**: Los archivos se guardan con seguridad en `public/uploads/evidencias/` con nombres sanados y vinculados a la tabla `solicitud_evidencias`.
+  - **Alcance**: Feature exclusivo para personal de la Unidad de Sistemas/Admin para documentar la resolución técnica de incidencias.
+
 - **📂 Constante `ROOT` missing**: Muchos scripts API (perfil, multimedia) usaban la constante `ROOT` para subir archivos, pero esta no estaba definida globalmente. Se definió centralmente en `config/database.php` como `dirname(__DIR__)` para asegurar que las rutas absolutas de servidor funcionen siempre en Docker y Windows.
 - **🔗 Fetch AJAX con URLs Relativas**: En `public/perfil.php`, el `fetch("api/perfil.php")` fallaba (404) si el usuario accedía desde una URL profunda como `/areas/difusion/dashboard.php`. **Solución**: Se cambió el `action` del formulario a una URL absoluta usando `<?= BASE_URL ?>public/api/perfil.php`, garantizando que el endpoint sea alcanzable desde cualquier contexto de navegación.
