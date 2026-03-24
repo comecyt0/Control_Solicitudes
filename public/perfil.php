@@ -9,6 +9,7 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../includes/helpers.php';
 require_once __DIR__ . '/../config/auth.php';
 
+// Inicializar sesión ANTES de leer csrf_token
 inicializarSesion();
 
 // Validar cualquier tipo de sesión activa
@@ -233,8 +234,8 @@ require_once __DIR__ . '/../includes/header_user.php';
         </div>
     </div>
 
-    <form id="formPerfil" action="api/perfil.php" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+    <form id="formPerfil" action="<?= BASE_URL ?>public/api/perfil.php" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
         <input type="hidden" name="accion" value="actualizar">
         <input type="file" id="fotoInput" name="foto_perfil" style="display:none;" accept="image/jpeg, image/png, image/webp">
 
@@ -334,7 +335,8 @@ document.getElementById('formPerfil').addEventListener('submit', function(e) {
                 COMECyTUI.alert('Error', res.error || 'Ocurrió un error al procesar la solicitud.');
             }
         }).catch(err => {
-            COMECyTUI.alert('Error', 'Fallo de conexión con el servidor.');
+            console.error('[Perfil] Error en fetch:', err);
+            COMECyTUI.alert('Error', 'Fallo de conexión con el servidor. Intenta recargar la página.');
         });
 });
 </script>

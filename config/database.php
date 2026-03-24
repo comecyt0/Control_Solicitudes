@@ -10,6 +10,11 @@
  * Para local sin Docker: DB_HOST=127.0.0.1, DB_PORT=5432
  */
 
+// ─── Definir Raíz del Proyecto ──────────────────────────────────────────────
+if (!defined('ROOT')) {
+    define('ROOT', dirname(__DIR__));
+}
+
 // ─── Parsear .env ──────────────────────────────────────────────────────────
 $envFile = __DIR__ . '/../.env';
 if (file_exists($envFile)) {
@@ -29,6 +34,7 @@ define('DB_PORT',   $_ENV['DB_PORT']   ?? '5432');
 define('DB_NAME',   $_ENV['DB_NAME']   ?? 'bd_sisibic');
 define('DB_USER',   $_ENV['DB_USER']   ?? '');
 define('DB_PASS',   $_ENV['DB_PASS']   ?? '');
+
 
 // Prefijo de folio institucional
 // Prefijo de folio institucional
