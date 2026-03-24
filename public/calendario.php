@@ -196,7 +196,7 @@ $extraHead = '
     position: absolute; top: calc(100% + 10px); right: 0;
     width: 320px; background: #fff; border-radius: 14px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: none;
-    flex-direction: column; z-index: 1000; border: 1px solid #f1f5f9;
+    flex-direction: column; z-index: 9999; border: 1px solid #f1f5f9;
     overflow: hidden; animation: ui-slide-up 0.3s ease;
 }
 .mailbox-header {

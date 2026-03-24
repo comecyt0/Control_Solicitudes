@@ -31,8 +31,9 @@ if (empty($_SESSION['admin_id'])) {
 }
 
 $pdo     = getConnection();
-$adminId = (int) $_SESSION['admin_id'];
-$accion  = $_GET['accion'] ?? $_POST['accion'] ?? '';
+$adminId  = (int) $_SESSION['admin_id'];
+$cveArea  = (int) ($_SESSION['admin_cve_area'] ?? 0);
+$accion   = $_GET['accion'] ?? $_POST['accion'] ?? '';
 
 // ------------------------------------------------------------------
 // LISTAR: Devuelve los últimos mensajes del canal grupal o de un DM con reacciones
@@ -54,7 +55,8 @@ if ($accion === 'listar') {
         $params[':eux2'] = $destinatario;
         $params[':yo2']  = $adminId;
     } else {
-        $where .= " AND m.destinatario_id IS NULL";
+        $where .= " AND m.destinatario_id IS NULL AND p.cve_area = :cve_area";
+        $params[':cve_area'] = $cveArea;
     }
 
     if ($desde === 0) {
@@ -73,6 +75,7 @@ if ($accion === 'listar') {
                            ) as reacciones
                     FROM sb_chat_mensajes m
                     INNER JOIN administradores a ON a.id = m.admin_id
+                    LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
                     WHERE $where
                     ORDER BY m.id DESC
                     LIMIT 50
@@ -93,6 +96,7 @@ if ($accion === 'listar') {
                        ) as reacciones
                 FROM sb_chat_mensajes m
                 INNER JOIN administradores a ON a.id = m.admin_id
+                LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
                 WHERE $where
                 ORDER BY m.id ASC
                 LIMIT 100";
@@ -206,13 +210,15 @@ if ($accion === 'enviar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // Incluye inicial y rol para el UI
 // ------------------------------------------------------------------
 if ($accion === 'admins') {
-    $stmt = $pdo->query(
-        "SELECT id, nombre, rol,
-                UPPER(SUBSTRING(nombre FROM 1 FOR 1)) AS inicial
-         FROM administradores
-         WHERE activo = true
-         ORDER BY nombre"
+    $stmt = $pdo->prepare(
+        "SELECT a.id, a.nombre, a.rol,
+                UPPER(SUBSTRING(a.nombre FROM 1 FOR 1)) AS inicial
+         FROM administradores a
+         LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
+         WHERE a.activo = true AND p.cve_area = ?
+         ORDER BY a.nombre"
     );
+    $stmt->execute([$cveArea]);
     $admins = $stmt->fetchAll();
     echo json_encode(['ok' => true, 'admins' => $admins]);
     exit;

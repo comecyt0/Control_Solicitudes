@@ -197,19 +197,74 @@ try {
                 <i class="fa-solid fa-user-shield"></i>
             </div>
             <div class="admin-details">
-                <span class="admin-name"><?= esc($adminNombre) ?></span>
-                <span class="admin-role">Administrador</span>
+                <span class="admin-name" title="<?= esc($adminNombre) ?>"><?= esc($adminNombre) ?></span>
+                <span class="admin-role"><?= esc($_SESSION['admin_rol'] ?? 'Administrador') ?></span>
             </div>
         </div>
-        <div style="display: flex; gap: 5px; margin-left: auto;">
-            <a href="<?= BASE_URL ?>public/perfil.php" class="btn-logout" style="color: #64748b; border: 1px solid #e2e8f0;" title="Mi Perfil">
+        <div class="footer-actions">
+            <a href="<?= BASE_URL ?>public/perfil.php" class="btn-footer-link" title="Mi Perfil">
                 <i class="fa-solid fa-user-pen"></i>
             </a>
-            <a href="<?= BASE_URL ?>admin/logout.php" class="btn-logout" title="Cerrar sesion">
+            <a href="<?= BASE_URL ?>admin/logout.php" class="btn-footer-link btn-danger-soft" title="Cerrar sesión">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </a>
         </div>
     </div>
+    <style>
+    .sidebar-footer {
+        padding: 1.25rem 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.15);
+    }
+    .admin-info {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        margin-bottom: 1rem;
+    }
+    .admin-avatar {
+        width: 38px; height: 38px;
+        background: linear-gradient(135deg, #662331, #8b2f42);
+        color: white;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; flex-shrink: 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .admin-details {
+        min-width: 0; flex: 1;
+        display: flex; flex-direction: column;
+    }
+    .admin-name {
+        font-weight: 700; font-size: 0.85rem; color: #fff;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        line-height: 1.2;
+    }
+    .admin-role {
+        font-size: 0.72rem; color: rgba(255,255,255,0.5);
+        text-transform: capitalize;
+    }
+    .footer-actions {
+        display: flex; gap: 8px;
+    }
+    .btn-footer-link {
+        flex: 1; height: 34px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.7);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px; text-decoration: none;
+        transition: all 0.2s; font-size: 0.9rem;
+    }
+    .btn-footer-link:hover {
+        background: rgba(255,255,255,0.15);
+        color: #fff; border-color: rgba(255,255,255,0.2);
+    }
+    .btn-danger-soft:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171; border-color: rgba(239, 68, 68, 0.3);
+    }
+    </style>
 </aside>
 
 <!-- Overlay para sidebar movil -->
@@ -1452,9 +1507,11 @@ try {
                     onclick="toggleDarkMode()" style="flex-shrink:0;">
                 <i class="fa-solid <?= $darkMode ? 'fa-sun' : 'fa-moon' ?>"></i>
             </button>
+            <?php if (($_SESSION['area_slug_activa'] ?? 'sistemas') === 'sistemas'): ?>
             <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=pendiente" class="topbar-btn" title="Solicitudes pendientes">
                 <i class="fa-solid fa-bell"></i>
             </a>
+            <?php endif; ?>
             <!-- Botón Chat Equipo TI -->
             <button class="topbar-btn" id="chatToggleBtn" onclick="toggleChat()" title="Chat del equipo"
                     style="position:relative; border:none; cursor:pointer;">

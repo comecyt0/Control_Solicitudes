@@ -519,13 +519,16 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const reveals = document.querySelectorAll(".reveal-up");
-    new IntersectionObserver((entries, ob) => {
-        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("active"); ob.unobserve(e.target); } });
-    }, { root: null, rootMargin: "0px", threshold: 0.08 }).observe?.apply(null, reveals) || reveals.forEach(el => {
-        new IntersectionObserver((entries, ob) => {
-            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("active"); ob.unobserve(e.target); } });
-        }, { root: null, rootMargin: "0px", threshold: 0.08 }).observe(el);
-    });
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("active");
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { root: null, rootMargin: "0px", threshold: 0.08 });
+    
+    reveals.forEach(el => observer.observe(el));
 });
 </script>
 
