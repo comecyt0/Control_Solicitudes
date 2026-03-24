@@ -77,23 +77,7 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
         </div>
     </nav>
 
-    <div class="sidebar-footer">
-        <div class="admin-info">
-            <div class="admin-avatar" style="background: var(--color-info);">
-                <i class="fa-solid fa-user"></i>
-            </div>
-            <div class="admin-details">
-                <span class="admin-name" title="<?= esc($userNombre) ?>"><?= esc($userNombre) ?></span>
-                <span class="admin-role" title="<?= esc($userArea) ?>"><?= esc($userArea) ?></span>
-            </div>
-        </div>
-            <a href="<?= BASE_URL ?>public/perfil.php" class="btn-outline" style="border: none; color: #1e293b;" title="Mi Perfil">
-                <i class="fa-solid fa-user-pen"></i> <span class="d-none d-sm-inline">Mi Perfil</span>
-            </a>
-            <a href="<?= BASE_URL ?>public/logout.php" class="btn-outline hover-danger" style="border: none; color: #dc2626;" title="Cerrar Sesión">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </a>
-    </div>
+    <?php require_once __DIR__ . '/sidebar_footer.php'; ?>
 </aside>
 
 <!-- Overlay para sidebar movil -->

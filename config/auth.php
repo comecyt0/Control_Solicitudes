@@ -146,7 +146,7 @@ function iniciarSesion(string $email, string $password): bool
 
     $pdo  = getConnection();
     $stmt = $pdo->prepare(
-        "SELECT a.id, a.nombre, a.email, a.password_hash, a.rol, p.cve_area
+        "SELECT a.id, a.nombre, a.email, a.password_hash, a.rol, p.cve_area, p.foto_perfil
          FROM administradores a
          LEFT JOIN cat_personal p ON p.correo_institucional = a.email OR p.correo_personal = a.email
          WHERE a.email = :email AND a.activo = true
@@ -171,6 +171,7 @@ function iniciarSesion(string $email, string $password): bool
     $_SESSION['admin_email']    = $admin['email'];
     $_SESSION['admin_rol']      = $admin['rol'] ?? 'admin';
     $_SESSION['admin_cve_area'] = (int)($admin['cve_area'] ?? 1);
+    $_SESSION['admin_foto']     = $admin['foto_perfil'] ?? null;
     $_SESSION['ultimo_acceso'] = time();
 
     return true;
@@ -187,7 +188,7 @@ function iniciarSesionUsuario(string $email, string $password): bool
     $stmt = $pdo->prepare(
         "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat,
                 COALESCE(u.correo_institucional, u.correo_personal) as email,
-                u.password_hash, u.cve_area, a.des_area
+                u.password_hash, u.cve_area, a.des_area, u.foto_perfil
          FROM cat_personal u
          LEFT JOIN cat_areas a ON u.cve_area = a.cve_area
          WHERE (u.correo_institucional = :email1 OR u.correo_personal = :email2) AND u.activo = true
@@ -210,6 +211,7 @@ function iniciarSesionUsuario(string $email, string $password): bool
     $_SESSION['user_email']    = $user['email'];
     $_SESSION['user_cve_area'] = $user['cve_area'] ?? 1;
     $_SESSION['user_area']     = $user['des_area'] ?? 'General';
+    $_SESSION['user_foto']     = $user['foto_perfil'] ?? null;
     $_SESSION['ultimo_acceso'] = time();
 
     return true;
@@ -346,7 +348,7 @@ function iniciarSesionSS(string $email, string $password): bool
     inicializarSesion();
     $pdo  = getConnection();
     $stmt = $pdo->prepare(
-        "SELECT id, nombre, appat, apmat, email, password_hash, cve_area
+        "SELECT id, nombre, appat, apmat, email, password_hash, cve_area, foto_perfil
          FROM ss_usuarios
          WHERE email = :email AND activo = TRUE
          LIMIT 1"
@@ -363,6 +365,7 @@ function iniciarSesionSS(string $email, string $password): bool
     $_SESSION['ss_email']      = $ss['email'];
     $_SESSION['ss_cve_area']   = $ss['cve_area'] ?? null;
     $_SESSION['ss_rol']        = 'servicio_social';
+    $_SESSION['ss_foto']       = $ss['foto_perfil'] ?? null;
     $_SESSION['ultimo_acceso'] = time();
     return true;
 }
