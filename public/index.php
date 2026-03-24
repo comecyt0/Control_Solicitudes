@@ -11,6 +11,12 @@ require_once __DIR__ . '/../config/auth.php';
 // Validar que el usuario esté loggeado (Admin o Usuario)
 verificarSesionUsuario();
 
+// El rol Servicio Social es el único que no debería permanecer en el Intranet Hub, lo forzamos a su panel
+if (!empty($_SESSION['ss_id'])) {
+    header("Location: " . BASE_URL . "servicio_social/dashboard.php");
+    exit;
+}
+
 $pdo = getConnection();
 
 // Obtener nombre del usuario para el saludo
