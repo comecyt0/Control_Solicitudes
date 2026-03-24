@@ -87,3 +87,8 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 
 - **📂 Constante `ROOT` missing**: Muchos scripts API (perfil, multimedia) usaban la constante `ROOT` para subir archivos, pero esta no estaba definida globalmente. Se definió centralmente en `config/database.php` como `dirname(__DIR__)` para asegurar que las rutas absolutas de servidor funcionen siempre en Docker y Windows.
 - **🔗 Fetch AJAX con URLs Relativas**: En `public/perfil.php`, el `fetch("api/perfil.php")` fallaba (404) si el usuario accedía desde una URL profunda como `/areas/difusion/dashboard.php`. **Solución**: Se cambió el `action` del formulario a una URL absoluta usando `<?= BASE_URL ?>public/api/perfil.php`, garantizando que el endpoint sea alcanzable desde cualquier contexto de navegación.
+
+- **💬 Chat de Administradores — Estabilidad y Responsividad**:
+  - **Mensajes "Stuck" (Bug de Orden)**: El API de chat (`admin/api/chat.php`) en su carga inicial (`desde=0`) obtenía los 100 mensajes más antiguos de la historia. **Solución**: Se implementó una subconsulta que obtiene los ÚLTIMOS 50 mensajes y los ordena ascendentemente, asegurando que el chat inicie en el presente.
+  - **📱 Vista Móvil**: El panel de chat tenía un ancho fijo de 580px que desbordaba pantallas pequeñas, ocultando el sidebar y el botón de cerrar.
+  - **Solución Mobile-First**: Se implementó `@media (max-width: 650px)` en `header_admin.php`, haciendo el panel `width: 100%`, moviendo el sidebar a vista completa y añadiendo un botón de retroceso (`chat-mobile-back`) para navegar entre la lista de administradores y los mensajes.

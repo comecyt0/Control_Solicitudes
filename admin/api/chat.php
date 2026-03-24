@@ -57,22 +57,46 @@ if ($accion === 'listar') {
         $where .= " AND m.destinatario_id IS NULL";
     }
 
-    $sql = "SELECT m.id, m.admin_id, m.destinatario_id, m.mensaje, m.tipo,
-                   m.ref_id, m.ref_titulo,
-                   TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'HH24:MI') AS hora,
-                   TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'DD/MM/YYYY') AS fecha_dia,
-                   a.nombre AS admin_nombre,
-                   (
-                       SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', r.admin_id, 'nombre', r2.nombre))
-                       FROM sb_chat_reacciones r
-                       JOIN administradores r2 ON r2.id = r.admin_id
-                       WHERE r.mensaje_id = m.id
-                   ) as reacciones
-            FROM sb_chat_mensajes m
-            INNER JOIN administradores a ON a.id = m.admin_id
-            WHERE $where
-            ORDER BY m.id ASC
-            LIMIT 100";
+    if ($desde === 0) {
+        // Carga inicial: obtener los ÚLTIMOS 50 para empezar en el presente
+        $sql = "SELECT * FROM (
+                    SELECT m.id, m.admin_id, m.destinatario_id, m.mensaje, m.tipo,
+                           m.ref_id, m.ref_titulo,
+                           TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'HH24:MI') AS hora,
+                           TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'DD/MM/YYYY') AS fecha_dia,
+                           a.nombre AS admin_nombre,
+                           (
+                               SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', r.admin_id, 'nombre', r2.nombre))
+                               FROM sb_chat_reacciones r
+                               JOIN administradores r2 ON r2.id = r.admin_id
+                               WHERE r.mensaje_id = m.id
+                           ) as reacciones
+                    FROM sb_chat_mensajes m
+                    INNER JOIN administradores a ON a.id = m.admin_id
+                    WHERE $where
+                    ORDER BY m.id DESC
+                    LIMIT 50
+                ) sub
+                ORDER BY id ASC";
+    } else {
+        // Polling: obtener solo lo nuevo desde el último ID conocido
+        $sql = "SELECT m.id, m.admin_id, m.destinatario_id, m.mensaje, m.tipo,
+                       m.ref_id, m.ref_titulo,
+                       TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'HH24:MI') AS hora,
+                       TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'DD/MM/YYYY') AS fecha_dia,
+                       a.nombre AS admin_nombre,
+                       (
+                           SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', r.admin_id, 'nombre', r2.nombre))
+                           FROM sb_chat_reacciones r
+                           JOIN administradores r2 ON r2.id = r.admin_id
+                           WHERE r.mensaje_id = m.id
+                       ) as reacciones
+                FROM sb_chat_mensajes m
+                INNER JOIN administradores a ON a.id = m.admin_id
+                WHERE $where
+                ORDER BY m.id ASC
+                LIMIT 100";
+    }
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);

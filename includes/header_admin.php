@@ -280,8 +280,12 @@ try {
     </div>
 
     <!-- Panel Derecho: Mensajes -->
-    <div style="flex:1; display:flex; flex-direction:column; min-width:0; position:relative;">
+    <div class="chat-right-panel" style="flex:1; display:flex; flex-direction:column; min-width:0; position:relative;">
         <div id="chatPanelHeader" style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:#f8f9fc; border-bottom:1px solid #e5e7eb; flex-shrink:0; cursor:grab;">
+            <button class="chat-mobile-back" onclick="chatVolverALista()" title="Volver a lista" 
+                    style="display:none; background:none; border:none; color:#6b7280; font-size:1.1rem; cursor:pointer; padding:5px 8px 5px 0;">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
             <div id="chatCanalAvatar" style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#662331,#8b2f42); display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:#fff; flex-shrink:0; font-weight:700;">
                 <i class="fa-solid fa-users"></i>
             </div>
@@ -576,6 +580,40 @@ try {
                 align-items:center; justify-content:center; cursor:pointer; font-size:0.7rem;
             }
             .chat-bubble-btn:hover { color:#662331; border-color:#662331; }
+
+            /* --- Responsive Chat --- */
+            @media (max-width: 650px) {
+                #chatPanel {
+                    width: calc(100% - 20px) !important;
+                    height: calc(100% - 100px) !important;
+                    right: 10px !important;
+                    left: 10px !important;
+                    top: 80px !important;
+                    border-radius: 12px !important;
+                }
+                #chatSidebar {
+                    width: 100% !important;
+                    display: flex !important;
+                    border-right: none !important;
+                }
+                #chatPanel.chat-mensajes-activos #chatSidebar {
+                    display: none !important;
+                }
+                #chatPanel.chat-mensajes-activos .chat-right-panel {
+                    display: flex !important;
+                    width: 100% !important;
+                }
+                #chatPanel:not(.chat-mensajes-activos) .chat-right-panel {
+                    display: none !important;
+                }
+                .chat-mobile-back {
+                    display: flex !important;
+                }
+                /* Ajustes menores para ahorrar espacio */
+                #chatAdminList { padding: 0 4px 4px !important; }
+                .chat-dm-btn { margin: 2px 4px !important; }
+                #chatInput { font-size: 16px !important; } /* Evita zoom en iOS */
+            }
         `;
         document.head.appendChild(s);
     })();
@@ -596,6 +634,11 @@ try {
     function colorAdmin(id) {
         return AVATAR_COLORS[(id + 1) % AVATAR_COLORS.length];
     }
+
+    // -? Volver a lista en móvil ----------------------------------?
+    window.chatVolverALista = function() {
+        document.getElementById('chatPanel').classList.remove('chat-mensajes-activos');
+    };
 
     // -? Crear chip de avatar con inicial ------------------------?
     function crearAvatar(nombre, adminId, size = 28) {
@@ -640,6 +683,9 @@ try {
     window.chatSeleccionarCanal = function (adminId) {
         canalActual = adminId;
         ultimoId    = 0;       // Reiniciar cursor de paginación al cambiar canal
+
+        // Activar vista de mensajes en móvil
+        document.getElementById('chatPanel').classList.add('chat-mensajes-activos');
 
         // Actualizar header del canal activo
         const avatar  = document.getElementById('chatCanalAvatar');
