@@ -39,13 +39,14 @@ if ($busqueda !== '') {
         // Un solo resultado: cargar detalle completo
         $resultado = $resultados[0];
 
-        $stmtH = $pdo->prepare(
-            "SELECT * FROM historial_solicitudes
-             WHERE solicitud_id = ?
-             ORDER BY fecha_cambio ASC"
-        );
+        $stmtH = $pdo->prepare("SELECT * FROM historial_solicitudes WHERE solicitud_id = ? ORDER BY fecha_cambio ASC");
         $stmtH->execute([$resultado['id']]);
         $historial = $stmtH->fetchAll();
+
+        // Cargar evidencias de staff
+        $stmtEv = $pdo->prepare("SELECT * FROM solicitud_evidencias WHERE solicitud_id = ? ORDER BY fecha_creacion DESC");
+        $stmtEv->execute([$resultado['id']]);
+        $evidencias = $stmtEv->fetchAll();
     } else {
         // Multiples resultados por correo: mostrar lista
         $resultado = $resultados; // array
@@ -319,6 +320,52 @@ if ($usuariologueado) {
                 <div class="detail-field">
                     <div class="detail-field-label">Inventario COMECyT</div>
                     <div class="detail-field-value"><?= !empty($resultado['num_inventario']) ? esc($resultado['num_inventario']) : '<span class="text-muted">En validación</span>' ?></div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Sección de Evidencias de Seguimiento (Lectura) -->
+        <?php if (!empty($evidencias)): ?>
+        <div class="card mb-16" style="margin-top: 20px; border-left: 4px solid var(--color-primary); background: #fdfdfd;">
+            <div class="card-header" style="padding-bottom: 8px;">
+                <h3 class="card-title" style="font-size: 1rem; color: var(--color-primary);">
+                    <i class="fa-solid fa-file-shield"></i>
+                    Documentos y Evidencias de Resolución
+                </h3>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+                <p class="text-muted" style="font-size: 0.82rem; margin-bottom: 12px;">Archivos adjuntados por el personal de Sistemas/Administración durante el proceso:</p>
+                <div style="display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+                    <?php foreach ($evidencias as $ev): ?>
+                    <?php 
+                        $ext = strtolower(pathinfo($ev['archivo_nombre'], PATHINFO_EXTENSION));
+                        $isImg = in_array($ext, ['jpg','jpeg','png']);
+                        $icono = $isImg ? 'fa-image' : 'fa-file-lines';
+                    ?>
+                    <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; background: #fff; display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--color-primary); flex-shrink: 0;">
+                                <i class="fa-solid <?= $icono ?>"></i>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 0.78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= esc($ev['archivo_nombre']) ?>">
+                                    <?= esc(substr($ev['archivo_nombre'], 0, 20)) ?>...
+                                </div>
+                                <div class="text-muted" style="font-size: 0.65rem;"><?= (new DateTime($ev['fecha_creacion']))->format('d/m/Y H:i') ?></div>
+                            </div>
+                        </div>
+                        <?php if ($ev['comentario']): ?>
+                            <p style="font-size: 0.75rem; color: #64748b; line-height: 1.3; margin: 0; min-height: 20px;"><?= nl2br(esc($ev['comentario'])) ?></p>
+                        <?php endif; ?>
+                        <a href="<?= BASE_URL ?>public/uploads/evidencias/<?= esc($ev['archivo_nombre']) ?>" 
+                           target="_blank" 
+                           class="btn btn-outline btn-sm" 
+                           style="width: 100%; justify-content: center; font-size: 0.75rem; padding: 5px;">
+                            <i class="fa-solid fa-eye"></i> Visualizar Adjunto
+                        </a>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>
