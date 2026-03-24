@@ -50,6 +50,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         }
     } elseif ($accion === 'editar_evento') {
         $id = (int) postParam('evento_id');
+        
+        // SEGURIDAD: Verificar si el evento es editorial o institucional
+        $stmtCheck = $pdo->prepare("SELECT 1 FROM df_eventos_editoriales WHERE id = ?");
+        $stmtCheck->execute([$id]);
+        $esEditorial = (bool)$stmtCheck->fetch();
+
+        if (!$esEditorial && $cveAreaUsuario !== 1) {
+             die("Acceso denegado: Solo Sistemas puede editar eventos institucionales.");
+        }
+
         $titulo = trim(postParam('titulo'));
         $descripcion = trim(postParam('descripcion'));
         $fechaInicio = postParam('fecha_inicio');
@@ -58,15 +68,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         
         if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
             $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-            $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
+            if ($esEditorial) {
+                $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
+                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
+            } else {
+                // Es institucional y es Sistemas, actualizar tabla global
+                $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
+                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
+            }
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_editado');
             exit;
         }
     } elseif ($accion === 'eliminar_evento') {
         $id = (int) postParam('evento_id');
         if ($id > 0) {
-            $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ?");
+            // SEGURIDAD: Solo Sistemas borra institucionales
+            $stmtCheck = $pdo->prepare("SELECT 1 FROM df_eventos_editoriales WHERE id = ?");
+            $stmtCheck->execute([$id]);
+            $esEditorial = (bool)$stmtCheck->fetch();
+
+            if (!$esEditorial && $cveAreaUsuario !== 1) {
+                die("Acceso denegado.");
+            }
+
+            if ($esEditorial) {
+                $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ?");
+            } else {
+                $stmt = $pdo->prepare("DELETE FROM eventos WHERE id = ?");
+            }
             $stmt->execute([$id]);
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_eliminado');
             exit;
@@ -390,10 +419,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     </div>
     <div style="display: flex; gap: 10px;">
         <button class="btn btn-primary" onclick="abrirModalCrear()">
-            <i class="fa-solid fa-plus"></i> Nuevo Evento
-        </button>
-        <button class="btn btn-outline" onclick="abrirModalCrearTarea()">
-            <i class="fa-solid fa-list-check"></i> Nueva Tarea
+            <i class="fa-solid fa-plus"></i> Nuevo Evento Editorial
         </button>
     </div>
 </div>
@@ -438,7 +464,14 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     $colorNota = isset($ev['es_cumple']) ? 'nota-dorado' : 'nota-difusion';
                 ?>
                     <div class="evento-pildora <?= $colorNota ?>" 
-                         onclick="event.stopPropagation(); <?= isset($ev['es_cumple']) ? 'abrirModalCumple(\''.esc($ev['nombre_cumple']).'\', \''.esc($ev['descripcion']).'\', \''.esc($ev['foto_perfil']).'\', \''.$ev['edad'].'\', \''.date('d M', strtotime($ev['fecha_inicio'])).'\')' : 'abrirModalEditar('.$ev['id'].', \''.esc($ev['titulo']).'\', \''.esc($ev['descripcion']).'\', \''.date('Y-m-d', strtotime($ev['fecha_inicio'])).'\', \''.date('Y-m-d', strtotime($ev['fecha_fin'])).'\', \''.($ev['color']).'\', '.($ev['publico']?1:0).')' ?>">
+                         onclick="event.stopPropagation(); 
+                         <?php if(isset($ev['es_cumple'])): ?>
+                            abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '<?=esc($ev['descripcion'])?>', '<?=esc($ev['foto_perfil'])?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')
+                         <?php elseif(isset($ev['es_institucional']) && $ev['es_institucional'] && $cveAreaUsuario !== 1): ?>
+                            abrirModalVer('<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d', strtotime($ev['fecha_fin']))?>')
+                         <?php else: ?>
+                            abrirModalEditar(<?=$ev['id']?>, '<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d', strtotime($ev['fecha_fin']))?>', '<?=($ev['color'])?>', <?=($ev['publico']?1:0)?>, <?= (isset($ev['es_institucional']) && $ev['es_institucional']) ? '1' : '0' ?>)
+                         <?php endif; ?>">
                         <div class="evento-titulo">
                             <?php if(isset($ev['es_cumple'])): ?>
                                 <?php if(!empty($ev['foto_perfil'])): ?>
@@ -458,7 +491,12 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 
 <!-- KANBAN -->
 <div id="kanban" style="margin-top: 50px;">
-    <h3 style="font-weight: 800; color: #1e293b;"><i class="fa-solid fa-list-check" style="color:#3b82f6;"></i> Tablero de Tareas Editoriales</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-weight: 800; color: #1e293b; margin:0;"><i class="fa-solid fa-list-check" style="color:#3b82f6;"></i> Tablero de Tareas Editoriales</h3>
+        <button class="btn btn-primary" onclick="abrirModalCrearTarea()" style="background:#3b82f6; border:none; padding: 0.5rem 1rem; font-size: 0.85rem;">
+            <i class="fa-solid fa-plus"></i> Nueva Tarea
+        </button>
+    </div>
     <div class="kanban-board">
         <?php foreach (['pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso', 'completada' => 'Completada'] as $idCol => $lblCol): ?>
             <div class="kanban-col" ondragover="allowDrop(event)" ondrop="drop(event, '<?= $idCol ?>')">
@@ -566,11 +604,11 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     <label for="e_publico" style="margin:0; font-weight:600; color:#1e40af; cursor:pointer;">Visible para el público</label>
                 </div>
             </div>
-            <div class="modal-footer d-flex justify-content-between">
-                <button type="button" class="btn btn-danger" onclick="eliminarEvento()">Eliminar</button>
+            <div class="modal-footer d-flex justify-content-between" id="footerEditarEvento">
+                <button type="button" class="btn btn-danger" onclick="eliminarEvento()" id="btnEliminarEvento">Eliminar</button>
                 <div>
                     <button type="button" class="btn btn-outline" onclick="cerrarModal('modalEditarEvento')">Cerrar</button>
-                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                    <button type="submit" class="btn btn-primary" id="btnActualizarEvento">Actualizar</button>
                 </div>
             </div>
         </form>
@@ -684,9 +722,16 @@ function abrirModalCrearDesdeCelda(ini, fin) {
 }
 function abrirModalVer(titulo, desc, ini, fin) {
     document.getElementById('e_titulo').value = titulo;
+    document.getElementById('e_titulo').readOnly = true;
     document.getElementById('e_descripcion').value = desc;
+    document.getElementById('e_descripcion').readOnly = true;
     document.getElementById('e_fecha_inicio').value = ini;
+    document.getElementById('e_fecha_inicio').readOnly = true;
     document.getElementById('e_fecha_fin').value = fin;
+    document.getElementById('e_fecha_fin').readOnly = true;
+    document.getElementById('e_publico').disabled = true;
+    document.getElementById('btnEliminarEvento').style.display = 'none';
+    document.getElementById('btnActualizarEvento').style.display = 'none';
     abrirModal('modalEditarEvento');
 }
 function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
@@ -706,13 +751,24 @@ function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
     }
     abrirModal('modalVerCumple');
 }
-function abrirModalEditar(id, t, d, ini, fin, c, p) {
+function abrirModalEditar(id, t, d, ini, fin, c, p, esInst) {
     document.getElementById('e_evento_id').value = id;
     document.getElementById('e_titulo').value = t;
+    document.getElementById('e_titulo').readOnly = false;
     document.getElementById('e_descripcion').value = d;
+    document.getElementById('e_descripcion').readOnly = false;
     document.getElementById('e_fecha_inicio').value = ini;
+    document.getElementById('e_fecha_inicio').readOnly = false;
     document.getElementById('e_fecha_fin').value = fin;
+    document.getElementById('e_fecha_fin').readOnly = false;
     document.getElementById('e_publico').checked = (p == 1);
+    document.getElementById('e_publico').disabled = false;
+    
+    document.getElementById('btnEliminarEvento').style.display = 'block';
+    document.getElementById('btnActualizarEvento').style.display = 'block';
+    
+    // Si es Systems pero es Institucional, ocultar checkbox public para evitar confusiones de replicas
+    // Pero el usuario pidió que Systems SI pueda editar. 
     abrirModal('modalEditarEvento');
 }
 

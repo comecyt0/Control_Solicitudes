@@ -116,10 +116,11 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Problema**: El footer del sidebar era demasiado transparente y los botones carecían de distinción profesional.
   - **Mejora**: Se aplicó un fondo sólido `#1a1c23` (Charcoal Premium) con un sutil `box-shadow` superior. Los botones de Perfil y Cerrar Sesión ahora tienen fondos individuales `#2d2f39`, bordes definidos y estados hover con `translateY(-1px)` y sombras profundas, mejorando la ergonomía visual.
 
-- **Refinamiento UI Calendario Editorial (2026-03-24)**:
-    - **Indicador de Hoy**: Se simplificó el resaltado del día actual, eliminando el borde que recorría toda la celda. Ahora se utiliza únicamente un indicador circular (bolita) de color primario en el número del día, mejorando la limpieza visual de la cuadrícula.
-    - **Diseño Post-it 3D**: Las píldoras de eventos ahora emulan fielmente una nota adhesiva real. Se incorporó un pliegue (`::after`) en la esquina inferior derecha y una animación hover con `scale(1.03)` y `rotate(-1deg)` para dar tridimensionalidad.
-    - **Consistencia de Sombras**: Se ajustaron los `box-shadow` iniciales y en hover para dar sensación de profundidad y realismo (papel real).
+- **Control de Acceso y Refinamiento Kanban (2026-03-25)**:
+    - **Protección de Eventos Institucionales**: Se implementó una restricción de seguridad donde los administradores de áreas (ej. Difusión, cve_area != 1) solo pueden ver los eventos institucionales en modo "Solo Lectura". La capacidad de editar o eliminar estos registros globales en el Calendario Editorial queda reservada exclusivamente para la **Unidad de Sistemas** (cve_area == 1).
+    - **Validación Backend**: El servidor ahora valida mediante PHP que cualquier intento de `editar_evento` o `eliminar_evento` sobre registros institucionales provenga de un usuario autorizado.
+    - **Optimización de UX**: El botón "Nueva Tarea" se movió del cabecero principal al **Tablero Kanban**, posicionándose junto al título de la sección para facilitar el flujo de trabajo contextual.
+    - **Modales Adaptativos**: El modal de edición detecta automáticamente el nivel de permiso del usuario y oculta botones de acción ("Actualizar", "Eliminar") y deshabilita campos de texto si se trata de un registro protegido.
 
 - **Sistema de Gestión de Evidencias (Fase 4, 2026-03-24)**:
     - **Staff/Sistemas**: En `admin/detalle.php`, se habilitó la carga de evidencias (fotos, PDF, documentos) con descripciones obligatorias capturadas mediante `COMECyTUI.prompt`.
