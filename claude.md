@@ -116,11 +116,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Problema**: El footer del sidebar era demasiado transparente y los botones carecían de distinción profesional.
   - **Mejora**: Se aplicó un fondo sólido `#1a1c23` (Charcoal Premium) con un sutil `box-shadow` superior. Los botones de Perfil y Cerrar Sesión ahora tienen fondos individuales `#2d2f39`, bordes definidos y estados hover con `translateY(-1px)` y sombras profundas, mejorando la ergonomía visual.
 
-- **Control de Acceso y Refinamiento Kanban (2026-03-25)**:
-    - **Protección de Eventos Institucionales**: Se implementó una restricción de seguridad donde los administradores de áreas (ej. Difusión, cve_area != 1) solo pueden ver los eventos institucionales en modo "Solo Lectura". La capacidad de editar o eliminar estos registros globales en el Calendario Editorial queda reservada exclusivamente para la **Unidad de Sistemas** (cve_area == 1).
-    - **Validación Backend**: El servidor ahora valida mediante PHP que cualquier intento de `editar_evento` o `eliminar_evento` sobre registros institucionales provenga de un usuario autorizado.
-    - **Optimización de UX**: El botón "Nueva Tarea" se movió del cabecero principal al **Tablero Kanban**, posicionándose junto al título de la sección para facilitar el flujo de trabajo contextual.
-    - **Modales Adaptativos**: El modal de edición detecta automáticamente el nivel de permiso del usuario y oculta botones de acción ("Actualizar", "Eliminar") y deshabilita campos de texto si se trata de un registro protegido.
+- **Resolución de Colisión de IDs y Limpieza (2026-03-25)**:
+    - **Solución Técnica**: Se identificó que eventos institucionales y editoriales podían compartir el mismo ID numérico en tablas diferentes. Se implementó un campo oculto `es_institucional` en el formulario de edición para que el servidor distinga inequívocamente el origen del dato y aplique las restricciones de seguridad correspondientes.
+    - **Refactorización de Código**: Se realizó una limpieza profunda de `calendario_editorial.php`, eliminando bloques de lógica duplicados que generaban estados inconsistentes.
+    - **Seguridad Reforzada**: Ahora es imposible "engañar" al servidor para editar un evento institucional mediante la manipulación de IDs si no se cuenta con los privilegios de Sistemas (cve_area == 1).
 
 - **Sistema de Gestión de Evidencias (Fase 4, 2026-03-24)**:
     - **Staff/Sistemas**: En `admin/detalle.php`, se habilitó la carga de evidencias (fotos, PDF, documentos) con descripciones obligatorias capturadas mediante `COMECyTUI.prompt`.

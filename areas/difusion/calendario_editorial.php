@@ -50,14 +50,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         }
     } elseif ($accion === 'editar_evento') {
         $id = (int) postParam('evento_id');
+        $esInstitucionalManual = (int) postParam('es_institucional'); // Bandera enviada por el front
         
-        // SEGURIDAD: Verificar si el evento es editorial o institucional
-        $stmtCheck = $pdo->prepare("SELECT 1 FROM df_eventos_editoriales WHERE id = ?");
-        $stmtCheck->execute([$id]);
-        $esEditorial = (bool)$stmtCheck->fetch();
+        // SEGURIDAD: Validar si el usuario intenta editar un institucional sin ser de Sistemas
+        if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1) {
+             die("Acceso denegado: Solo Sistemas puede editar eventos institucionales principales.");
+        }
 
-        if (!$esEditorial && $cveAreaUsuario !== 1) {
-             die("Acceso denegado: Solo Sistemas puede editar eventos institucionales.");
+        // Adicionalmente, verificar en DB para evitar manipulaciones del POST
+        if ($esInstitucionalManual === 0) {
+            $stmtCheck = $pdo->prepare("SELECT 1 FROM df_eventos_editoriales WHERE id = ?");
+            $stmtCheck->execute([$id]);
+            if (!$stmtCheck->fetch()) {
+                // Si dijo que era editorial pero no existe, probablemente es un intento de spoofing de ID institucional
+                if ($cveAreaUsuario !== 1) die("Error de validación de registro.");
+            }
         }
 
         $titulo = trim(postParam('titulo'));
@@ -68,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         
         if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
             $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-            if ($esEditorial) {
+            if ($esInstitucionalManual === 0) {
                 $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
                 $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
             } else {
@@ -81,17 +88,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         }
     } elseif ($accion === 'eliminar_evento') {
         $id = (int) postParam('evento_id');
+        $esInstitucionalManual = (int) postParam('es_institucional');
+        
         if ($id > 0) {
             // SEGURIDAD: Solo Sistemas borra institucionales
-            $stmtCheck = $pdo->prepare("SELECT 1 FROM df_eventos_editoriales WHERE id = ?");
-            $stmtCheck->execute([$id]);
-            $esEditorial = (bool)$stmtCheck->fetch();
-
-            if (!$esEditorial && $cveAreaUsuario !== 1) {
+            if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1) {
                 die("Acceso denegado.");
             }
 
-            if ($esEditorial) {
+            if ($esInstitucionalManual === 0) {
                 $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ?");
             } else {
                 $stmt = $pdo->prepare("DELETE FROM eventos WHERE id = ?");
@@ -170,81 +175,37 @@ $mesSiguiente = (clone $dtMes)->modify('+1 month');
 $diasEnMes = (int)$dtMes->format('t');
 $diaSemanaInicio = (int)$dtMes->format('N'); 
 
-// Consultar eventos EDITORALES del mes
 $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
+// 1. Consultar eventos EDITORIALES (Propios del área)
 $stmt = $pdo->prepare("SELECT * FROM df_eventos_editoriales WHERE fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Consultar eventos INSTITUCIONALES (Públicos)
+// 2. Consultar eventos INSTITUCIONALES (Globales/Públicos)
 $stmtG = $pdo->prepare("SELECT * FROM eventos WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmtG->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosGlobales = $stmtG->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($eventosGlobales as $eg) {
-    // Si el título empieza con (Editorial), probablemente es una réplica, la saltamos para no duplicar
+    // Evitar duplicados si el título indica que es una réplica editorial
     if (strpos($eg['titulo'], '(Editorial)') === 0) continue;
     
     $eg['es_institucional'] = true;
-    if (empty($eg['color'])) $eg['color'] = '#64748b'; // Gris para institucionales
+    if (empty($eg['color'])) $eg['color'] = '#64748b'; 
     $eventosRaw[] = $eg;
 }
 
-// Mapear eventos por dia
+// 3. Mapear a Calendario por Día
 $calendarioEventos = [];
 foreach ($eventosRaw as $ev) {
-    $dIni = new DateTime($ev['fecha_inicio']);
-    $dia = (int)$dIni->format('d');
-    if (!isset($calendarioEventos[$dia])) $calendarioEventos[$dia] = [];
-    $calendarioEventos[$dia][] = $ev;
+    $diaEv = (int) (new DateTime($ev['fecha_inicio']))->format('d');
+    if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
+    $calendarioEventos[$diaEv][] = $ev;
 }
 
-// Consultar CUMPLEAÑOS (Lógica compartida con Admin)
-if ($mes > 0 && $mes <= 12) {
-    $stmtB = $pdo->prepare("SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil FROM cat_personal WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND EXTRACT(MONTH FROM fecha_nacimiento) = :mes");
-    $stmtB->execute([':mes' => $mes]);
-    $cumpleaneros = $stmtB->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($cumpleaneros as $cp) {
-        $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
-        $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
-        $anioNacimiento = (int)(new DateTime($cp['fecha_nacimiento']))->format('Y');
-        $calendarioEventos[$diaCumple][] = [
-            'id'           => null,
-            'titulo'       => "\u{1F382} " . $nombreCompleto,
-            'descripcion'  => 'Cumpleaños institucional',
-            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple),
-            'fecha_fin'    => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
-            'color'        => '#B19A6D',
-            'publico'      => false,
-            'es_cumple'    => true,
-            'foto_perfil'  => $cp['foto_perfil'] ?? null,
-            'nombre_cumple'=> $nombreCompleto,
-            'edad'         => ($anio - $anioNacimiento)
-        ];
-    }
-}
-
-// Consultar tareas KANBAN filtradas por ÁREA
-$listaTareas = ['pendiente' => [], 'en_proceso' => [], 'completada' => []];
-$stmtT = $pdo->prepare("SELECT t.*, a.nombre AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id WHERE t.cve_area = ? ORDER BY t.estatus DESC, t.id DESC");
-$stmtT->execute([$cveAreaUsuario]);
-$tareas = $stmtT->fetchAll(PDO::FETCH_ASSOC);
-foreach ($tareas as $t) {
-    if (isset($listaTareas[$t['estatus']])) $listaTareas[$t['estatus']][] = $t;
-    else $listaTareas['pendiente'][] = $t;
-}
-
-// Mapear eventos por dia
-$calendarioEventos = [];
-foreach ($eventosRaw as $ev) {
-    $dia = (int) (new DateTime($ev['fecha_inicio']))->format('d');
-    if (!isset($calendarioEventos[$dia])) $calendarioEventos[$dia] = [];
-    $calendarioEventos[$dia][] = $ev;
-}
-
-// Cumpleaños
+// 4. Consultar y Añadir CUMPLEAÑOS
 if ($mes > 0 && $mes <= 12) {
     $stmtB = $pdo->prepare("SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil FROM cat_personal WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND EXTRACT(MONTH FROM fecha_nacimiento) = :mes");
     $stmtB->execute([':mes' => $mes]);
@@ -254,14 +215,32 @@ if ($mes > 0 && $mes <= 12) {
         $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
         $edadAnios = $anio - (int)(new DateTime($cp['fecha_nacimiento']))->format('Y');
         $calendarioEventos[$diaCumple][] = [
-            'id' => null, 'titulo' => "🎂 " . $nombreCompleto, 'descripcion' => 'Cumpleaños institucional (' . $edadAnios . ' años)',
-            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple), 'fecha_fin' => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
-            'color' => '#B19A6D', 'publico' => false, 'es_cumple' => true, 'foto_perfil' => $cp['foto_perfil'] ?? null, 'nombre_cumple'=> $nombreCompleto, 'edad' => $edadAnios,
+            'id' => null, 
+            'titulo' => "🎂 " . $nombreCompleto, 
+            'descripcion' => 'Cumpleaños institucional (' . $edadAnios . ' años)',
+            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple), 
+            'fecha_fin' => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
+            'color' => '#B19A6D', 
+            'publico' => false, 
+            'es_cumple' => true, 
+            'foto_perfil' => $cp['foto_perfil'] ?? null, 
+            'nombre_cumple'=> $nombreCompleto, 
+            'edad' => $edadAnios,
         ];
     }
 }
 
-// Admins para asignación
+// 5. Consultar tareas KANBAN filtradas por ÁREA
+$listaTareas = ['pendiente' => [], 'en_proceso' => [], 'completada' => []];
+$stmtT = $pdo->prepare("SELECT t.*, a.nombre AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id WHERE t.cve_area = ? ORDER BY t.estatus DESC, t.id DESC");
+$stmtT->execute([$cveAreaUsuario]);
+$tareas = $stmtT->fetchAll(PDO::FETCH_ASSOC);
+foreach ($tareas as $t) {
+    if (isset($listaTareas[$t['estatus']])) $listaTareas[$t['estatus']][] = $t;
+    else $listaTareas['pendiente'][] = $t;
+}
+
+// 6. Admins para asignación
 $stmtAdmins = $pdo->prepare("SELECT a.id, a.nombre 
          FROM administradores a 
          LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
@@ -580,6 +559,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
             <?= csrfField() ?>
             <input type="hidden" name="_accion" id="e_accion" value="editar_evento">
             <input type="hidden" name="evento_id" id="e_evento_id">
+            <input type="hidden" name="es_institucional" id="e_es_institucional">
             <div class="modal-body">
                 <div class="form-group mb-16">
                     <label class="form-label">Título</label>
@@ -753,6 +733,7 @@ function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
 }
 function abrirModalEditar(id, t, d, ini, fin, c, p, esInst) {
     document.getElementById('e_evento_id').value = id;
+    document.getElementById('e_es_institucional').value = esInst ? 1 : 0;
     document.getElementById('e_titulo').value = t;
     document.getElementById('e_titulo').readOnly = false;
     document.getElementById('e_descripcion').value = d;
