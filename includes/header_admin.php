@@ -117,6 +117,9 @@ try {
             <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=en_proceso" class="nav-link <?= $activeMenu === 'en_proceso' ? 'active' : '' ?>">
                 <i class="fa-solid fa-bolt nav-icon"></i><span>En Proceso</span>
             </a>
+            <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=completada" class="nav-link <?= $activeMenu === 'completadas' ? 'active' : '' ?>">
+                <i class="fa-solid fa-circle-check nav-icon"></i><span>Completadas</span>
+            </a>
             <a href="<?= BASE_URL ?>admin/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
                 <i class="fa-solid fa-chart-line nav-icon"></i><span>Reportes</span>
             </a>

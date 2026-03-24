@@ -130,9 +130,13 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 
 - **📎 Sistema de Evidencias y Adjuntos Staff (Fase 4, 2026-03-24)**:
   - **Gestión de Seguimiento**: En el detalle de solicitud (`admin/detalle.php`), el personal de Sistemas puede cargar evidencias (imágenes, documentos, reportes) tanto de forma libre como al realizar cambios de estatus.
-  - **Integración con Flujo**: Al completar o actualizar un estatus, el modal ahora incluye un campo opcional de adjunto, el cual se vincula automáticamente a la historia de la solicitud.
+  - **Integración con Flujo**: Al completar o actualizar un estatus, el modal de confirmación ahora permite adjuntar un archivo de prueba de resolución.
+  - **Visibilidad Pública**: Las evidencias cargadas por el staff son automáticamente visibles (en modo lectura) para el solicitante en `public/consulta.php`, permitiéndole descargar actas o capturas de la solución.
+  - **Robustez UI**: Se implementó `COMECyTUI.prompt` para capturar descripciones de evidencias sin usar pop-ups del navegador. Se añadió un rompe-caché dinámico (`?v=time()`) a `ui-frames.js` para asegurar la carga de la última versión de la interfaz en cualquier navegador.
   - **Almacenamiento**: Los archivos se guardan con seguridad en `public/uploads/evidencias/` con nombres sanados y vinculados a la tabla `solicitud_evidencias`.
-  - **Alcance**: Feature exclusivo para personal de la Unidad de Sistemas/Admin para documentar la resolución técnica de incidencias.
+
+- **📌 Mejoras en Navegación (Sidebar Admin)**:
+  - Se añadió el acceso directo **"Completadas"** en el grupo de Gestión del sidebar para la Unidad de Sistemas. Esto permite filtrar rápidamente las solicitudes resueltas sin pasar por la lista general de "Todas las Solicitudes".
 
 - **📂 Constante `ROOT` missing**: Muchos scripts API (perfil, multimedia) usaban la constante `ROOT` para subir archivos, pero esta no estaba definida globalmente. Se definió centralmente en `config/database.php` como `dirname(__DIR__)` para asegurar que las rutas absolutas de servidor funcionen siempre en Docker y Windows.
 - **🔗 Fetch AJAX con URLs Relativas**: En `public/perfil.php`, el `fetch("api/perfil.php")` fallaba (404) si el usuario accedía desde una URL profunda como `/areas/difusion/dashboard.php`. **Solución**: Se cambió el `action` del formulario a una URL absoluta usando `<?= BASE_URL ?>public/api/perfil.php`, garantizando que el endpoint sea alcanzable desde cualquier contexto de navegación.
