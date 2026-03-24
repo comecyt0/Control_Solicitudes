@@ -580,10 +580,10 @@ function abrirModalEditar(id, t, d, ini, fin, c, p) {
     abrirModal('modalEditarEvento');
 }
 function eliminarEvento() {
-    if(confirm('¿Seguro que deseas eliminar este evento?')) {
+    COMECyTUI.confirm('¿Deseas borrar permanentemente este evento de la agenda editorial?', () => {
         document.getElementById('e_accion').value = 'eliminar_evento';
         document.getElementById('formEditarEvento').submit();
-    }
+    }, null, { titulo: 'Eliminar Evento' });
 }
 
 // Kanban
@@ -609,19 +609,19 @@ function abrirModalEditarTarea(id, t, d, c, a) {
     abrirModal('modalEditarTarea');
 }
 function eliminarTareaDesdeModal() {
-    if(confirm('¿Eliminar esta tarea del Kanban?')) {
+    COMECyTUI.confirm('¿Seguro que deseas eliminar esta tarea del tablero Kanban?', () => {
         document.getElementById('t_accion').value = 'eliminar_tarea';
         document.getElementById('t_tarea_id').value = document.getElementById('et_id').value;
         document.getElementById('formAccionTarea').submit();
-    }
+    }, null, { titulo: 'Eliminar Tarea' });
 }
 function abrirModalCumple(nombre, desc, foto, edad, fecha) {
     // Reutilizar la función del admin si está cargada
     if(typeof window.abrirModalCumpleAdmin === 'function') {
         window.abrirModalCumpleAdmin(nombre, desc, foto, edad, fecha);
     } else {
-        // Fallback simple si no carga el modal del admin correctamente
-        alert('¡Cumpleaños de ' + nombre + '! ' + edad + ' años el ' + fecha);
+        // Fallback usando COMECyTUI si no carga el modal del admin correctamente
+        COMECyTUI.info('¡Hoy celebra ' + nombre + ' sus ' + edad + ' años!\n\nFecha: ' + fecha, 'Cumpleaños Institucional');
     }
 }
 </script>

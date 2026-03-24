@@ -565,15 +565,16 @@ function escapeHtml(t) {
 }
 
 function eliminarComentario(id) {
-    if (!confirm('¿Eliminar esta nota?')) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-    fd.append('accion', 'eliminar');
-    fd.append('comentario_id', id);
-    fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php', { method:'POST', body:fd })
-        .then(r => r.json())
-        .then(d => { if (d.ok) cargarComentarios(); })
-        .catch(() => {});
+    COMECyTUI.confirm('¿Deseas eliminar esta nota interna permanentemente?', () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+        fd.append('accion', 'eliminar');
+        fd.append('comentario_id', id);
+        fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php', { method:'POST', body:fd })
+            .then(r => r.json())
+            .then(d => { if (d.ok) cargarComentarios(); })
+            .catch(() => {});
+    }, null, { titulo: 'Eliminar Nota' });
 }
 
 document.getElementById('formComentario').addEventListener('submit', function(e) {
@@ -598,10 +599,10 @@ document.getElementById('formComentario').addEventListener('submit', function(e)
                 textarea.value = '';
                 cargarComentarios();
             } else {
-                alert('Error: ' + (d.error || 'No se pudo enviar'));
+                COMECyTUI.alert(d.error || 'No se pudo guardar la nota interna.', 'Error');
             }
         })
-        .catch(() => alert('Error de red'))
+        .catch(() => COMECyTUI.toast('Error de conexión con el servidor', 'error'))
         .finally(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar';
@@ -654,47 +655,48 @@ function cargarEvidencias() {
 }
 
 function eliminarEvidencia(id) {
-    if (!confirm('¿Eliminar esta evidencia?')) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-    fd.append('accion', 'eliminar');
-    fd.append('evidencia_id', id);
-    fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
-        .then(r => r.json())
-        .then(d => { if (d.ok) cargarEvidencias(); });
+    COMECyTUI.confirm('¿Seguro que deseas eliminar esta evidencia? Se borrará el archivo físicamente del servidor.', () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+        fd.append('accion', 'eliminar');
+        fd.append('evidencia_id', id);
+        fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
+            .then(r => r.json())
+            .then(d => { if (d.ok) cargarEvidencias(); });
+    }, null, { titulo: 'Borrar Evidencia' });
 }
 
 function abrirModalEvidencia() {
-    const comentario = prompt('Comentario opcional para la evidencia:');
-    if (comentario === null) return;
-    
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.jpg,.jpeg,.png,.pdf,.docx,.doc,.xls,.xlsx,.zip';
-    input.onchange = e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const fd = new FormData();
-        fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-        fd.append('accion', 'agregar');
-        fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
-        fd.append('comentario', comentario);
-        fd.append('archivo', file);
-        
-        COMECyTUI.toast('Subiendo archivo...', 'info');
-        fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
-            .then(r => r.json())
-            .then(d => {
-                if (d.ok) {
-                    COMECyTUI.toast('Evidencia guardada', 'success');
-                    cargarEvidencias();
-                } else {
-                    COMECyTUI.alert(d.error);
-                }
-            });
-    };
-    input.click();
+    COMECyTUI.prompt('Ingresa una descripción breve o comentario para esta evidencia:', (comentario) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.jpg,.jpeg,.png,.pdf,.docx,.doc,.xls,.xlsx,.zip';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const fd = new FormData();
+            fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+            fd.append('accion', 'agregar');
+            fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
+            fd.append('comentario', comentario);
+            fd.append('archivo', file);
+            
+            COMECyTUI.toast('Subiendo archivo...', 'info');
+            fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.ok) {
+                        COMECyTUI.toast('Evidencia guardada exitosamente', 'success');
+                        cargarEvidencias();
+                    } else {
+                        COMECyTUI.alert(d.error, 'Error de Carga');
+                    }
+                })
+                .catch(() => COMECyTUI.toast('Error de conexión', 'error'));
+        };
+        input.click();
+    }, { titulo: 'Nueva Evidencia', placeholder: 'Ej. Reporte técnico inicial...' });
 }
 
 // Cargar datos iniciales

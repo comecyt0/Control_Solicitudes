@@ -55,11 +55,16 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* Toast Styles */
         .ui-toast-container {
             position: fixed; top: 20px; right: 20px; z-index: 1000001;
             display: flex; flex-direction: column; gap: 10px; pointer-events: none;
         }
+        .ui-prompt-input {
+            width: 100%; padding: 12px 16px; border: 1px solid #e2e8f0;
+            border-radius: 10px; margin-top: 15px; font-size: 0.95rem;
+            outline: none; transition: border-color 0.2s;
+        }
+        .ui-prompt-input:focus { border-color: #662331; box-shadow: 0 0 0 3px rgba(102, 35, 49, 0.1); }
         .ui-toast {
             background: #ffffff; min-width: 280px; max-width: 350px;
             padding: 16px 20px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
@@ -105,9 +110,12 @@
                     ${iconHtml}
                     <div class="ui-frame-title">${config.titulo || 'Notificación'}</div>
                 </div>
-                <div class="ui-frame-body">${config.mensaje}</div>
+                <div class="ui-frame-body">
+                    ${config.mensaje}
+                    ${config.prompt ? `<input type="${config.inputType || 'text'}" class="ui-prompt-input" placeholder="${config.placeholder || ''}" value="${config.defaultValue || ''}">` : ''}
+                </div>
                 <div class="ui-frame-footer">
-                    ${config.confirmar ? `<button class="ui-btn ui-btn-outline ui-cancel-btn">${config.txtCancel || 'Cancelar'}</button>` : ''}
+                    ${config.confirmar || config.prompt ? `<button class="ui-btn ui-btn-outline ui-cancel-btn">${config.txtCancel || 'Cancelar'}</button>` : ''}
                     <button class="ui-btn ui-btn-primary ui-ok-btn">${config.txtOk || 'Entendido'}</button>
                 </div>
             </div>
@@ -119,15 +127,30 @@
             setTimeout(() => backdrop.remove(), 250);
         };
 
-        backdrop.querySelector('.ui-ok-btn').onclick = () => {
+        const okBtn = backdrop.querySelector('.ui-ok-btn');
+        okBtn.onclick = () => {
+            let val = true;
+            if (config.prompt) {
+                val = backdrop.querySelector('.ui-prompt-input').value;
+            }
             close();
-            if (config.onOk) config.onOk();
+            if (config.onOk) config.onOk(val);
         };
 
-        if (config.confirmar) {
-            backdrop.querySelector('.ui-cancel-btn').onclick = () => {
+        if (config.confirmar || config.prompt) {
+            const cancelBtn = backdrop.querySelector('.ui-cancel-btn');
+            cancelBtn.onclick = () => {
                 close();
                 if (config.onCancel) config.onCancel();
+            };
+        }
+
+        if (config.prompt) {
+            const input = backdrop.querySelector('.ui-prompt-input');
+            setTimeout(() => input.focus(), 300);
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') okBtn.click();
+                if (e.key === 'Escape') backdrop.querySelector('.ui-cancel-btn').click();
             };
         }
 
@@ -196,6 +219,20 @@
                 onCancel,
                 txtOk: config.txtOk,
                 txtCancel: config.txtCancel
+            });
+        },
+        prompt: (msg, onOk, config = {}) => {
+            createFrame({
+                tipo: 'info',
+                titulo: config.titulo || 'Entrada de datos',
+                mensaje: msg,
+                prompt: true,
+                onOk,
+                onCancel: config.onCancel,
+                placeholder: config.placeholder,
+                defaultValue: config.defaultValue,
+                txtOk: config.txtOk || 'Aceptar',
+                txtCancel: config.txtCancel || 'Cancelar'
             });
         }
     };
