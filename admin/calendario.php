@@ -324,9 +324,9 @@ $extraHead = '
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-    overflow: hidden;     /* ← CLAVE: evita que el contenido desborde la celda */
-    min-width: 0;         /* ← necesario en flex para habilitar el truncado */
-    width: 0;             /* ← fuerza a la celda a repartir el espacio de la grid equitativamente */
+    overflow: hidden;
+    min-width: 0;
+    width: 100%;
 }
 
 .calendar-cell:hover {

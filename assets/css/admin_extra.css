@@ -306,7 +306,7 @@
 .calendar-cell {
     overflow: hidden !important;
     min-width: 0 !important;
-    width: 0 !important;         /* en grid 1fr este valor es efectivamente min-width */
+    width: 100% !important;      /* Cambiado de 0 a 100% para evitar colapso en la grid */
     box-sizing: border-box !important;
 }
 
