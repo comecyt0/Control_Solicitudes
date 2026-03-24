@@ -14,9 +14,7 @@ require_once __DIR__ . '/../config/auth.php';
 inicializarSesion();
 
 // Si ya hay sesion activa
-if (!empty($_SESSION['admin_id'])) {
-    redirigir('admin/dashboard.php');
-} elseif (!empty($_SESSION['user_id'])) {
+if (!empty($_SESSION['admin_id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['ss_id'])) {
     redirigir('public/index.php');
 }
 
@@ -39,13 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Por favor, complete todos los campos.';
         } elseif (iniciarSesion($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('admin/dashboard.php');
+            redirigir('public/router.php');
         } elseif (iniciarSesionUsuario($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('public/index.php');
+            redirigir('public/router.php');
         } elseif (iniciarSesionSS($email, $password)) {
             reiniciarIntentosLogin();
-            redirigir('servicio_social/dashboard.php');
+            redirigir('public/router.php');
         } else {
             registrarIntentoFallido();
             // Mensaje generico para no revelar existencia de cuenta

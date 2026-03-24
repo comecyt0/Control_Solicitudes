@@ -14,6 +14,28 @@ if (!isset($activeMenu)) $activeMenu = '';
 
 $adminNombre = getNombreAdmin();
 
+// --- Cortafuegos de Ingeniería (Routing Firewall) Phase 3 ---
+if (isset($_SESSION['area_slug_activa'])) {
+    $script_path = $_SERVER['SCRIPT_NAME'];
+    $slug_esperado = $_SESSION['area_slug_activa'];
+    
+    // Si la URL actual está dentro del directorio /areas/ (ej. /areas/archivo/dashboard.php)
+    if (strpos($script_path, '/areas/') !== false) {
+        // PERO NO contiene el slug exacto del usuario (ej. su slug es 'sistemas' o 'direccion_general')
+        if (strpos($script_path, '/areas/' . $slug_esperado . '/') === false) {
+            header("Location: " . BASE_URL . "public/router.php");
+            exit;
+        }
+    } else if (strpos($script_path, '/admin/') !== false) {
+        // O si intenta acceder al admin de sistemas puro pero su slug NO es sistemas
+        if ($slug_esperado !== 'sistemas') {
+            header("Location: " . BASE_URL . "public/router.php");
+            exit;
+        }
+    }
+}
+// -------------------------------------------------------------
+
 // Cargar preferencia de dark mode del admin
 $darkMode = (int) ($_SESSION['admin_dark_mode'] ?? 0);
 if (!isset($_SESSION['admin_dark_mode'])) {
@@ -182,9 +204,14 @@ try {
                 <span class="admin-role">Administrador</span>
             </div>
         </div>
-        <a href="<?= BASE_URL ?>admin/logout.php" class="btn-logout" title="Cerrar sesion">
-            <i class="fa-solid fa-right-from-bracket"></i>
-        </a>
+        <div style="display: flex; gap: 5px; margin-left: auto;">
+            <a href="<?= BASE_URL ?>public/perfil.php" class="btn-logout" style="color: #64748b; border: 1px solid #e2e8f0;" title="Mi Perfil">
+                <i class="fa-solid fa-user-pen"></i>
+            </a>
+            <a href="<?= BASE_URL ?>admin/logout.php" class="btn-logout" title="Cerrar sesion">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+        </div>
     </div>
 </aside>
 

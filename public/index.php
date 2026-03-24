@@ -247,11 +247,37 @@ require_once __DIR__ . '/../includes/header_user.php';
     <div class="intranet-hero-content">
         <h1>¡Bienvenido/a, <?= esc($usuarioNombre) ?>!</h1>
         <p>Dashboard central de servicios técnicos COMECyT. Gestiona tus requerimientos y mantente enterado de los últimos comunicados institucionales.</p>
+        
+        <?php if (!empty($_SESSION['admin_id']) || !empty($_SESSION['ss_id'])): ?>
+        <div style="margin-top: 24px;">
+            <a href="<?= BASE_URL ?>public/router.php" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 15px rgba(102, 35, 49, 0.25); border-radius: 12px; padding: 14px 28px; font-weight: 700;">
+                <i class="fa-solid fa-rocket" style="margin-right: 8px;"></i> Mi Panel Administrativo
+            </a>
+        </div>
+        <?php endif; ?>
     </div>
     <div class="intranet-hero-icon">
         <i class="fa-solid fa-shapes"></i>
     </div>
 </div>
+
+<?php if (!empty($_SESSION['admin_id'])): ?>
+<div class="card reveal-up" style="background: #f8fafc; border: 1px dashed #cbd5e1; margin-bottom: 40px; padding: 20px;">
+    <h3 style="margin-bottom: 15px; color: #475569;"><i class="fa-solid fa-vial"></i> Modo Desarrollador: Ver otras Áreas</h3>
+    <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 15px;">Selecciona un área del sistema simulando que perteneces a ella y esquivando el cortafuegos. (Exclusivo para pruebas).</p>
+    <form action="<?= BASE_URL ?>public/router.php" method="GET" style="display: flex; gap: 15px; max-width: 500px;">
+        <select name="demo_area" class="form-control">
+            <?php 
+            $stmtAreasO = $pdo->query("SELECT cve_area, des_area FROM cat_areas ORDER BY cve_area ASC");
+            while ($a = $stmtAreasO->fetch(PDO::FETCH_ASSOC)):
+            ?>
+            <option value="<?= $a['cve_area'] ?>"><?= esc($a['des_area']) ?></option>
+            <?php endwhile; ?>
+        </select>
+        <button type="submit" class="btn btn-outline" style="white-space: nowrap;"><i class="fa-solid fa-arrow-right-to-bracket"></i> Visitar</button>
+    </form>
+</div>
+<?php endif; ?>
 
 <div class="intranet-grid">
     <a href="<?= BASE_URL ?>public/nueva_solicitud.php" class="intranet-card card-solicitud reveal-up" style="transition-delay: 0.1s;">

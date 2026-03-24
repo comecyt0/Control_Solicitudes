@@ -40,8 +40,30 @@ $stmt = $pdo->prepare("SELECT * FROM eventos WHERE publico = TRUE AND fecha_inic
 $stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// 2. Consultar cumpleaños activos institucionales del mes
+$mesAlineado = str_pad($mes, 2, '0', STR_PAD_LEFT);
+$sqlCumpleanos = "
+    SELECT nombre, fecha_nacimiento FROM cat_personal WHERE fecha_nacimiento IS NOT NULL AND TO_CHAR(fecha_nacimiento, 'MM') = ?
+    UNION
+    SELECT nombre, fecha_nacimiento FROM ss_usuarios WHERE fecha_nacimiento IS NOT NULL AND TO_CHAR(fecha_nacimiento, 'MM') = ?
+";
+$stmtCump = $pdo->prepare($sqlCumpleanos);
+$stmtCump->execute([$mesAlineado, $mesAlineado]);
+$cumpleanosRaw = $stmtCump->fetchAll(PDO::FETCH_ASSOC);
+
 // Mapear eventos por dia
 $calendarioEventos = [];
+foreach ($cumpleanosRaw as $cump) {
+    $dia = (int)DateTime::createFromFormat('Y-m-d', $cump['fecha_nacimiento'])->format('d');
+    if (!isset($calendarioEventos[$dia])) $calendarioEventos[$dia] = [];
+    $calendarioEventos[$dia][] = [
+        'titulo' => '🎂 Cumpleaños de ' . $cump['nombre'],
+        'descripcion' => 'Felicita a ' . $cump['nombre'] . ' en su día.',
+        'fecha_inicio' => $anio . '-' . $mesAlineado . '-' . str_pad($dia, 2, '0', STR_PAD_LEFT) . ' 00:00:00',
+        'fecha_fin'    => $anio . '-' . $mesAlineado . '-' . str_pad($dia, 2, '0', STR_PAD_LEFT) . ' 23:59:59',
+        'color' => '#B19A6D' // nota-dorado
+    ];
+}
 foreach ($eventosRaw as $ev) {
     $dIni = new DateTime($ev['fecha_inicio']);
     $dia = (int)$dIni->format('d');

@@ -24,24 +24,12 @@ $pdo = getConnection();
 $errores = [];
 $exito = false;
 
-// Áreas predefinidas COMECyT (lista canónica, sin consulta dinámica)
-$AREAS_PREDEFINIDAS = [
-    'Dirección General',
-    'Subdirección de TI',
-    'Departamento de Soporte Técnico',
-    'Departamento de Redes',
-    'Departamento de Sistemas',
-    'Recursos Humanos',
-    'Administración y Finanzas',
-    'Comunicación Social',
-    'Jurídico',
-    'Vinculación y Difusión',
-    'Control Escolar',
-    'Planeación',
-    'Atención Ciudadana',
-    'Archivo General',
-    'Servicios Generales',
-];
+// Áreas dinámicas desde la base de datos COMECyT
+$stmtAreas = $pdo->query("SELECT des_area FROM cat_areas ORDER BY cve_area ASC");
+$AREAS_PREDEFINIDAS = [];
+while ($row = $stmtAreas->fetch(PDO::FETCH_ASSOC)) {
+    $AREAS_PREDEFINIDAS[] = $row['des_area'];
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     validarCsrfPost();
@@ -54,8 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $areaOtro   = trim(postParam('area_otro'));          // Texto libre cuando se elige "Otro"
     $areaTexto  = ($areaSelect === 'otro') ? $areaOtro : $areaSelect; // Nombre final del área
     $ext    = trim(postParam('ext_telefonica'));
+    $fecha_nacimiento = trim(postParam('fecha_nacimiento'));
 
-    if (empty($nombre) || empty($appat) || empty($email) || empty($pass) || empty($areaTexto)) {
+    if (empty($nombre) || empty($appat) || empty($email) || empty($pass) || empty($areaTexto) || empty($fecha_nacimiento)) {
         $errores[] = 'Todos los campos marcados con * son obligatorios.';
     }
 
@@ -115,10 +104,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cveAreaReg = (int)($stmtCveA2->fetchColumn() ?: 1);
 
                 $stmtI = $pdo->prepare(
-                    "INSERT INTO cat_personal (nombre, appat, apmat, correo_institucional, password_hash, cve_area, ext_telefonica, activo, cve_estatus) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, FALSE, 1)"
+                    "INSERT INTO cat_personal (nombre, appat, apmat, correo_institucional, password_hash, cve_area, ext_telefonica, activo, cve_estatus, fecha_nacimiento) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, FALSE, 1, ?)"
                 );
-                $stmtI->execute([$nombre, $appat, $apmat, $email, $hash, $cveAreaReg, $ext]);
+                $stmtI->execute([$nombre, $appat, $apmat, $email, $hash, $cveAreaReg, $ext, $fecha_nacimiento]);
                 
                 $exito = true; // Registro normal
             }
@@ -274,9 +263,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label" for="password">Contraseña <span class="required">*</span></label>
-                    <input type="password" id="password" name="password" class="form-control" required placeholder="Mínimo 6 caracteres">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="password">Contraseña <span class="required">*</span></label>
+                        <input type="password" id="password" name="password" class="form-control" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="fecha_nacimiento">F. de Nacimiento (Cumpleaños) <span class="required">*</span></label>
+                        <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" class="form-control" required value="<?= esc(postParam('fecha_nacimiento')) ?>">
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">

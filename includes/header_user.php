@@ -87,9 +87,12 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
                 <span class="admin-role" title="<?= esc($userArea) ?>"><?= esc($userArea) ?></span>
             </div>
         </div>
-        <a href="<?= BASE_URL ?>admin/logout.php" class="btn-logout" title="Cerrar sesion" style="color: var(--color-danger); border-color: transparent;">
-            <i class="fa-solid fa-right-from-bracket"></i>
-        </a>
+            <a href="<?= BASE_URL ?>public/perfil.php" class="btn-outline" style="border: none; color: #1e293b;" title="Mi Perfil">
+                <i class="fa-solid fa-user-pen"></i> <span class="d-none d-sm-inline">Mi Perfil</span>
+            </a>
+            <a href="<?= BASE_URL ?>public/logout.php" class="btn-outline hover-danger" style="border: none; color: #dc2626;" title="Cerrar Sesión">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
     </div>
 </aside>
 

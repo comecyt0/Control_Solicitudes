@@ -68,9 +68,14 @@ $ssId     = (int) ($_SESSION['ss_id'] ?? 0);
                 <span class="admin-role">Servicio Social</span>
             </div>
         </div>
-        <a href="<?= BASE_URL ?>servicio_social/logout.php" class="btn-logout" title="Cerrar sesión">
-            <i class="fa-solid fa-right-from-bracket"></i>
-        </a>
+        <div style="display: flex; gap: 5px; margin-left: auto;">
+            <a href="<?= BASE_URL ?>public/perfil.php" class="btn-logout" style="color: #64748b; border: 1px solid #e2e8f0;" title="Mi Perfil">
+                <i class="fa-solid fa-user-pen"></i>
+            </a>
+            <a href="<?= BASE_URL ?>servicio_social/logout.php" class="btn-logout" title="Cerrar sesión">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+        </div>
     </div>
 </aside>
 

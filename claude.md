@@ -11,9 +11,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Infraestructura**: Docker + Docker Compose
 
 ## Estructura de Carpetas
-- `/admin`: Panel de administración.
-- `/public`: Vistas públicas y API de usuario.
-- `/config`: Configuración de base de datos y autenticación.
+- `/admin`: Panel de administración (Unidad de Sistemas).
+- `/areas`: Contenedores físicos independientes para los 19 departamentos (Intranets Privadas).
+- `/public`: Hub Global, vistas públicas, Mi Perfil, y recursos de enrutamiento web (`router.php`).
+- `/config`: Configuración de base de datos y autenticación centralizada.
 - `/includes`: Componentes reutilizables (header, footer, helpers).
 - `/assets`: Recursos estáticos (CSS, JS, imágenes).
 - `/docker`: Archivos de configuración de Apache y PHP.
@@ -36,6 +37,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - `public/calendario.php`: Restablece la visualización correcta del `sidebar` garantizando navegabilidad y añade cabecero `.page-header-calendario` altamente resposivno con mejor tipografía e iconografía destacada.
 - **Animaciones UI**: Se incorpora IntersectionObserver para reveals de items al scrollear (`.reveal-up`) en el Dashboard, Nueva Solicitud y Calendario.
 - **Gestor de Anuncios y Banners**: CRUD disponible en `admin/anuncios.php`. Se superó limitación de directorios en PHP usando `dirname(__DIR__, 2)` para procesar descargas de banners transparentes.
+
+- **Arquitectura Multidepartamento (Fase 3)**: El monolito de `/admin` fue clonado a 19 directorios dentro de `/areas/` (Ej. `areas/juridico/`). El login dirige exclusivamente a `public/index.php` (Hub Global) desde donde el router dinámico `public/router.php` calcula y dirige al departamento exacto. Existe un Firewall en `header_admin.php` que compara la URL con el slug del área autorizado en sesión para prevenir inyecciones cruzadas.
+- **Perfiles Extensibles (Fase 1)**: Glassmorphism responsivo en `public/perfil.php` permitiendo la carga de fotográfias con aprobación pendiente (guardadas en buffer JSON).
+- **Cumpleaños Dinámicos (Fase 2)**: Calendarios iterando en `$pdo` bajo sentencias especiales `UNION` SQL para mezclar las agendas con cumpleaños públicos en color dorado de los usuarios actuales y becarios de servicio.
 
 ## Contexto Importante
 - **BASE_URL**: Crucial para la conectividad entre módulos. Se detecta dinámicamente en `helpers.php`.
