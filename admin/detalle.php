@@ -527,7 +527,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
 // ── Comentarios internos ────────────────────────────────────────
 const SOLICITUD_ID_COMENTARIOS = <?= (int)$sol['id'] ?>;
 const CSRF_TOKEN_COMENTARIOS = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>';
-const BASE_URL_COMENTARIOS    = '<?= BASE_URL ?>';
+const BASE_URL_COMENTARIOS    = '<?= rtrim(BASE_URL, "/") ?>/';
 
 // Depuración en consola
 console.log('UI Evidencias cargando para solicitud: ' + SOLICITUD_ID_COMENTARIOS);
