@@ -293,3 +293,39 @@
         max-width: 100%;
     }
 }
+
+/* ==============================================================
+   FIX GLOBAL — Truncado de títulos en píldoras de Calendario
+   Se aplica a TODOS los calendarios del sistema (admin + áreas)
+   porque header_admin.php carga este archivo en cada página.
+   ============================================================== */
+
+/* La píldora es display:flex; la celda flex no limita el ancho
+   del hijo automáticamente → necesita min-width:0 para que
+   text-overflow:ellipsis funcione en hijos de contenedores flex. */
+.evento-pildora {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.evento-pildora .evento-titulo {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Fix idéntico para el Calendario Editorial de Difusión (.ev-pill)
+   y cualquier alias de píldora que pueda existir en otras áreas. */
+.ev-pill {
+    min-width: 0;
+    max-width: 100%;
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+

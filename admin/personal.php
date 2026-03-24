@@ -47,21 +47,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $fecha_nacimiento = postParam('fecha_nacimiento');
 
         if ($idUsuario > 0 && !empty($nombre) && !empty($appat)) {
+            $cve_area = !empty($_POST['cve_area']) ? (int) $_POST['cve_area'] : null;
+
             if (!empty($password)) {
                 $hash = password_hash($password, PASSWORD_BCRYPT);
                 $stmtU = $pdo->prepare(
                     "UPDATE cat_personal 
-                     SET nombre = ?, appat = ?, apmat = ?, correo_institucional = ?, correo_personal = ?, ext_telefonica = ?, password_hash = ?, fecha_nacimiento = ?
+                     SET nombre = ?, appat = ?, apmat = ?, correo_institucional = ?, correo_personal = ?, ext_telefonica = ?, password_hash = ?, fecha_nacimiento = ?, cve_area = ?
                      WHERE cve_personal = ?"
                 );
-                $stmtU->execute([$nombre, $appat, $apmat, $correo_institucional, $correo_personal, $ext_telefonica, $hash, $fecha_nacimiento, $idUsuario]);
+                $stmtU->execute([$nombre, $appat, $apmat, $correo_institucional, $correo_personal, $ext_telefonica, $hash, $fecha_nacimiento, $cve_area, $idUsuario]);
             } else {
                 $stmtU = $pdo->prepare(
                     "UPDATE cat_personal 
-                     SET nombre = ?, appat = ?, apmat = ?, correo_institucional = ?, correo_personal = ?, ext_telefonica = ?, fecha_nacimiento = ?
+                     SET nombre = ?, appat = ?, apmat = ?, correo_institucional = ?, correo_personal = ?, ext_telefonica = ?, fecha_nacimiento = ?, cve_area = ?
                      WHERE cve_personal = ?"
                 );
-                $stmtU->execute([$nombre, $appat, $apmat, $correo_institucional, $correo_personal, $ext_telefonica, $fecha_nacimiento, $idUsuario]);
+                $stmtU->execute([$nombre, $appat, $apmat, $correo_institucional, $correo_personal, $ext_telefonica, $fecha_nacimiento, $cve_area, $idUsuario]);
             }
             // Eliminar solicitud de actualizacion nativa pendiente si es que habia
             $stmtDelPend = $pdo->prepare("DELETE FROM solicitudes_actualizacion_personal WHERE cve_personal = ?");
@@ -192,6 +194,10 @@ $stmtPerfilesList = $pdo->query(
 );
 $listaPerfilesPendientes = $stmtPerfilesList->fetchAll();
 
+// Cargar catálogo de áreas para el selector del modal
+$stmtAreas = $pdo->query("SELECT cve_area, des_area FROM cat_areas ORDER BY cve_area ASC");
+$listaAreas = $stmtAreas->fetchAll(PDO::FETCH_ASSOC);
+
 // Filtros de busqueda
 $busqueda = getParam('busqueda');
 $filtroEstatus = getParam('estatus');
@@ -213,7 +219,7 @@ if ($filtroEstatus === '1' || $filtroEstatus === '0') {
 $condicion = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
 // Obtener lista de personal con su area aplicando filtros
-$sql = "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.correo_personal, u.ext_telefonica, COALESCE(u.correo_institucional, u.correo_personal, 'Sin correo') as email, u.activo, a.des_area, u.fecha_nacimiento 
+$sql = "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.correo_personal, u.ext_telefonica, COALESCE(u.correo_institucional, u.correo_personal, 'Sin correo') as email, u.activo, u.cve_area, a.des_area, u.fecha_nacimiento 
         FROM cat_personal u
         LEFT JOIN cat_areas a ON u.cve_area = a.cve_area
         {$condicion}
@@ -466,14 +472,15 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         <!-- Editar -->
                         <button type="button" class="btn btn-outline btn-icon" title="Editar personal" 
                                 onclick="abrirModalEditar(<?= htmlspecialchars(json_encode([
-                                    'id' => $usr['id'],
-                                    'nombre' => $usr['nombre'],
-                                    'appat' => $usr['appat'],
-                                    'apmat' => $usr['apmat'],
+                                    'id'                   => $usr['id'],
+                                    'nombre'               => $usr['nombre'],
+                                    'appat'                => $usr['appat'],
+                                    'apmat'                => $usr['apmat'],
                                     'correo_institucional' => $usr['correo_institucional'],
-                                    'correo_personal' => $usr['correo_personal'],
-                                    'ext_telefonica' => $usr['ext_telefonica'],
-                                    'fecha_nacimiento' => $usr['fecha_nacimiento']
+                                    'correo_personal'      => $usr['correo_personal'],
+                                    'ext_telefonica'       => $usr['ext_telefonica'],
+                                    'fecha_nacimiento'     => $usr['fecha_nacimiento'],
+                                    'cve_area'             => (int)($usr['cve_area'] ?? 0)
                                 ]), ENT_QUOTES, 'UTF-8') ?>)">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
@@ -572,6 +579,24 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         </div>
                     </div>
 
+                    <div class="form-group" style="margin-top: 0.5rem;">
+                        <label class="form-label" for="edit_cve_area">
+                            <i class="fa-solid fa-building" style="color: var(--color-primary); margin-right: 4px;"></i>
+                            Área Departamental
+                            <small style="font-weight:400; color:#64748b; margin-left:4px;">(define a qué panel se redirige)</small>
+                        </label>
+                        <select id="edit_cve_area" name="cve_area" class="form-control">
+                            <option value="">-- Sin área asignada --</option>
+                            <?php foreach ($listaAreas as $area): ?>
+                            <option value="<?= (int)$area['cve_area'] ?>"><?= esc($area['cve_area'] . ' – ' . $area['des_area']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small style="display:block; margin-top:5px; color: #64748b; font-size:0.82rem;">
+                            <i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>
+                            Al cambiar el área, el inicio de sesión del empleado lo redirigirá automáticamente al panel correcto.
+                        </small>
+                    </div>
+
                     <div class="form-group" style="margin-bottom: 0; margin-top: 1rem;">
                         <label class="form-label" for="edit_password">Nueva Contraseña (Opcional)</label>
                         <input type="password" id="edit_password" name="password" class="form-control" placeholder="Dejar en blanco para mantener la actual">
@@ -589,15 +614,21 @@ require_once __DIR__ . '/../includes/header_admin.php';
 
 <script>
 function abrirModalEditar(data) {
-    document.getElementById('edit_usuario_id').value = data.id || '';
-    document.getElementById('edit_nombre').value = data.nombre || '';
-    document.getElementById('edit_appat').value = data.appat || '';
-    document.getElementById('edit_apmat').value = data.apmat || '';
-    document.getElementById('edit_correo_inst').value = data.correo_institucional || '';
-    document.getElementById('edit_correo_per').value = data.correo_personal || '';
-    document.getElementById('edit_ext_telefonica').value = data.ext_telefonica || '';
-    document.getElementById('edit_fecha_nacimiento').value = data.fecha_nacimiento || '';
-    document.getElementById('edit_password').value = '';
+    document.getElementById('edit_usuario_id').value         = data.id || '';
+    document.getElementById('edit_nombre').value             = data.nombre || '';
+    document.getElementById('edit_appat').value              = data.appat || '';
+    document.getElementById('edit_apmat').value              = data.apmat || '';
+    document.getElementById('edit_correo_inst').value        = data.correo_institucional || '';
+    document.getElementById('edit_correo_per').value         = data.correo_personal || '';
+    document.getElementById('edit_ext_telefonica').value     = data.ext_telefonica || '';
+    document.getElementById('edit_fecha_nacimiento').value   = data.fecha_nacimiento || '';
+    document.getElementById('edit_password').value           = '';
+
+    // Seleccionar el área correcta
+    const selArea = document.getElementById('edit_cve_area');
+    if (selArea) {
+        selArea.value = data.cve_area || '';
+    }
     
     abrirModal('modalEditarPersonal');
 }
