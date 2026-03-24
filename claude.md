@@ -139,3 +139,4 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
     - **Cortafuegos de Ruteo (v4)**: Se extendió el `header_admin.php` con un firewall que detecta si el área del usuario está marcada como "en desarrollo". Si es así, bloquea el acceso a cualquier archivo operativo (solicitudes, reportes, etc.) y redirige automáticamente al Dashboard.
     - **Sidebar Inteligente**: El menú lateral ahora oculta dinámicamente secciones de gestión (Personal, Equipos, Reportes) para áreas en construcción, reduciendo la confusión y el riesgo de acceso a datos sensibles.
     - **Control Centralizado**: La lista de áreas funcionales se gestiona desde `$areas_funcionales` en el header, permitiendo habilitar módulos uno a uno conforme se completan.
+    - **Nota Técnica (BOM)**: Todos los archivos PHP deben guardarse estrictamente en **UTF-8 sin BOM**. El uso de BOM causa errores de "Headers already sent" al iniciar sesiones o realizar redirecciones.
