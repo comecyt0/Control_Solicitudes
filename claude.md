@@ -84,7 +84,7 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Feature**: Las notas doradas de cumpleaños en el calendario muestran un mini-avatar circular (foto real si existe, ícono placeholder si no).
   - **Feature**: Al hacer clic en el ojo de una nota de cumpleaños, se abre `modalVerCumple` (en lugar del genérico `modalVerEvento`), con: foto circular con borde dorado, nombre completo, edad calculada dinámicamente, fecha de cumpleaños y mensaje de felicitación.
   - **Campos añadidos al array de evento**: `foto_perfil`, `nombre_cumple`, `edad` (calculada como `$anio - $anioNacimiento`).
-  - **Alcance**: Aplicado en `admin/calendario.php` y los 19 calendarios de área en `areas/*/calendario.php`.
+  - **Alcance**: Aplicado en `admin/calendario.php`, los 19 calendarios de área en `areas/*/calendario.php` y el calendario público en `public/calendario.php`.
 
 - **🎂 Cumpleaños en Calendario — Filtrar solo por Día y Mes**: La query de cumpleaños usa `EXTRACT(MONTH FROM fecha_nacimiento) = :mes` y luego extrae el día con `format('d')`. Esto ignora el año del registro, mostrando correctamente los cumpleaños de personas con nacimiento en años anteriores. Aplicado en `admin/calendario.php` y en los 19 calendarios de área via script PowerShell batch.
 
