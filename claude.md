@@ -140,3 +140,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
     - **Sidebar Inteligente**: El menú lateral ahora oculta dinámicamente secciones de gestión (Personal, Equipos, Reportes) para áreas en construcción, reduciendo la confusión y el riesgo de acceso a datos sensibles.
     - **Control Centralizado**: La lista de áreas funcionales se gestiona desde `$areas_funcionales` en el header, permitiendo habilitar módulos uno a uno conforme se completan.
     - **Nota Técnica (BOM)**: Todos los archivos PHP deben guardarse estrictamente en **UTF-8 sin BOM**. El uso de BOM causa errores de "Headers already sent" al iniciar sesiones o realizar redirecciones.
+
+- **Phase 5: Polarización de Difusión (v5.0, 2026-03-25)**:
+    - **Unificación de Sesiones**: Se modificó `auth.php` y `header_admin.php` para que el sistema reconozca tanto a `admin_id` como a `user_id` de forma intercambiable en módulos compartidos (Chat, IA, Kanban).
+    - **Aislamiento Departamental**: El motor de chat (`admin/api/chat.php`) y la asignación de tareas ahora filtran estrictamente por el `cve_area` del usuario logueado, asegurando que el personal de Difusión solo interactúe con sus compañeros de área.
+    - **Corrección de Regresiones**: Se resolvieron los errores de "Headers already sent" eliminando advertencias de claves indefinidas en `sidebar_footer.php` y el header.
+    - **Seguridad Multimedia**: Se corrigió la validación CSRF y la detección de autoría en el Repositorio Multimedia y la Gestión de Anuncios.

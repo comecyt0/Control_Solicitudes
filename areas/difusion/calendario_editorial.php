@@ -34,17 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $color = postParam('color', '#e11d48'); // Color por defecto editorial
         
         if ($titulo && $fechaInicio && $fechaFin) {
-            $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-            // Insertar en tabla editorial
-            $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, $publico)");
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $adminId]);
+            // Insertar en tabla editorial (Siempre publico=false para esta vista editorial interna)
+            $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, FALSE)");
+            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $adminId ?: null]);
             
-            // Si es público, replicar en eventos globales
-            if ($publico === 'TRUE') {
-                $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, TRUE)")
-                    ->execute([$titulo, "(Editorial) " . $descripcion, $fechaInicio, $fechaFin, $color, $adminId]);
-            }
-
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_creado');
             exit;
         } else {
@@ -116,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         
         if ($titulo) {
             $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
-            $stmt->execute([$titulo, $descripcion, $color, $adminId, $asignado_a, $cveAreaUsuario]);
+            $stmt->execute([$titulo, $descripcion, $color, $adminId ?: null, $asignado_a, $cveAreaUsuario]);
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=tarea_creada#kanban');
             exit;
         }
@@ -737,10 +730,6 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <input type="date" name="fecha_fin" id="c_fecha_fin" class="form-control" required>
                     </div>
                 </div>
-                <div class="form-group" style="padding: 12px; background: rgba(59,130,246,0.08); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" name="publico" id="c_publico" style="width:18px; height:18px;">
-                    <label for="c_publico" style="margin:0; font-weight:600; color:#1e40af; cursor:pointer;">Mostrar en Calendario Público Institucional</label>
-                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="cerrarModal('modalCrearEvento')">Cerrar</button>
@@ -780,10 +769,6 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <label class="form-label">Fin</label>
                         <input type="date" name="fecha_fin" id="e_fecha_fin" class="form-control" required>
                     </div>
-                </div>
-                <div class="form-group" style="padding: 12px; background: rgba(59,130,246,0.08); border-radius: 8px; display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" name="publico" id="e_publico" style="width:18px; height:18px;">
-                    <label for="e_publico" style="margin:0; font-weight:600; color:#1e40af; cursor:pointer;">Visible para el público</label>
                 </div>
             </div>
             <div class="modal-footer d-flex justify-content-between" id="footerEditarEvento">

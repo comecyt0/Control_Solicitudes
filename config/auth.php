@@ -119,7 +119,7 @@ function verificarSesionAdmin(): void
     }
 
     // Normalizar variables de sesión para evitar advertencias en módulos compartidos
-    if (!isset($_SESSION['admin_id'])) $_SESSION['admin_id'] = 0;
+    if (!isset($_SESSION['admin_id'])) $_SESSION['admin_id'] = null;
     if (!isset($_SESSION['admin_rol'])) $_SESSION['admin_rol'] = $_SESSION['user_rol'] ?? 'Personal';
     if (!isset($_SESSION['admin_cve_area'])) $_SESSION['admin_cve_area'] = $_SESSION['user_cve_area'] ?? 0;
 
