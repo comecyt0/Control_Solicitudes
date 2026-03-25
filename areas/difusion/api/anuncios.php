@@ -34,27 +34,49 @@ $pdo = getConnection();
 try {
     // Función helper para procesar el banner
     $procesarBanner = function() {
-        if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
-            $tmpInfo = @getimagesize($_FILES['banner']['tmp_name']);
-            if ($tmpInfo !== false) {
-                $exts = ['image/jpeg' => '.jpg', 'image/png' => '.png', 'image/webp' => '.webp'];
-                $mime = mime_content_type($_FILES['banner']['tmp_name']);
-                if (isset($exts[$mime])) {
-                    $ext = $exts[$mime];
-                    $filename = uniqid('banner_') . $ext;
-                    // Asegurar la ruta absoluta usando dirname(__DIR__, 2)
-                    $uploadDir = dirname(__DIR__, 2) . '/public/uploads/anuncios/';
-                    if (!is_dir($uploadDir)) {
-                        @mkdir($uploadDir, 0755, true);
-                    }
-                    $path = $uploadDir . $filename;
-                    if (@move_uploaded_file($_FILES['banner']['tmp_name'], $path)) {
-                        return $filename;
-                    }
-                }
+        if (!isset($_FILES['banner']) || $_FILES['banner']['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $tmpName = $_FILES['banner']['tmp_name'];
+
+        // Validar que realmente es una imagen
+        $tmpInfo = @getimagesize($tmpName);
+        if ($tmpInfo === false) {
+            error_log('[Anuncios] Banner rechazado: no es una imagen válida.');
+            return null;
+        }
+
+        $mime = mime_content_type($tmpName);
+        $exts = ['image/jpeg' => '.jpg', 'image/png' => '.png', 'image/webp' => '.webp', 'image/gif' => '.gif'];
+        if (!isset($exts[$mime])) {
+            error_log('[Anuncios] Banner rechazado: tipo MIME no permitido: ' . $mime);
+            return null;
+        }
+
+        $ext = $exts[$mime];
+        $filename = 'banner_' . bin2hex(random_bytes(8)) . $ext;
+
+        // RUTA CORRECTA: este archivo está en areas/difusion/api/ → subir 3 niveles llega a la raíz del proyecto
+        // dirname(__DIR__, 2) solo sube 2 niveles → llega a areas/ (INCORRECTO)
+        // dirname(__DIR__, 3) sube 3 niveles → llega a la raíz C:\Intranet (CORRECTO)
+        // Dentro del contenedor Docker: /var/www/html/public/uploads/anuncios/ (montado como volumen)
+        $uploadDir = ROOT . '/public/uploads/anuncios/';
+        if (!is_dir($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true)) {
+                error_log('[Anuncios] No se pudo crear el directorio: ' . $uploadDir);
+                return null;
             }
         }
-        return null; // Si falla algo retorna null, sin matar el script
+
+        $destino = $uploadDir . $filename;
+        if (!move_uploaded_file($tmpName, $destino)) {
+            error_log('[Anuncios] move_uploaded_file falló. Origen: ' . $tmpName . ' | Destino: ' . $destino);
+            return null;
+        }
+
+        error_log('[Anuncios] Banner guardado correctamente: ' . $destino);
+        return $filename;
     };
 
     if ($accion === 'crear') {

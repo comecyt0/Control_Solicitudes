@@ -141,6 +141,21 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
     - **Control Centralizado**: La lista de áreas funcionales se gestiona desde `$areas_funcionales` en el header, permitiendo habilitar módulos uno a uno conforme se completan.
     - **Nota Técnica (BOM)**: Todos los archivos PHP deben guardarse estrictamente en **UTF-8 sin BOM**. El uso de BOM causa errores de "Headers already sent" al iniciar sesiones o realizar redirecciones.
 
+- **🚨 Fix Banner de Anuncios No Visible (v5.3, 2026-03-25)**:
+    - **Síntoma**: Al crear o editar un anuncio con imagen en `areas/difusion/anuncios.php`, el registro se guardaba correctamente en BD pero la imagen nunca aparecía. El campo `banner_url` quedaba `NULL`.
+    - **Causa Raíz**: `areas/difusion/api/anuncios.php` usaba `dirname(__DIR__, 2)` para calcular la ruta de destino del upload. Desde `areas/difusion/api/`, subir 2 niveles con `dirname` llega a `C:\Intranet\areas\` — **NO a la raíz del proyecto**. El directorio `areas/public/uploads/anuncios/` nunca existe, `move_uploaded_file()` retorna `false`, la función retorna `null` silenciosamente (estaba suprimido con `@`), y el registro se guarda sin imagen.
+    - **Regla de Cálculo de niveles**: `dirname(__DIR__, N)` desde `areas/{area}/api/` requiere N=3 para llegar a la raíz. Desde `admin/api/` requiere N=2. **Solución definitiva**: usar siempre la constante `ROOT` (definida en `config/database.php`) — es absolutamente independiente de la profundidad del script.
+    - **Corrección aplicada**: Reemplazado `dirname(__DIR__, 2)` por `ROOT` en `areas/difusion/api/anuncios.php` y homologado en `admin/api/anuncios.php`. Se eliminó el `@` de supresión de errores y se agregaron `error_log()` explícitos para detectar futuros fallos de escritura.
+    - **Regla permanente**: **NUNCA usar `dirname(__DIR__, N)` para rutas de upload**. Siempre usar `ROOT . '/public/uploads/...'`. El operador `@` nunca debe suprimir `move_uploaded_file()` — oculta errores críticos.
+    - **Reconstruir Docker**: `docker compose up -d --build app`
+
+- **🚨 Fix CSRF en Repositorio Multimedia Difusión (v5.2, 2026-03-25)**:
+    - **Síntoma**: Al intentar subir un archivo en `repositorio.php`, el navegador mostraba un `alert()` con "Error de seguridad CSRF." y el upload no completaba.
+    - **Causa Raíz**: `api/repositorio.php` usaba `if (!validarCsrfPost())` — error documentado en §Troubleshooting. La función es `:void`, llama a `mostrarError()` que emite HTML, rompiendo `JSON.parse()` en el `fetch()`. Además, `inicializarSesion()` no se llamaba antes de leer `$_SESSION['csrf_token']`, dejando el token vacío.
+    - **Solución**: Validación CSRF inline directa (comparar `$_POST['csrf_token']` con `$_SESSION['csrf_token']`) + llamada explícita a `inicializarSesion()` al inicio de la API.
+    - **Regla**: **NUNCA llamar `validarCsrfPost()` en APIs que retornan JSON.** Usar siempre validación inline. Ver ejemplo en `areas/difusion/api/repositorio.php`.
+    - **Reconstruir Docker**: `docker compose up -d --build app`
+
 - **Phase 5: Polarización de Difusión (v5.0, 2026-03-25)**:
     - **Unificación de Sesiones**: Se modificó `auth.php` y `header_admin.php` para que el sistema reconozca tanto a `admin_id` como a `user_id` de forma intercambiable en módulos compartidos (Chat, IA, Kanban).
     - **Aislamiento Departamental**: El motor de chat (`admin/api/chat.php`) y la asignación de tareas ahora filtran estrictamente por el `cve_area` del usuario logueado, asegurando que el personal de Difusión solo interactúe con sus compañeros de área.

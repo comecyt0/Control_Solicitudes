@@ -10,9 +10,23 @@ require_once __DIR__ . '/../../../config/auth.php';
 
 header('Content-Type: application/json');
 
-if (!validarCsrfPost()) {
-    echo json_encode(['ok' => false, 'error' => 'Error de seguridad CSRF.']);
-    exit;
+// Inicializar sesión ANTES de leer $_SESSION (obligatorio en APIs AJAX)
+// Ver claude.md §Troubleshooting — CSRF void-vs-bool
+if (session_status() === PHP_SESSION_NONE && function_exists('inicializarSesion')) {
+    inicializarSesion();
+}
+
+// Validación CSRF inline — NO usar validarCsrfPost() aquí:
+// esa función es :void y llama a mostrarError() que emite HTML,
+// lo que rompe JSON.parse() en el cliente fetch().
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $tokenPost    = $_POST['csrf_token'] ?? '';
+    $tokenSession = $_SESSION['csrf_token'] ?? '';
+    if (empty($tokenPost) || empty($tokenSession) || !hash_equals($tokenSession, $tokenPost)) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Token de seguridad inválido. Recarga la página e intenta de nuevo.']);
+        exit;
+    }
 }
 
 verificarSesionAdmin();

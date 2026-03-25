@@ -34,27 +34,35 @@ $pdo = getConnection();
 try {
     // Función helper para procesar el banner
     $procesarBanner = function() {
-        if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
-            $tmpInfo = @getimagesize($_FILES['banner']['tmp_name']);
-            if ($tmpInfo !== false) {
-                $exts = ['image/jpeg' => '.jpg', 'image/png' => '.png', 'image/webp' => '.webp'];
-                $mime = mime_content_type($_FILES['banner']['tmp_name']);
-                if (isset($exts[$mime])) {
-                    $ext = $exts[$mime];
-                    $filename = uniqid('banner_') . $ext;
-                    // Asegurar la ruta absoluta usando dirname(__DIR__, 2)
-                    $uploadDir = dirname(__DIR__, 2) . '/public/uploads/anuncios/';
-                    if (!is_dir($uploadDir)) {
-                        @mkdir($uploadDir, 0755, true);
-                    }
-                    $path = $uploadDir . $filename;
-                    if (@move_uploaded_file($_FILES['banner']['tmp_name'], $path)) {
-                        return $filename;
-                    }
-                }
-            }
+        if (!isset($_FILES['banner']) || $_FILES['banner']['error'] !== UPLOAD_ERR_OK) {
+            return null;
         }
-        return null; // Si falla algo retorna null, sin matar el script
+        $tmpName = $_FILES['banner']['tmp_name'];
+        $tmpInfo = @getimagesize($tmpName);
+        if ($tmpInfo === false) {
+            error_log('[Anuncios Admin] Banner rechazado: no es una imagen válida.');
+            return null;
+        }
+        $mime = mime_content_type($tmpName);
+        $exts = ['image/jpeg' => '.jpg', 'image/png' => '.png', 'image/webp' => '.webp', 'image/gif' => '.gif'];
+        if (!isset($exts[$mime])) {
+            error_log('[Anuncios Admin] Banner rechazado: MIME no permitido: ' . $mime);
+            return null;
+        }
+        $filename = 'banner_' . bin2hex(random_bytes(8)) . $exts[$mime];
+        // Usar ROOT (definido en config/database.php como raíz del proyecto)
+        // Es la forma robusta que funciona desde cualquier profundidad de directorio.
+        $uploadDir = ROOT . '/public/uploads/anuncios/';
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+            error_log('[Anuncios Admin] No se pudo crear directorio: ' . $uploadDir);
+            return null;
+        }
+        $destino = $uploadDir . $filename;
+        if (!move_uploaded_file($tmpName, $destino)) {
+            error_log('[Anuncios Admin] move_uploaded_file falló. Destino: ' . $destino);
+            return null;
+        }
+        return $filename;
     };
 
     if ($accion === 'crear') {
