@@ -24,7 +24,7 @@ if ($_SESSION['area_slug_activa'] !== 'difusion') {
 
 $pdo = getConnection();
 $accion = postParam('accion');
-$id_admin = $_SESSION['admin_id'];
+$id_admin = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
 
 if ($accion === 'crear') {
     $titulo = trim(postParam('titulo'));

@@ -118,13 +118,18 @@ function verificarSesionAdmin(): void
         exit;
     }
 
+    // Normalizar variables de sesión para evitar advertencias en módulos compartidos
+    if (!isset($_SESSION['admin_id'])) $_SESSION['admin_id'] = 0;
+    if (!isset($_SESSION['admin_rol'])) $_SESSION['admin_rol'] = $_SESSION['user_rol'] ?? 'Personal';
+    if (!isset($_SESSION['admin_cve_area'])) $_SESSION['admin_cve_area'] = $_SESSION['user_cve_area'] ?? 0;
+
     if (!empty($_SESSION['ultimo_acceso'])) {
         $ahora      = time();
         $ultimo     = (int) $_SESSION['ultimo_acceso'];
         $inactivo   = $ahora - $ultimo;
         $medianoche = strtotime('today midnight');
 
-        // REGLA DE MEDIANOCHE:
+        // REGLA DE MEDIANOCHE (v4.5): 
         // Si ya pasó la medianoche y el último acceso fue AYER (antes de las 00:00)
         // Y el usuario no ha estado activo en los últimos 30 minutos (1800s), cerrar sesión.
         if ($ahora >= $medianoche && $ultimo < $medianoche && $inactivo > 1800) {

@@ -14,7 +14,10 @@ verificarSesionAdmin();
 $pdo = getConnection();
 $mensajeFlash = '';
 $tipoFlash = '';
-$cveAreaUsuario = (int) ($_SESSION['admin_cve_area'] ?? 1);
+$cveAreaUsuario = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0);
+$adminId        = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
+
+if ($cveAreaUsuario === 0) redirigir('public/hub.php');
 
 // -------------------------------------------------------
 // Procesar acciones de Calendario (PRG)
@@ -34,12 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
             // Insertar en tabla editorial
             $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, $publico)");
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id']]);
+            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $adminId]);
             
             // Si es público, replicar en eventos globales
             if ($publico === 'TRUE') {
                 $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, TRUE)")
-                    ->execute([$titulo, "(Editorial) " . $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id']]);
+                    ->execute([$titulo, "(Editorial) " . $descripcion, $fechaInicio, $fechaFin, $color, $adminId]);
             }
 
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_creado');
@@ -113,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         
         if ($titulo) {
             $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
-            $stmt->execute([$titulo, $descripcion, $color, $_SESSION['admin_id'], $asignado_a, $cveAreaUsuario]);
+            $stmt->execute([$titulo, $descripcion, $color, $adminId, $asignado_a, $cveAreaUsuario]);
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=tarea_creada#kanban');
             exit;
         }

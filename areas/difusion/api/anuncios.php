@@ -12,7 +12,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-if (empty($_SESSION['admin_id'])) {
+if (empty($_SESSION['admin_id']) && empty($_SESSION['user_id'])) {
     echo json_encode(['ok' => false, 'error' => 'Sesión expirada o no autorizada.']);
     exit;
 }

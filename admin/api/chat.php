@@ -25,14 +25,14 @@ header('Content-Type: application/json; charset=utf-8');
 
 // Iniciar sesión y verificar autenticación
 inicializarSesion();
-if (empty($_SESSION['admin_id'])) {
+if (empty($_SESSION['admin_id']) && empty($_SESSION['user_id'])) {
     http_response_code(401);
     die(json_encode(['ok' => false, 'error' => 'No autorizado']));
 }
 
 $pdo     = getConnection();
-$adminId  = (int) $_SESSION['admin_id'];
-$cveArea  = (int) ($_SESSION['admin_cve_area'] ?? 0);
+$adminId  = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
+$cveArea  = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0);
 $accion   = $_GET['accion'] ?? $_POST['accion'] ?? '';
 
 // ------------------------------------------------------------------

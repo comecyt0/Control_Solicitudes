@@ -509,7 +509,7 @@ try {
  *   · Compatible 100% con PostgreSQL 15+ (timestamps via TO_CHAR backend)
  */
 (function () {
-    const ADMIN_ID   = <?= (int) $_SESSION['admin_id'] ?>;
+    const ADMIN_ID   = <?= (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0) ?>;
     const API        = '<?= BASE_URL ?>admin/api/chat.php';
     const POLL_MS    = 6000;   // Reducción a 6s para mayor agilidad
     const BG_POLL_MS = 15000;  // Reducción a 15s (antes 30s)

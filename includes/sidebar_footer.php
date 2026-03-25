@@ -8,9 +8,9 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$u_id     = $_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? $_SESSION['ss_id'] ?? 0;
-$u_nombre = $_SESSION['admin_nombre'] ?? $_SESSION['user_nombre'] ?? $_SESSION['ss_nombre'] ?? 'Usuario';
-$u_rol    = $_SESSION['admin_rol']    ?? ($_SESSION['ss_id'] ? 'Servicio Social' : ($_SESSION['user_area'] ?? 'Área General'));
+$u_id     = $_SESSION['admin_id']    ?? $_SESSION['user_id']    ?? $_SESSION['ss_id']    ?? 0;
+$u_nombre = $_SESSION['admin_nombre']  ?? $_SESSION['user_nombre']  ?? $_SESSION['ss_nombre']  ?? 'Usuario';
+$u_rol    = $_SESSION['admin_rol']     ?? (isset($_SESSION['ss_id']) ? 'Servicio Social' : ($_SESSION['user_area'] ?? 'Área General'));
 $u_foto   = $_SESSION['admin_foto']   ?? $_SESSION['user_foto']   ?? $_SESSION['ss_foto']   ?? null;
 
 // Lazy Load Foto si no esta en sesion (evita requerir logout para ver cambios)
