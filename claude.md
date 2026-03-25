@@ -146,3 +146,13 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
     - **Aislamiento Departamental**: El motor de chat (`admin/api/chat.php`) y la asignación de tareas ahora filtran estrictamente por el `cve_area` del usuario logueado, asegurando que el personal de Difusión solo interactúe con sus compañeros de área.
     - **Corrección de Regresiones**: Se resolvieron los errores de "Headers already sent" eliminando advertencias de claves indefinidas en `sidebar_footer.php` y el header.
     - **Seguridad Multimedia**: Se corrigió la validación CSRF y la detección de autoría en el Repositorio Multimedia y la Gestión de Anuncios.
+
+- **Fase 5.1: Depuración de Calendario Difusión (v5.1, 2026-03-25)**:
+    - **Solución FK Violation**: Se cambió el fallback de `admin_id` de `0` a `null` para evitar errores de clave foránea en la base de datos al insertar registros desde cuentas de Personal (No-Admins).
+    - **Simplificación de UI**: Se eliminó la opción "Visible al público" del Calendario Editorial para mantenerlo como una herramienta de planeación interna pura.
+
+- **Fase 6: Chat Híbrido Universal (v6.0, 2026-03-25)**:
+    - **Identidad Extendida**: Migración de `sb_chat_mensajes` para incluir `usuario_id` (vinculado a `cat_personal`). Esto permite que el personal sin cuenta de administrador participe plenamente en el chat.
+    - **Prefijos de ID**: Implementación de sistema de prefijos en API y JS (`A` para Admins, `P` para Personal) para manejar destinatarios de forma unificada.
+    - **Visibilidad Total**: El sidebar del chat en Difusión ahora muestra a todos los miembros del área registrados en `cat_personal`.
+    - **Avatares Determinísticos**: Actualización de la lógica de color JS para generar avatares consistentes basados en strings alfanuméricos.

@@ -509,7 +509,7 @@ try {
  *   · Compatible 100% con PostgreSQL 15+ (timestamps via TO_CHAR backend)
  */
 (function () {
-    const ADMIN_ID   = <?= (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0) ?>;
+    const ADMIN_ID   = '<?= $_SESSION['admin_id'] ? "A".$_SESSION['admin_id'] : "P".$_SESSION['user_id'] ?>';
     const API        = '<?= BASE_URL ?>admin/api/chat.php';
     const POLL_MS    = 6000;   // Reducción a 6s para mayor agilidad
     const BG_POLL_MS = 15000;  // Reducción a 15s (antes 30s)
@@ -619,7 +619,13 @@ try {
 
     // -? Color determinístico por ID de admin --------------------?
     function colorAdmin(id) {
-        return AVATAR_COLORS[(id + 1) % AVATAR_COLORS.length];
+        let num = 0;
+        if (typeof id === 'string') {
+            for (let i = 0; i < id.length; i++) num += id.charCodeAt(i);
+        } else {
+            num = id;
+        }
+        return AVATAR_COLORS[(num + 1) % AVATAR_COLORS.length];
     }
 
     // -? Volver a lista en móvil ----------------------------------?

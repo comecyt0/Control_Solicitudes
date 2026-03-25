@@ -31,7 +31,8 @@ if (empty($_SESSION['admin_id']) && empty($_SESSION['user_id'])) {
 }
 
 $pdo     = getConnection();
-$adminId  = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
+$adminId  = $_SESSION['admin_id'] ?? null;
+$personalId = $_SESSION['user_id'] ?? null;
 $cveArea  = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0);
 $accion   = $_GET['accion'] ?? $_POST['accion'] ?? '';
 
@@ -43,38 +44,70 @@ $accion   = $_GET['accion'] ?? $_POST['accion'] ?? '';
 // ------------------------------------------------------------------
 if ($accion === 'listar') {
     $desde        = (int) ($_GET['desde'] ?? 0);
-    $destinatario = isset($_GET['destinatario']) ? (int) $_GET['destinatario'] : null;
+    $destinatarioRaw = $_GET['destinatario'] ?? null;
+    
+    $destAdminId = null;
+    $destUserId  = null;
+    if ($destinatarioRaw) {
+        if (str_starts_with($destinatarioRaw, 'A')) $destAdminId = (int) substr($destinatarioRaw, 1);
+        elseif (str_starts_with($destinatarioRaw, 'P')) $destUserId = (int) substr($destinatarioRaw, 1);
+        else $destAdminId = (int)$destinatarioRaw; // Fallback legacy
+    }
 
     $params = [':desde' => $desde];
     $where  = "m.id > :desde ";
 
-    if ($destinatario !== null && $destinatario > 0) {
-        $where .= " AND ((m.admin_id = :yo AND m.destinatario_id = :eux) OR (m.admin_id = :eux2 AND m.destinatario_id = :yo2))";
-        $params[':yo']   = $adminId;
-        $params[':eux']  = $destinatario;
-        $params[':eux2'] = $destinatario;
-        $params[':yo2']  = $adminId;
+    if ($destAdminId || $destUserId) {
+        // Lógica de DM Híbrida
+        $idPropioAdmin = $adminId;
+        $idPropioUser  = $personalId;
+
+        $where .= " AND (
+            (m.admin_id = :yoA AND :yoA IS NOT NULL AND m.destinatario_id = :destA) OR 
+            (m.usuario_id = :yoU AND :yoU IS NOT NULL AND m.destinatario_usuario_id = :destU) OR
+            (m.admin_id = :yoA2 AND m.destinatario_usuario_id = :destU2) OR
+            (m.usuario_id = :yoU2 AND m.destinatario_id = :destA2) OR
+            (m.admin_id = :destA3 AND m.destinatario_id = :yoA3) OR
+            (m.usuario_id = :destU3 AND m.destinatario_usuario_id = :yoU3) OR
+            (m.admin_id = :destA4 AND m.destinatario_usuario_id = :yoU4) OR
+            (m.usuario_id = :destU5 AND m.destinatario_id = :yoA5)
+        )";
+        // Esto es complejo pero cubre todas las combinaciones A->A, U->U, A->U, U->A
+        $params[':yoA']   = $idPropioAdmin;   $params[':destA']  = $destAdminId;
+        $params[':yoU']   = $idPropioUser;    $params[':destU']  = $destUserId;
+        $params[':yoA2']  = $idPropioAdmin;   $params[':destU2'] = $destUserId;
+        $params[':yoU2']  = $idPropioUser;    $params[':destA2'] = $destAdminId;
+        $params[':destA3'] = $destAdminId;    $params[':yoA3']   = $idPropioAdmin;
+        $params[':destU3'] = $destUserId;     $params[':yoU3']   = $idPropioUser;
+        $params[':destA4'] = $destAdminId;    $params[':yoU4']   = $idPropioUser;
+        $params[':destU5'] = $destUserId;     $params[':yoA5']   = $idPropioAdmin;
     } else {
-        $where .= " AND m.destinatario_id IS NULL AND p.cve_area = :cve_area";
+        $where .= " AND m.destinatario_id IS NULL AND m.destinatario_usuario_id IS NULL AND (p.cve_area = :cve_area OR p2.cve_area = :cve_area2)";
         $params[':cve_area'] = $cveArea;
+        $params[':cve_area2'] = $cveArea;
     }
 
     if ($desde === 0) {
         // Carga inicial: obtener los ÚLTIMOS 50 para empezar en el presente
         $sql = "SELECT * FROM (
-                    SELECT m.id, m.admin_id, m.destinatario_id, m.mensaje, m.tipo,
+                    SELECT m.id, 
+                           COALESCE('A' || m.admin_id, 'P' || m.usuario_id) AS admin_id,
+                           COALESCE('A' || m.destinatario_id, 'P' || m.destinatario_usuario_id) AS destinatario_id,
+                           m.mensaje, m.tipo,
                            m.ref_id, m.ref_titulo,
                            TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'HH24:MI') AS hora,
                            TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'DD/MM/YYYY') AS fecha_dia,
-                           a.nombre AS admin_nombre,
+                           COALESCE(a.nombre, p2.nombre) AS admin_nombre,
                            (
-                               SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', r.admin_id, 'nombre', r2.nombre))
+                               SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', COALESCE('A' || r.admin_id, 'P' || r.usuario_id), 'nombre', COALESCE(ra.nombre, rp.nombre)))
                                FROM sb_chat_reacciones r
-                               JOIN administradores r2 ON r2.id = r.admin_id
+                               LEFT JOIN administradores ra ON ra.id = r.admin_id
+                               LEFT JOIN cat_personal rp ON rp.id_personal = r.usuario_id
                                WHERE r.mensaje_id = m.id
                            ) as reacciones
                     FROM sb_chat_mensajes m
-                    INNER JOIN administradores a ON a.id = m.admin_id
+                    LEFT JOIN administradores a ON a.id = m.admin_id
+                    LEFT JOIN cat_personal p2 ON p2.id_personal = m.usuario_id
                     LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
                     WHERE $where
                     ORDER BY m.id DESC
@@ -83,19 +116,24 @@ if ($accion === 'listar') {
                 ORDER BY id ASC";
     } else {
         // Polling: obtener solo lo nuevo desde el último ID conocido
-        $sql = "SELECT m.id, m.admin_id, m.destinatario_id, m.mensaje, m.tipo,
+        $sql = "SELECT m.id, 
+                       COALESCE('A' || m.admin_id, 'P' || m.usuario_id) AS admin_id,
+                       COALESCE('A' || m.destinatario_id, 'P' || m.destinatario_usuario_id) AS destinatario_id,
+                       m.mensaje, m.tipo,
                        m.ref_id, m.ref_titulo,
                        TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'HH24:MI') AS hora,
                        TO_CHAR(m.fecha AT TIME ZONE 'America/Mexico_City', 'DD/MM/YYYY') AS fecha_dia,
-                       a.nombre AS admin_nombre,
+                       COALESCE(a.nombre, p2.nombre) AS admin_nombre,
                        (
-                           SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', r.admin_id, 'nombre', r2.nombre))
+                           SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', COALESCE('A' || r.admin_id, 'P' || r.usuario_id), 'nombre', COALESCE(ra.nombre, rp.nombre)))
                            FROM sb_chat_reacciones r
-                           JOIN administradores r2 ON r2.id = r.admin_id
+                           LEFT JOIN administradores ra ON ra.id = r.admin_id
+                           LEFT JOIN cat_personal rp ON rp.id_personal = r.usuario_id
                            WHERE r.mensaje_id = m.id
                        ) as reacciones
                 FROM sb_chat_mensajes m
-                INNER JOIN administradores a ON a.id = m.admin_id
+                LEFT JOIN administradores a ON a.id = m.admin_id
+                LEFT JOIN cat_personal p2 ON p2.id_personal = m.usuario_id
                 LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
                 WHERE $where
                 ORDER BY m.id ASC
@@ -146,17 +184,15 @@ if ($accion === 'reaccionar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $chk->execute([$mensajeId, $adminId, $emoji]);
         
         if ($chk->fetch()) {
-            $pdo->prepare("DELETE FROM sb_chat_reacciones WHERE mensaje_id = ? AND admin_id = ? AND emoji = ?")
-                ->execute([$mensajeId, $adminId, $emoji]);
+            $pdo->prepare("DELETE FROM sb_chat_reacciones WHERE mensaje_id = ? AND (admin_id = ? OR usuario_id = ?) AND emoji = ?")
+                ->execute([$mensajeId, $adminId, $personalId, $emoji]);
             $res = 'deleted';
         } else {
-            // Un admin solo tiene una reacción por mensaje? 
-            // Hagamos que pueda tener varias pero una de cada tipo.
-            // Para simplificar el UI: "Unique(mensaje_id, admin_id)" (una sola reacción por mensaje)
-            $sql = "INSERT INTO sb_chat_reacciones (mensaje_id, admin_id, emoji)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT (mensaje_id, admin_id) DO UPDATE SET emoji = EXCLUDED.emoji";
-            $pdo->prepare($sql)->execute([$mensajeId, $adminId, $emoji]);
+            $sql = "INSERT INTO sb_chat_reacciones (mensaje_id, admin_id, usuario_id, emoji)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT (mensaje_id, COALESCE(admin_id, -1), COALESCE(usuario_id, -1)) DO UPDATE SET emoji = EXCLUDED.emoji";
+            // Nota: El ON CONFLICT requiere un índice que cubra nulls o usar COALESCE si se cambió la constraint
+            $pdo->prepare($sql)->execute([$mensajeId, $adminId, $personalId, $emoji]);
             $res = 'saved';
         }
         echo json_encode(['ok' => true, 'res' => $res]);
@@ -175,30 +211,27 @@ if ($accion === 'reaccionar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($accion === 'enviar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     validarCsrfPost();
     $texto        = trim($_POST['mensaje'] ?? '');
-    $destinatario = !empty($_POST['destinatario']) ? (int) $_POST['destinatario'] : null;
+    $destinatarioRaw = $_POST['destinatario'] ?? null;
+    $destAdminId = null;
+    $destUserId  = null;
+
+    if ($destinatarioRaw) {
+        if (str_starts_with($destinatarioRaw, 'A')) $destAdminId = (int) substr($destinatarioRaw, 1);
+        elseif (str_starts_with($destinatarioRaw, 'P')) $destUserId = (int) substr($destinatarioRaw, 1);
+        else $destAdminId = (int) $destinatarioRaw;
+    }
 
     if (mb_strlen($texto) < 1 || mb_strlen($texto) > 2000) {
         echo json_encode(['ok' => false, 'error' => 'Mensaje inválido.']);
         exit;
     }
 
-    // Validar que el destinatario existe y está activo si se especificó
-    if ($destinatario !== null) {
-        $chk = $pdo->prepare("SELECT id FROM administradores WHERE id = ? AND activo = true");
-        $chk->execute([$destinatario]);
-        if (!$chk->fetch()) {
-            echo json_encode(['ok' => false, 'error' => 'Destinatario inválido.']);
-            exit;
-        }
-    }
-
     $stmt = $pdo->prepare(
-        "INSERT INTO sb_chat_mensajes (admin_id, destinatario_id, mensaje, tipo)
-         VALUES (?, ?, ?, 'texto')"
+        "INSERT INTO sb_chat_mensajes (admin_id, usuario_id, destinatario_id, destinatario_usuario_id, mensaje, tipo)
+         VALUES (?, ?, ?, ?, ?, 'texto')"
     );
-    $stmt->execute([$adminId, $destinatario, $texto]);
+    $stmt->execute([$adminId, $personalId, $destAdminId, $destUserId, $texto]);
 
-    // lastInsertId() no aplica en PostgreSQL para diferentes tablas; usamos RETURNING
     $nuevoId = (int) $pdo->query("SELECT lastval()")->fetchColumn();
 
     echo json_encode(['ok' => true, 'id' => $nuevoId]);
@@ -210,16 +243,29 @@ if ($accion === 'enviar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 // Incluye inicial y rol para el UI
 // ------------------------------------------------------------------
 if ($accion === 'admins') {
+    // Listar TODOS los miembros del área desde cat_personal
+    // Pero detectar si tienen una cuenta de admin asociada para usar su AdminID si existe
     $stmt = $pdo->prepare(
-        "SELECT a.id, a.nombre, a.rol,
-                UPPER(SUBSTRING(a.nombre FROM 1 FOR 1)) AS inicial
-         FROM administradores a
-         LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
-         WHERE a.activo = true AND p.cve_area = ?
-         ORDER BY a.nombre"
+        "SELECT p.id_personal, p.nombre, a.id as admin_id, a.rol,
+                UPPER(SUBSTRING(p.nombre FROM 1 FOR 1)) AS inicial
+         FROM cat_personal p
+         LEFT JOIN administradores a ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
+         WHERE p.cve_area = ? AND p.habilitado = true
+         ORDER BY p.nombre"
     );
     $stmt->execute([$cveArea]);
-    $admins = $stmt->fetchAll();
+    $listaRaw = $stmt->fetchAll();
+    
+    $admins = [];
+    foreach ($listaRaw as $row) {
+        $admins[] = [
+            'id'      => $row['admin_id'] ? 'A' . $row['admin_id'] : 'P' . $row['id_personal'],
+            'nombre'  => $row['nombre'],
+            'rol'     => $row['rol'] ?? 'Staff',
+            'inicial' => $row['inicial']
+        ];
+    }
+    
     echo json_encode(['ok' => true, 'admins' => $admins]);
     exit;
 }
