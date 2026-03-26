@@ -82,9 +82,9 @@ if ($accion === 'listar') {
         $params[':destA4'] = $destAdminId;    $params[':yoU4']   = $idPropioUser;
         $params[':destU5'] = $destUserId;     $params[':yoA5']   = $idPropioAdmin;
     } else {
-        $where .= " AND m.destinatario_id IS NULL AND m.destinatario_usuario_id IS NULL AND (p.cve_area = :cve_area OR p2.cve_area = :cve_area2)";
+        // Canal Grupal: Filtrar por el área asignada al mensaje (visibilidad total garantizada)
+        $where .= " AND m.destinatario_id IS NULL AND m.destinatario_usuario_id IS NULL AND m.cve_area = :cve_area";
         $params[':cve_area'] = $cveArea;
-        $params[':cve_area2'] = $cveArea;
     }
 
     if ($desde === 0) {
@@ -212,6 +212,7 @@ if ($accion === 'enviar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     validarCsrfPost();
     $texto        = trim($_POST['mensaje'] ?? '');
     $destinatarioRaw = $_POST['destinatario'] ?? null;
+    $contextoArea    = !empty($_POST['cve_area']) ? (int)$_POST['cve_area'] : $cveArea;
     $destAdminId = null;
     $destUserId  = null;
 
@@ -227,10 +228,10 @@ if ($accion === 'enviar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $stmt = $pdo->prepare(
-        "INSERT INTO sb_chat_mensajes (admin_id, usuario_id, destinatario_id, destinatario_usuario_id, mensaje, tipo)
-         VALUES (?, ?, ?, ?, ?, 'texto')"
+        "INSERT INTO sb_chat_mensajes (admin_id, usuario_id, destinatario_id, destinatario_usuario_id, mensaje, tipo, cve_area)
+         VALUES (?, ?, ?, ?, ?, 'texto', ?)"
     );
-    $stmt->execute([$adminId, $personalId, $destAdminId, $destUserId, $texto]);
+    $stmt->execute([$adminId, $personalId, $destAdminId, $destUserId, $texto, $contextoArea]);
 
     $nuevoId = (int) $pdo->query("SELECT lastval()")->fetchColumn();
 
@@ -294,10 +295,10 @@ if ($accion === 'crear_tarea' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $msgTexto = "📌 Nueva tarea: \"$titulo\"";
     $stmtM = $pdo->prepare(
-        "INSERT INTO sb_chat_mensajes (admin_id, mensaje, tipo, ref_id, ref_titulo)
-         VALUES (?, ?, 'tarea', ?, ?) RETURNING id"
+        "INSERT INTO sb_chat_mensajes (admin_id, usuario_id, mensaje, tipo, ref_id, ref_titulo, cve_area)
+         VALUES (?, ?, ?, 'tarea', ?, ?, ?) RETURNING id"
     );
-    $stmtM->execute([$adminId, $msgTexto, $tareaId, $titulo]);
+    $stmtM->execute([$adminId, $personalId, $msgTexto, $tareaId, $titulo, $cveArea]);
     $nuevoId = (int) $stmtM->fetchColumn();
 
     echo json_encode(['ok' => true, 'id' => $nuevoId, 'tarea_id' => $tareaId]);
@@ -330,10 +331,10 @@ if ($accion === 'crear_evento' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $fechaFormato = date('d/m/Y', strtotime($fechaInicio));
     $msgTexto     = "📅 Evento: \"$titulo\" → $fechaFormato";
     $stmtM = $pdo->prepare(
-        "INSERT INTO sb_chat_mensajes (admin_id, mensaje, tipo, ref_id, ref_titulo)
-         VALUES (?, ?, 'evento', ?, ?) RETURNING id"
+        "INSERT INTO sb_chat_mensajes (admin_id, usuario_id, mensaje, tipo, ref_id, ref_titulo, cve_area)
+         VALUES (?, ?, ?, 'evento', ?, ?, ?) RETURNING id"
     );
-    $stmtM->execute([$adminId, $msgTexto, $eventoId, $titulo]);
+    $stmtM->execute([$adminId, $personalId, $msgTexto, $eventoId, $titulo, $cveArea]);
     $nuevoId = (int) $stmtM->fetchColumn();
 
     echo json_encode(['ok' => true, 'id' => $nuevoId, 'evento_id' => $eventoId]);

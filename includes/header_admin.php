@@ -535,6 +535,7 @@ if (isset($_SESSION['user_area'])) {
     let bgPollingTimer    = null;
     let listaAdmins       = [];
     let csrfToken         = '<?= $_SESSION["csrf_token"] ?? "" ?>';
+    const ADMIN_AREA      = <?= (int)($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0) ?>;
 
     // Paleta de colores para los avatares (circular rotatoria)
     const AVATAR_COLORS = [
@@ -971,6 +972,7 @@ if (isset($_SESSION['user_area'])) {
         fd.append('csrf_token', csrfToken);
         fd.append('accion',    'enviar');
         fd.append('mensaje',   texto);
+        fd.append('cve_area',  ADMIN_AREA);
         if (canalActual !== null) fd.append('destinatario', canalActual);
 
         input.value        = '';

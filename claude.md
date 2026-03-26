@@ -224,7 +224,5 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Causa 2 (Ruteo - "Difusión Trap")**: La lógica de inicio de sesión no mapeaba correctamente los IDs de área a Slugs, forzando a todos los usuarios departamentales al dashboard de Difusión (área 6) mientras su chat seguía filtrado por su área real (ej: 16). Esto hacía que el chat pareciera vacío.
   - **Solución**: Se eliminaron las restricciones obsoletas y se recrearon apuntando a `cve_personal`. Se implementó un `slugMap` en `auth.php` para garantizar que cada usuario llegue a su dashboard correcto con el contexto de chat adecuado.
 
-- **Diseño Premium Chat de Solicitudes (2026-03-26)**:
-  - **Identidad Visual**: El canal de comunicación con el ciudadano utiliza gradientes `linear-gradient(135deg, #662331, #8b2f42)` para mensajes de staff y burbujas blancas con borde `#e2e8f0` para ciudadanos.
-  - **Interacción**: Uso de `scale` suave al hover en botones de envío circulares y `box-shadow` profundo en el contenedor principal.
-  - **Fix Técnico**: Se restauraron las funciones `escapeHtml`, `cargarComentarios` y `cargarEvidencias` en `admin/detalle.php` que se habían perdido tras una edición fallida de archivo. Se unificó la lógica en un solo bloque de `<script>` para evitar colisiones.
+- **Distribución en Detalle (Grid Alignment)**: Los componentes de seguimiento (Chat, Notas) deben insertarse *dentro* del contenedor `.detail-layout` y utilizar `grid-column: 1 / -1` para asegurar que respeten los márgenes del sidebar y mantengan una visualización profesional de ancho completo.
+- **Fix Técnico (Estructura)**: Se corrigió una corrupción de etiquetas HTML (`</form>`, `</div>` duplicados) y la pérdida del `endif` de la lógica de estatus que causaba errores de sintaxis al final del archivo.
