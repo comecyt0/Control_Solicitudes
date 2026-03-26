@@ -215,6 +215,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
+- **🚨 Fix Kanban Crash/Visibility en Áreas (v7.1, 2026-03-26)**:
+    - **Causa 1 (Integridad)**: La tabla `sb_kanban_tareas` exigía un ID de la tabla `administradores`. Usuarios de `cat_personal` provocaban un `PDOException (23503)`. **Solución**: `ALTER TABLE ... DROP CONSTRAINT ..._creado_por_fkey`.
+    - **Causa 2 (Contexto)**: Las páginas departamentales usaban el área de la sesión del usuario para filtrar, en lugar del área de la página. **Solución**: Se forzó `$cveAreaContexto = 6` en el módulo de Difusión para que la colaboración sea global al departamento.
+    - **Regla de Oro**: Para módulos compartidos o departamentales, **NUNCA usar el área de sesión para el filtrado principal**. Usar un contexto de área fijo por módulo.
 - **Error `Lista de DMs vacía / Chat sin branding por área` (2026-03-26)**:
   - **Causa**: La consulta de miembros usaba la columna `habilitado` (inexistente) en lugar de `activo`. Además, el título "Equipo TI" estaba fijo en el HTML.
   - **Solución**: Corrección masiva de `habilitado` → `activo` en 21 archivos. Se implementó la variable `$chat_area_label` en `header_admin.php` para inyectar dinámicamente el nombre del área en el encabezado y subtextos del chat.
