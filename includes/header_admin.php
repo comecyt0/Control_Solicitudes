@@ -189,6 +189,18 @@ if (isset($_SESSION['user_area'])) {
             </a>
         </div>
 
+        <?php elseif ($slug_menu === 'direccion_general'): ?>
+        <!-- Menu Exclusivo Dirección General -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos de Dirección</span>
+            <a href="<?= BASE_URL ?>areas/direccion_general/gestion_solicitudes.php" class="nav-link <?= $activeMenu === 'solicitudes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-check nav-icon"></i><span>Gestión Editorial</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/direccion_general/calendario_editorial.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
+                <i class="fa-solid fa-clipboard-list nav-icon"></i><span>Agenda y Tareas</span>
+            </a>
+        </div>
+
         <?php else: ?>
         <!-- Menu Fallback para Áreas en Construcción -->
         <div class="nav-group">

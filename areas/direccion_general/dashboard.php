@@ -216,14 +216,6 @@ require_once __DIR__ . '/../../includes/header_admin.php';
         <i class="fa-solid fa-user-check"></i>
         Aprobar Solicitudes
     </a>
-    <a href="chat.php" class="action-btn">
-        <i class="fa-solid fa-comments"></i>
-        Chat Interno
-    </a>
-    <a href="ia.php" class="action-btn">
-        <i class="fa-solid fa-robot"></i>
-        Asistente IA
-    </a>
     <a href="calendario_editorial.php" class="action-btn">
         <i class="fa-solid fa-calendar-days"></i>
         Agenda Direccional
