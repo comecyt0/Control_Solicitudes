@@ -701,8 +701,9 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <div class="day-number"><?= $dia ?></div>
                 <?php foreach ($calendarioEventos[$dia] ?? [] as $ev): 
                     $colorNota = isset($ev['es_cumple']) ? 'nota-dorado' : 'nota-difusion';
+                    $customStyle = (!isset($ev['es_cumple']) && !empty($ev['color'])) ? 'style="border-top-color: '.$ev['color'].'; background-color: '.$ev['color'].'1a;"' : '';
                 ?>
-                    <div class="evento-pildora <?= $colorNota ?>">
+                    <div class="evento-pildora <?= $colorNota ?>" <?= $customStyle ?>>
                         <div class="evento-titulo">
                             <?php if(isset($ev['es_cumple'])): ?>
                                 <?php if(!empty($ev['foto_perfil'])): ?>
