@@ -271,5 +271,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 **Cambios**:
 - Implementación de control de visibilidad pública (`publico`) en el calendario de Dirección General.
 - Habilitación completa de edición/eliminación para Área 4 y Área 1 de eventos institucionales.
-- Adición de checkbox de "Mostrar en Calendario Público" en modales de creación y edición.
-- Corrección de firma JavaScript para soportar el parámetro de visibilidad en modales.
+
+## v10.3 - Fix: Error de Esquema en Consulta de Eventos
+**Fecha**: 2026-03-27
+**Cambios**:
+- Corrección de la consulta de eventos globales en el módulo de Dirección General.
+- Se eliminó la referencia a la columna inexistente `cve_area` en la tabla `eventos`, restaurando la visualización de la agenda institucional.
