@@ -203,3 +203,7 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Error `Botón Eliminar Anuncios no responde` (2026-03-26)**:
   - **Causa**: Argumento de callback mal posicionado en `COMECyTUI.confirm` (se pasaba el título como 2º parámetro).
   - **Solución**: Corregido en 20 archivos para usar: `COMECyTUI.confirm(msg, callback, null, { titulo: "..." })`.
+
+- **Error `Botón de Logout no funciona en Áreas` (2026-03-26)**:
+  - **Causa**: El botón apuntaba a `public/logout.php`, archivo inexistente.
+  - **Solución**: Se consolidó la lógica en `includes/sidebar_footer.php` para que todos los usuarios (Personal y Admin) usen el controlador unificado `admin/logout.php`.

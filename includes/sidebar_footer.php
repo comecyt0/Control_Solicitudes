@@ -43,7 +43,6 @@ $u_perfil_url = BASE_URL . 'public/perfil.php';
 // Definir logout segun rol prioritario
 $u_logout_url = BASE_URL . 'admin/logout.php';
 if (isset($_SESSION['ss_id'])) $u_logout_url = BASE_URL . 'servicio_social/logout.php';
-elseif (isset($_SESSION['user_id']) && !isset($_SESSION['admin_id'])) $u_logout_url = BASE_URL . 'public/logout.php';
 ?>
 
 <div class="sf-container">
