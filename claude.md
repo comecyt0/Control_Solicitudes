@@ -284,9 +284,14 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - Refactorización de consultas PRG para usar parámetros en valores booleanos (PostgreSQL).
 - Implementación de bloque `try-catch` en el procesamiento de acciones para evitar fallos silenciosos.
 
-## v10.5 - Diseño Sticky Notes (Post-it) y Mejora de Visibilidad (DG)
+## v10.6 - Sincronización de Permisos de Escritura (DG)
 **Fecha**: 2026-03-27
 **Cambios**:
-- Sincronización estética total con el Panel Admin: implementación del diseño "Sticky Notes" con pliegue de página (`::after`) y sombras tridimensionales.
-- Adición de visualización de horas (`H:i`) en las tarjetas del calendario.
-- Ajuste en la lógica de visibilidad de botones de edición para asegurar que el personal asignado a la prueba (Área 2) vea las herramientas administrativas en el módulo de Dirección (Área 4).
+- Sincronización de los permisos de backend para permitir que el personal de prueba (Área 2) realice operaciones CRUD en el módulo de Dirección General (Área 4).
+
+## v10.7 - Eliminación de Alertas y Frames de Confirmación (DG)
+**Fecha**: 2026-03-27
+**Cambios**:
+- Sustitución total de `confirm()` (alertas de navegador) por frames/modales de confirmación personalizados.
+- Limpieza de archivos duplicados por errores de escritura.
+- Refuerzo de la lógica PRG para evitar errores de acceso durante la eliminación de registros.

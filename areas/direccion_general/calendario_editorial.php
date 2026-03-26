@@ -1,7 +1,8 @@
 <?php
 /**
- * COMECyT — Calendario Editorial (Dirección General) v10.5
- * Diseño y funcionalidad sincronizados con el Panel Admin (Sticky Notes / Post-it).
+ * COMECyT — Calendario Editorial (Dirección General) v10.7
+ * Diseño Sticky Notes (Post-it), Sin Alertas de Navegador (Uso de Frames/Modales).
+ * Permisos sincronizados para Sistemas (1), Dirección (4) y Testers (2).
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -17,6 +18,9 @@ $cveAreaUsuario  = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_are
 $cveAreaContexto = 4; // Dirección General
 $adminId         = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
 
+// Definición de personal autorizado para este módulo (Sistemas, DG, y Juan Perez/Area 2 para pruebas)
+$esPersonalAutorizado = ($cveAreaUsuario === 1 || $cveAreaUsuario === 4 || $cveAreaUsuario === 2);
+
 if ($cveAreaUsuario === 0) redirigir('public/hub.php');
 
 // -------------------------------------------------------
@@ -25,6 +29,12 @@ if ($cveAreaUsuario === 0) redirigir('public/hub.php');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
     try {
         validarCsrfPost();
+        
+        // Verificación de permiso global para este módulo
+        if (!$esPersonalAutorizado) {
+            die("Acceso denegado: No tiene permisos de administración en el módulo de Dirección General.");
+        }
+
         $accion = $_POST['_accion'];
         
         if ($accion === 'crear_evento') {
@@ -36,11 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $publico = isset($_POST['publico']) ? true : false;
             
             if ($titulo && $fechaInicio && $fechaFin) {
-                // Solo Area 1 (Sistemas) o Area 4 (Dirección General) pueden escribir aquí
-                if ($cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
-                    die("Acceso denegado: No tiene permisos de escritura en este módulo.");
-                }
-
                 $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
                 $checkAdmin->execute([$adminId]);
                 $idAutor = $checkAdmin->fetch() ? $adminId : null;
@@ -54,11 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         } elseif ($accion === 'editar_evento') {
             $id = (int) postParam('evento_id');
             $esInstitucionalManual = (int) postParam('es_institucional');
-            
-            if (($cveAreaUsuario !== 1 && $cveAreaUsuario !== 4)) {
-                 die("Acceso denegado.");
-            }
-
             $titulo = trim(postParam('titulo'));
             $descripcion = trim(postParam('descripcion'));
             $fechaInicio = postParam('fecha_inicio');
@@ -82,10 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $esInstitucionalManual = (int) postParam('es_institucional');
             
             if ($id > 0) {
-                if ($cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
-                    die("Acceso denegado.");
-                }
-
                 if ($esInstitucionalManual === 0) {
                     $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ? AND cve_area = ?");
                     $stmt->execute([$id, $cveAreaContexto]);
@@ -101,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $descripcion = trim(postParam('descripcion'));
             $color = postParam('color', '#662331');
             $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
-            
             if ($titulo) {
                 $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
                 $stmt->execute([$titulo, $descripcion, $color, $adminId, $asignado_a, $cveAreaContexto]);
@@ -114,7 +109,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $descripcion = trim(postParam('descripcion'));
             $color = postParam('color', '#662331');
             $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
-            
             if ($id > 0 && $titulo) {
                 $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET titulo = ?, descripcion = ?, color = ?, asignado_a = ? WHERE id = ? AND cve_area = ?");
                 $stmt->execute([$titulo, $descripcion, $color, $asignado_a, $id, $cveAreaContexto]);
@@ -144,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
     }
 }
 
-// Leer flash redirect
+// Mensajes Flash
 $flashCode = getParam('flash');
 if ($flashCode === 'evento_creado') { $mensajeFlash = "Evento interno agendado."; $tipoFlash = "success"; }
 elseif ($flashCode === 'evento_editado') { $mensajeFlash = "Evento actualizado."; $tipoFlash = "success"; }
@@ -154,9 +148,7 @@ elseif ($flashCode === 'tarea_editada') { $mensajeFlash = "Tarea actualizada."; 
 elseif ($flashCode === 'tarea_movida') { $mensajeFlash = "Estatus actualizado."; $tipoFlash = "success"; }
 elseif ($flashCode === 'tarea_eliminada') { $mensajeFlash = "Tarea eliminada."; $tipoFlash = "success"; }
 
-// -------------------------------------------------------
-// Logica de Mes y Fechas
-// -------------------------------------------------------
+// Lógica de Calendario
 $hoy = new DateTime();
 $mes = (int) getParam('mes', $hoy->format('m'));
 $anio = (int) getParam('anio', $hoy->format('Y'));
@@ -168,138 +160,75 @@ $mesAnterior = (clone $dtMes)->modify('-1 month');
 $mesSiguiente = (clone $dtMes)->modify('+1 month');
 $diasEnMes = (int)$dtMes->format('t');
 $diaSemanaInicio = (int)$dtMes->format('N'); 
-
 $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
-// 1. Consultar eventos de DIRECCIÓN (Propios del área)
+// Consultas
 $stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, FALSE as es_institucional FROM df_eventos_editoriales WHERE cve_area = ? AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmt->execute([$cveAreaContexto, $finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 2. Consultar eventos INSTITUCIONALES
 $stmtG = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, TRUE as es_institucional FROM eventos WHERE (publico = TRUE) AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmtG->execute([$finMesBusqueda, $inicioMesBusqueda]);
-$eventosGlobales = $stmtG->fetchAll(PDO::FETCH_ASSOC);
-
-foreach ($eventosGlobales as $eg) {
+foreach ($stmtG->fetchAll(PDO::FETCH_ASSOC) as $eg) {
     if (strpos($eg['titulo'], '(Editorial)') === 0) continue;
     if (empty($eg['color'])) $eg['color'] = '#64748b'; 
     $eventosRaw[] = $eg;
 }
 
-// 3. Mapear a Calendario por Día
 $calendarioEventos = [];
 foreach ($eventosRaw as $ev) {
     try {
         $dIni = new DateTime($ev['fecha_inicio']);
         $diaEv = (int)$dIni->format('d');
         if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
-        // Añadir hora formateada
         $ev['hora_formateada'] = $dIni->format('H:i');
         $calendarioEventos[$diaEv][] = $ev;
     } catch (Exception $e) {}
 }
 
-// 4. Consultar y Añadir CUMPLEAÑOS
+// Cumpleaños
 if ($mes > 0 && $mes <= 12) {
     $stmtB = $pdo->prepare("SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil FROM cat_personal WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND EXTRACT(MONTH FROM fecha_nacimiento) = :mes");
     $stmtB->execute([':mes' => $mes]);
-    $cumpleaneros = $stmtB->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($cumpleaneros as $cp) {
+    foreach ($stmtB->fetchAll(PDO::FETCH_ASSOC) as $cp) {
         $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
         $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
         $edadAnios = $anio - (int)(new DateTime($cp['fecha_nacimiento']))->format('Y');
-        $calendarioEventos[$diaCumple][] = [
-            'id' => null, 
-            'titulo' => "🎂 " . $nombreCompleto, 
-            'descripcion' => 'Cumpleaños institucional (' . $edadAnios . ' años)',
-            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple), 
-            'fecha_fin' => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
-            'color' => '#B19A6D', 
-            'publico' => false, 
-            'es_cumple' => true, 
-            'foto_perfil' => $cp['foto_perfil'] ?? null, 
-            'nombre_cumple'=> $nombreCompleto, 
-            'edad' => $edadAnios,
-            'hora_formateada' => 'Todo el día'
-        ];
+        $calendarioEventos[$diaCumple][] = ['id'=>null,'titulo'=>"🎂 ".$nombreCompleto,'descripcion'=>'Cumpleaños institucional ('.$edadAnios.' años)','fecha_inicio'=>sprintf('%04d-%02d-%02d 00:00:00',$anio,$mes,$diaCumple),'fecha_fin'=>sprintf('%04d-%02d-%02d 23:59:59',$anio,$mes,$diaCumple),'color'=>'#B19A6D','publico'=>false,'es_cumple'=>true,'foto_perfil'=>$cp['foto_perfil']??null,'nombre_cumple'=>$nombreCompleto,'edad'=>$edadAnios,'hora_formateada'=>'Todo el día'];
     }
 }
 
-// 5. Consultar tareas KANBAN filtradas por ÁREA 4
-$listaTareas = ['pendiente' => [], 'en_proceso' => [], 'completada' => []];
-$stmtT = $pdo->prepare("SELECT t.*, COALESCE(a.nombre, p.nombre) AS asignado_nombre 
-         FROM sb_kanban_tareas t 
-         LEFT JOIN administradores a ON t.asignado_a = a.id 
-         LEFT JOIN cat_personal p ON t.asignado_a = p.cve_personal 
-         WHERE t.cve_area = ? 
-         ORDER BY t.estatus DESC, t.id DESC");
+// Kanban y Personal
+$listaTareas = ['pendiente'=>[],'en_proceso'=>[],'completada'=>[]];
+$stmtT = $pdo->prepare("SELECT t.*, COALESCE(a.nombre, p.nombre) AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id LEFT JOIN cat_personal p ON t.asignado_a = p.cve_personal WHERE t.cve_area = ? ORDER BY t.estatus DESC, t.id DESC");
 $stmtT->execute([$cveAreaContexto]);
-$tareas = $stmtT->fetchAll(PDO::FETCH_ASSOC);
-foreach ($tareas as $t) {
-    if (isset($listaTareas[$t['estatus']])) $listaTareas[$t['estatus']][] = $t;
-    else $listaTareas['pendiente'][] = $t;
-}
+foreach ($stmtT->fetchAll(PDO::FETCH_ASSOC) as $t) { $listaTareas[$t['estatus']][] = $t; }
 
-// 6. Personal para asignación
-$stmtAdmins = $pdo->prepare("SELECT p.cve_personal AS id, 
-                CONCAT(p.nombre, ' ', p.appat, ' ', p.apmat) AS nombre 
-         FROM cat_personal p
-         WHERE p.activo = true AND p.cve_area = ? 
-         ORDER BY p.nombre ASC");
+$stmtAdmins = $pdo->prepare("SELECT p.cve_personal AS id, CONCAT(p.nombre, ' ', p.appat, ' ', p.apmat) AS nombre FROM cat_personal p WHERE p.activo = true AND p.cve_area = ? ORDER BY p.nombre ASC");
 $stmtAdmins->execute([$cveAreaContexto]);
 $adminsDisponibles = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
 
 $mesesNombres = [1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'];
 $pageTitle = 'Dirección General — Agenda';
-$activeMenu = 'calendario';
 
 $extraHead = '
 <style>
-:root {
-    --color-primary: #662331;
-    --color-primary-dark: #4d1a25;
-}
-
-/* Diseño Sticky Note (Post-it) Premium */
+:root { --color-primary: #662331; --color-primary-dark: #4d1a25; }
 .calendar-wrapper { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08); overflow: hidden; margin-top: 1.5rem; border: 1px solid rgba(0,0,0,0.05); }
 .calendar-header-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; background: #fdfdfd; border-bottom: 1px solid rgba(0,0,0,0.06); }
 .calendar-header-nav h3 { margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--color-primary); }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8fafc; gap: 1px; }
 .calendar-day-name { padding: 1rem 0.5rem; text-align: right; font-weight: 800; font-size: 0.75rem; color: #64748b; background: #ffffff; text-transform: uppercase; }
-.calendar-cell { min-height: 140px; padding: 0.5rem; background: #ffffff; cursor: pointer; display: flex; flex-direction: column; gap: 0.4rem; overflow: hidden; }
+.calendar-cell { min-height: 140px; padding: 0.5rem; background: #ffffff; cursor: pointer; display: flex; flex-direction: column; gap: 0.4rem; overflow: hidden; border:none; }
 .day-number { font-weight: 700; color: #334155; align-self: flex-end; }
 .calendar-cell.today .day-number { color: #fff; background: var(--color-primary); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; }
 
-/* Sticky Note Style */
-.evento-pildora { 
-    font-size: 0.75rem; 
-    padding: 0.5rem 0.6rem; 
-    border-radius: 2px 2px 12px 2px; 
-    color: #1e293b; 
-    margin-bottom: 0.25rem; 
-    position: relative; 
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05), inset -10px -10px 20px rgba(0,0,0,0.03); 
-    border-top: 3px solid var(--color-primary); 
-    width:100%; box-sizing:border-box;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex; flex-direction: column; gap: 0.2rem;
-}
-.evento-pildora:hover { 
-    transform: scale(1.02) translateY(-2px) rotate(-1deg); 
-    box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.1); 
-    z-index: 10; 
-}
-.evento-pildora::after { 
-    content: ""; position: absolute; bottom: 0; right: 0; 
-    border-width: 0 0 10px 10px; border-style: solid; 
-    border-color: rgba(0,0,0,0.06) white; border-radius: 0 0 0 2px; 
-}
-
+.evento-pildora { font-size: 0.75rem; padding: 0.5rem 0.6rem; border-radius: 2px 2px 12px 2px; color: #1e293b; margin-bottom: 0.25rem; position: relative; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05), inset -10px -10px 20px rgba(0,0,0,0.03); border-top: 3px solid var(--color-primary); width:100%; box-sizing:border-box; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; gap: 0.2rem; }
+.evento-pildora:hover { transform: scale(1.02) translateY(-2px) rotate(-1deg); box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.1); z-index: 10; }
+.evento-pildora::after { content: ""; position: absolute; bottom: 0; right: 0; border-width: 0 0 10px 10px; border-style: solid; border-color: rgba(0,0,0,0.06) white; border-radius: 0 0 0 2px; }
 .evento-titulo { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .evento-hora { font-size: 0.65rem; opacity: 0.75; font-weight: 500; display: flex; align-items: center; gap: 3px; }
-
 .evento-acciones { display: flex; gap: 4px; opacity: 0; max-height: 0; overflow: hidden; transition: all 0.2s; }
 .evento-pildora:hover .evento-acciones { opacity: 1; max-height: 30px; margin-top: 4px; }
 .btn-evento-accion { flex: 1; background: rgba(255,255,255,0.7); border: none; border-radius: 4px; padding: 4px 0; cursor: pointer; font-size: 0.75rem; color: #475569; }
@@ -312,7 +241,8 @@ $extraHead = '
 
 .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 2000; align-items: center; justify-content: center; }
 .modal-backdrop.active { display: flex; }
-.modal { background: #fff; width: 100%; max-width: 550px; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); overflow: hidden; }
+.modal { background: #fff; width: 100%; max-width: 550px; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); overflow: hidden; animation: zoomIn 0.3s ease; }
+@keyframes zoomIn { from { transform: scale(0.9); opacity:0; } to { transform: scale(1); opacity:1; } }
 .modal-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: white; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
 .nota-dorado { background: #fef08a !important; border-top-color: #ca8a04 !important; }
 .cumple-mini-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ca8a04; }
@@ -322,16 +252,11 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-    <div>
-        <h2 style="font-weight: 800; color: #0f172a; margin: 0;"><i class="fa-solid fa-calendar-check" style="color:var(--color-primary);"></i> Agenda de Dirección</h2>
-        <p style="color: #64748b; margin: 0;">Gestión de la agenda institucional y compromisos de área.</p>
-    </div>
-    <div style="display: flex; gap: 10px;">
-        <button class="btn btn-primary" onclick="abrirModalCrear()"><i class="fa-solid fa-plus"></i> Nuevo Evento</button>
-    </div>
+    <div><h2 style="font-weight: 800; color: #0f172a; margin: 0;"><i class="fa-solid fa-calendar-check" style="color:var(--color-primary);"></i> Agenda de Dirección</h2><p style="color: #64748b; margin: 0;">Gestión de la agenda institucional y compromisos de área.</p></div>
+    <button class="btn btn-primary" onclick="abrirModalCrear()"><i class="fa-solid fa-plus"></i> Nuevo Evento</button>
 </div>
 
-<?php if ($mensajeFlash): ?><div class="alert alert-<?= $tipoFlash ?> alert-dismissible fade show" role="alert"><?= esc($mensajeFlash) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div><?php endif; ?>
+<?php if ($mensajeFlash): ?><div class="alert alert-<?= $tipoFlash ?> alert-dismissible fade show"><?= esc($mensajeFlash) ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div><?php endif; ?>
 
 <div class="calendar-wrapper">
     <div class="calendar-header-nav">
@@ -346,33 +271,25 @@ require_once __DIR__ . '/../../includes/header_admin.php';
         <?php foreach (['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'] as $d): ?><div class="calendar-day-name"><?= $d ?></div><?php endforeach; ?>
         <?php for ($i = 1; $i < $diaSemanaInicio; $i++): ?><div class="calendar-cell empty"></div><?php endfor; ?>
         <?php for ($dia = 1; $dia <= $diasEnMes; $dia++): 
-            $esHoy = ($dia === (int)date('d') && $mes === (int)date('m') && $anio === (int)date('Y'));
-            $fechaIso = sprintf('%04d-%02d-%02d', $anio, $mes, $dia);
+            $esHoy = ($dia===(int)date('d')&&$mes===(int)date('m')&&$anio===(int)date('Y'));
+            $fIso = sprintf('%04d-%02d-%02d', $anio, $mes, $dia);
         ?>
-            <div class="calendar-cell <?= $esHoy ? 'today' : '' ?>" onclick="abrirModalCrearDesdeCelda('<?= $fechaIso ?>', '<?= $fechaIso ?>')">
+            <div class="calendar-cell <?= $esHoy ? 'today' : '' ?>" onclick="abrirModalCrearDesdeCelda('<?= $fIso ?>')">
                 <div class="day-number"><?= $dia ?></div>
                 <?php foreach ($calendarioEventos[$dia] ?? [] as $ev): 
                     $colorNota = isset($ev['es_cumple']) ? 'nota-dorado' : '';
-                    $customStyle = (!isset($ev['es_cumple']) && !empty($ev['color'])) ? 'style="border-top-color: '.$ev['color'].'; background-color: '.$ev['color'].'1a;"' : '';
-                    $esPersonalDG = ($cveAreaUsuario === 1 || $cveAreaUsuario === 4 || $cveAreaUsuario === 2); // Agregamos 2 temporalmente para Juan Perez
+                    $cStyle = (!isset($ev['es_cumple'])&&!empty($ev['color'])) ? 'style="border-top-color:'.$ev['color'].'; background-color:'.$ev['color'].'1a;"' : '';
                 ?>
-                    <div class="evento-pildora <?= $colorNota ?>" <?= $customStyle ?>>
+                    <div class="evento-pildora <?= $colorNota ?>" <?= $cStyle ?> onclick="event.stopPropagation()">
                         <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= $ev['hora_formateada'] ?></div>
-                        <div class="evento-titulo">
-                            <?php if(isset($ev['es_cumple'])): ?>
-                                <?php if(!empty($ev['foto_perfil'])): ?><img src="<?= BASE_URL ?>public/uploads/avatares/<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar">
-                                <?php else: ?><div class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-cake-candles"></i></div><?php endif; ?>
-                            <?php endif; ?>
-                             <?= esc($ev['titulo']) ?>
-                             <?php if(isset($ev['publico']) && $ev['publico']): ?><i class="fa-solid fa-earth-americas" style="font-size:0.65rem; color:var(--color-primary); margin-left:5px;" title="Público"></i><?php endif; ?>
-                        </div>
+                        <div class="evento-titulo"><?= esc($ev['titulo']) ?> <?php if(isset($ev['publico'])&&$ev['publico']): ?><i class="fa-solid fa-earth-americas" style="font-size:0.65rem; color:var(--color-primary);"></i><?php endif; ?></div>
                         <div class="evento-acciones">
                             <?php if(isset($ev['es_cumple'])): ?>
-                                <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '', '<?=$ev['foto_perfil'] ? BASE_URL.'public/uploads/avatares/'.esc($ev['foto_perfil']) : ''?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-cake-candles"></i></button>
+                                <button type="button" class="btn-evento-accion" onclick="abrirModalCumple('<?=esc($ev['nombre_cumple'])?>','','','<?=$ev['edad']?>','<?=date('d M', strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-cake-candles"></i></button>
                             <?php else: ?>
-                                <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalVer('<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('d/m/Y H:i', strtotime($ev['fecha_inicio']))?>', '<?=date('d/m/Y H:i', strtotime($ev['fecha_fin']))?>')"><i class="fa-solid fa-eye"></i></button>
-                                <?php if($esPersonalDG): ?>
-                                <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalEditar(<?=$ev['id']?>, '<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_fin']))?>', '<?=($ev['color'])?>', <?= ($ev['publico']?1:0) ?>, <?= ($ev['es_institucional'] ? '1' : '0') ?>)"><i class="fa-solid fa-pen"></i></button>
+                                <button type="button" class="btn-evento-accion" onclick="abrirModalVer('<?=esc($ev['titulo'])?>','<?=esc($ev['descripcion'])?>','<?=date('d/m/Y H:i',strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-eye"></i></button>
+                                <?php if($esPersonalAutorizado): ?>
+                                <button type="button" class="btn-evento-accion" onclick="abrirModalEditar(<?=$ev['id']?>,'<?=esc($ev['titulo'])?>','<?=esc($ev['descripcion'])?>','<?=date('Y-m-d\TH:i',strtotime($ev['fecha_inicio']))?>','<?=date('Y-m-d\TH:i',strtotime($ev['fecha_fin']))?>','<?=$ev['color']?>',<?=($ev['publico']?1:0)?>,<?=($ev['es_institucional']?1:0)?>)"><i class="fa-solid fa-pen"></i></button>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -383,164 +300,49 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     </div>
 </div>
 
-<div id="kanban" style="margin-top: 50px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 style="font-weight: 800; color: #1e293b; margin:0;"><i class="fa-solid fa-list-check" style="color:#3b82f6;"></i> Compromisos Dirección</h3>
-        <button class="btn btn-primary" onclick="abrirModalCrearTarea()" style="background:#3b82f6; border:none;"><i class="fa-solid fa-plus"></i> Nueva Tarea</button>
-    </div>
-    <div class="kanban-board">
-        <?php foreach (['pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso', 'completada' => 'Completada'] as $idCol => $lblCol): ?>
-            <div class="kanban-col" ondragover="allowDrop(event)" ondrop="drop(event, '<?= $idCol ?>')">
-                <div class="kanban-col-header bg-<?= str_replace('_','-',$idCol) ?>"><span><?= strtoupper($lblCol) ?></span><span class="kanban-badge"><?= count($listaTareas[$idCol]) ?></span></div>
-                <div class="kanban-col-body">
-                    <?php foreach ($listaTareas[$idCol] as $t): ?>
-                        <div class="tarea-card" draggable="true" ondragstart="drag(event, <?= $t['id'] ?>)" onclick="abrirModalEditarTarea(<?= $t['id'] ?>, '<?= esc($t['titulo']) ?>', '<?= esc($t['descripcion']) ?>', '<?= $t['color'] ?>', <?= (int)$t['asignado_a'] ?>)">
-                            <h4 style="margin:0 0 5px; font-size:1rem;"><?= esc($t['titulo']) ?></h4><p style="font-size:0.8rem; color:#64748b;"><?= esc(mb_strimwidth($t['descripcion'], 0, 80, '...')) ?></p>
-                            <div style="margin-top:10px; font-size:0.7rem; color:#94a3b8; display:flex; justify-content:space-between; align-items:center;"><span><i class="fa-solid fa-user-tag"></i> <?= esc($t['asignado_nombre'] ?: 'Sin asignar') ?></span><i class="fa-solid fa-grip-lines" style="opacity:0.3;"></i></div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endforeach; ?>
-    </div>
-</div>
-
-<!-- Modales Agenda -->
+<!-- Modales -->
 <div class="modal-backdrop" id="modalCrearEvento">
     <div class="modal"><div class="modal-header"><h3>Agendar Evento</h3><button type="button" onclick="cerrarModal('modalCrearEvento')" class="btn-close btn-close-white"></button></div>
-        <form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="crear_evento">
-            <div class="modal-body">
-                <div class="form-group mb-3"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div>
-                <div class="form-group mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="3"></textarea></div>
-                <div class="row mb-3"><div class="col"><label class="form-label">Desde</label><input type="datetime-local" name="fecha_inicio" id="c_fecha_inicio" class="form-control" required></div><div class="col"><label class="form-label">Hasta</label><input type="datetime-local" name="fecha_fin" id="c_fecha_fin" class="form-control" required></div></div>
-                <div class="form-group mb-3"><label class="form-label">Color</label><input type="color" name="color" value="#662331" class="form-control" style="height:40px;"></div>
-                <div class="checkbox-wrapper"><input type="checkbox" name="publico" id="c_publico" value="1"><label for="c_publico">Mostrar en Calendario Público (Global)</label></div>
-            </div>
-            <div class="modal-footer"><button type="submit" class="btn btn-primary">Guardar Evento</button></div>
-        </form>
-    </div>
-</div>
+        <form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="crear_evento"><div class="modal-body"><div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div><div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="2"></textarea></div><div class="row mb-3"><div class="col"><label class="form-label">Desde</label><input type="datetime-local" name="fecha_inicio" id="c_fecha_inicio" class="form-control" required></div><div class="col"><label class="form-label">Hasta</label><input type="datetime-local" name="fecha_fin" id="c_fecha_fin" class="form-control" required></div></div><div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" value="#662331" class="form-control" style="height:40px;"></div><div class="form-check"><input type="checkbox" name="publico" value="1" id="c_pub" class="form-check-input"><label for="c_pub">Hacer público</label></div></div><div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Guardar</button></div></form></div></div>
 
-<div class="modal-backdrop" id="modalVerEvento">
-    <div class="modal"><div class="modal-header"><h3>Detalle de Evento</h3><button type="button" onclick="cerrarModal('modalVerEvento')" class="btn-close btn-close-white"></button></div>
-        <div class="modal-body"><p><strong>Horario:</strong> <span id="v_horario"></span></p><hr><div id="v_descripcion" style="white-space:pre-wrap;"></div></div>
-    </div>
-</div>
+<div class="modal-backdrop" id="modalVerEvento"><div class="modal"><div class="modal-header"><h3>Detalle</h3><button type="button" onclick="cerrarModal('modalVerEvento')" class="btn-close btn-close-white"></button></div><div class="modal-body"><p><strong>Horario:</strong> <span id="v_horario"></span></p><hr><div id="v_descripcion"></div></div></div></div>
 
 <div class="modal-backdrop" id="modalEditarEvento">
     <div class="modal"><div class="modal-header"><h3>Editar Evento</h3><button type="button" onclick="cerrarModal('modalEditarEvento')" class="btn-close btn-close-white"></button></div>
-        <form method="POST" id="formEditarEvento"><?= csrfField() ?><input type="hidden" name="_accion" value="editar_evento" id="e_accion"><input type="hidden" name="evento_id" id="e_evento_id"><input type="hidden" name="es_institucional" id="e_es_institucional">
-            <div class="modal-body">
-                <div class="form-group mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="e_titulo" class="form-control" required></div>
-                <div class="form-group mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="e_descripcion" class="form-control" rows="3"></textarea></div>
-                <div class="row mb-3"><div class="col"><label class="form-label">Desde</label><input type="datetime-local" name="fecha_inicio" id="e_fecha_inicio" class="form-control" required></div><div class="col"><label class="form-label">Hasta</label><input type="datetime-local" name="fecha_fin" id="e_fecha_fin" class="form-control" required></div></div>
-                <div class="form-group mb-3"><label class="form-label">Color</label><input type="color" name="color" id="e_color" class="form-control" style="height:40px;"></div>
-                <div class="checkbox-wrapper"><input type="checkbox" name="publico" id="e_publico" value="1"><label for="e_publico">Mostrar en Calendario Público (Global)</label></div>
-            </div>
-            <div class="modal-footer d-flex justify-content-between"><button type="button" class="btn btn-danger" onclick="eliminarEvento()">Eliminar</button><button type="submit" class="btn btn-primary">Actualizar</button></div>
+        <form method="POST" id="formEditarEvento"><?= csrfField() ?><input type="hidden" name="_accion" value="editar_evento" id="e_accion"><input type="hidden" name="evento_id" id="e_id"><input type="hidden" name="es_institucional" id="e_es_inst">
+            <div class="modal-body"><div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="e_titulo" class="form-control" required></div><div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="e_descripcion" class="form-control" rows="2"></textarea></div><div class="row mb-3"><div class="col"><label class="form-label">Desde</label><input type="datetime-local" name="fecha_inicio" id="e_inicio" class="form-control" required></div><div class="col"><label class="form-label">Hasta</label><input type="datetime-local" name="fecha_fin" id="e_fin" class="form-control" required></div></div><div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" id="e_color" class="form-control" style="height:40px;"></div><div class="form-check"><input type="checkbox" name="publico" value="1" id="e_pub" class="form-check-input"><label for="e_pub">Hacer público</label></div></div>
+            <div class="modal-footer d-flex justify-content-between"><button type="button" class="btn btn-danger" onclick="confirmarEliminar()">Eliminar</button><button type="submit" class="btn btn-primary">Actualizar</button></div>
         </form>
     </div>
 </div>
 
-<!-- Modales Kanban -->
-<div class="modal-backdrop" id="modalCrearTarea">
-    <div class="modal"><div class="modal-header" style="background:#3b82f6;"><h3>Nueva Tarea</h3><button type="button" onclick="cerrarModal('modalCrearTarea')" class="btn-close btn-close-white"></button></div>
-        <form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="crear_tarea">
-            <div class="modal-body">
-                <div class="form-group mb-3"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div>
-                <div class="form-group mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="3"></textarea></div>
-                <div class="form-group mb-3"><label class="form-label">Asignado a</label><select name="asignado_a" class="form-control"><option value="">-- Sin Asignar --</option><?php foreach ($adminsDisponibles as $adm): ?><option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option><?php endforeach; ?></select></div>
-                <div class="form-group"><label class="form-label">Color</label><input type="color" name="color" value="#3b82f6" class="form-control" style="height:40px;"></div>
-            </div>
-            <div class="modal-footer"><button type="submit" class="btn btn-primary" style="background:#3b82f6; border:none;">Crear Tarea</button></div>
-        </form>
-    </div>
+<!-- Frame de Confirmación Personalizado -->
+<div class="modal-backdrop" id="modalConfirmar" style="z-index: 3000;">
+    <div class="modal" style="max-width:350px;"><div class="modal-body text-center p-4">
+        <i class="fa-solid fa-triangle-exclamation text-warning mb-3" style="font-size:3rem;"></i>
+        <h4>¿Estás seguro?</h4><p>Esta acción no se puede deshacer.</p>
+        <div class="d-flex gap-2 justify-content-center mt-4">
+            <button class="btn btn-outline" onclick="cerrarModal('modalConfirmar')">Cancelar</button>
+            <button class="btn btn-danger" id="btnConfirmarAccion">Sí, Eliminar</button>
+        </div>
+    </div></div>
 </div>
-
-<div class="modal-backdrop" id="modalEditarTarea">
-    <div class="modal"><div class="modal-header" style="background:#3b82f6;"><h3>Editar Tarea</h3><button type="button" onclick="cerrarModal('modalEditarTarea')" class="btn-close btn-close-white"></button></div>
-        <form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="editar_tarea"><input type="hidden" name="tarea_id" id="et_id">
-            <div class="modal-body">
-                <div class="form-group mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="et_titulo" class="form-control" required></div>
-                <div class="form-group mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="et_descripcion" class="form-control" rows="3"></textarea></div>
-                <div class="form-group mb-3"><label class="form-label">Asignado a</label><select name="asignado_a" id="et_asignado_a" class="form-control"><option value="">-- Sin Asignar --</option><?php foreach ($adminsDisponibles as $adm): ?><option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option><?php endforeach; ?></select></div>
-                <div class="form-group"><label class="form-label">Color</label><input type="color" name="color" id="et_color" class="form-control" style="height:40px;"></div>
-            </div>
-            <div class="modal-footer d-flex justify-content-between"><button type="button" class="btn btn-danger" onclick="eliminarTareaDesdeModal()">Eliminar</button><button type="submit" class="btn btn-primary" style="background:#3b82f6; border:none;">Actualizar</button></div>
-        </form>
-    </div>
-</div>
-
-<form id="formAccionTarea" method="POST" style="display:none;"><?= csrfField() ?><input type="hidden" name="_accion" id="t_accion"><input type="hidden" name="tarea_id" id="t_tarea_id"><input type="hidden" name="nuevo_estatus" id="t_nuevo_estatus"></form>
-
-<?php require_once __DIR__ . '/../../admin/modales/modal_cumple.php'; ?>
 
 <script>
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
-function abrirModalCrear() { abrirModal('modalCrearEvento'); }
-function abrirModalCrearDesdeCelda(ini, fin) {
-    if (ini.length === 10) ini += "T09:00";
-    if (fin.length === 10) fin += "T10:00";
-    document.getElementById('c_fecha_inicio').value = ini;
-    document.getElementById('c_fecha_fin').value = fin;
-    abrirModal('modalCrearEvento');
-}
-function abrirModalVer(titulo, desc, ini, fin) {
-    document.getElementById('v_horario').textContent = ini + ' - ' + fin;
-    document.getElementById('v_descripcion').textContent = desc || 'Sin detalles.';
-    abrirModal('modalVerEvento');
-}
-function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
-    document.getElementById('mc_nombre').textContent = nombre;
-    document.getElementById('mc_fecha').textContent = fecha;
-    const img = document.getElementById('mc_foto');
-    const ph = document.getElementById('mc_foto_placeholder');
-    if (fotoUrl) { img.src = fotoUrl; img.style.display = 'block'; ph.style.display = 'none'; } else { img.style.display = 'none'; ph.style.display = 'flex'; }
-    abrirModal('modalVerCumple');
-}
-function abrirModalEditar(id, t, d, ini, fin, c, p, esInst) {
-    document.getElementById('e_evento_id').value = id;
-    document.getElementById('e_es_institucional').value = esInst;
-    document.getElementById('e_titulo').value = t;
-    document.getElementById('e_descripcion').value = d;
-    document.getElementById('e_fecha_inicio').value = ini;
-    document.getElementById('e_fecha_fin').value = fin;
-    document.getElementById('e_color').value = c;
-    document.getElementById('e_publico').checked = (p === 1);
+function abrirModalCrearDesdeCelda(f) { document.getElementById('c_fecha_inicio').value = f+'T09:00'; document.getElementById('c_fecha_fin').value = f+'T10:00'; abrirModal('modalCrearEvento'); }
+function abrirModalVer(t,d,h) { document.getElementById('v_horario').textContent = h; document.getElementById('v_descripcion').textContent = d||'Sin descripción.'; abrirModal('modalVerEvento'); }
+function abrirModalEditar(id,t,d,i,f,c,p,inst) {
+    document.getElementById('e_id').value = id; document.getElementById('e_titulo').value = t; document.getElementById('e_descripcion').value = d; document.getElementById('e_inicio').value = i; document.getElementById('e_fin').value = f; document.getElementById('e_color').value = c; document.getElementById('e_pub').checked=(p===1); document.getElementById('e_es_inst').value = inst;
     abrirModal('modalEditarEvento');
 }
-function eliminarEvento() {
-    if(confirm('¿Deseas eliminar este evento?')) {
+function confirmarEliminar() {
+    document.getElementById('btnConfirmarAccion').onclick = function() {
         document.getElementById('e_accion').value = 'eliminar_evento';
         document.getElementById('formEditarEvento').submit();
-    }
-}
-function allowDrop(ev) { ev.preventDefault(); }
-function drag(ev, id) { ev.dataTransfer.setData("text", id); }
-function drop(ev, nuevo) {
-    ev.preventDefault();
-    const id = ev.dataTransfer.getData("text");
-    document.getElementById('t_accion').value = 'mover_tarea';
-    document.getElementById('t_tarea_id').value = id;
-    document.getElementById('t_nuevo_estatus').value = nuevo;
-    document.getElementById('formAccionTarea').submit();
-}
-function abrirModalCrearTarea() { abrirModal('modalCrearTarea'); }
-function abrirModalEditarTarea(id, t, d, c, a) {
-    document.getElementById('et_id').value = id;
-    document.getElementById('et_titulo').value = t;
-    document.getElementById('et_descripcion').value = d;
-    document.getElementById('et_color').value = c;
-    document.getElementById('et_asignado_a').value = a || '';
-    abrirModal('modalEditarTarea');
-}
-function eliminarTareaDesdeModal() {
-    if(confirm('¿Seguro que deseas eliminar esta tarea?')) {
-        document.getElementById('t_accion').value = 'eliminar_tarea';
-        document.getElementById('t_tarea_id').value = document.getElementById('et_id').value;
-        document.getElementById('formAccionTarea').submit();
-    }
+    };
+    abrirModal('modalConfirmar');
 }
 </script>
 
