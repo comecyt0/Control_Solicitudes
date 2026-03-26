@@ -14,8 +14,9 @@ verificarSesionAdmin();
 $pdo = getConnection();
 $mensajeFlash = '';
 $tipoFlash = '';
-$cveAreaUsuario = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0);
-$adminId        = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
+$cveAreaUsuario  = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0);
+$cveAreaContexto = 6; // ÁREA FIJA: Departamento de Difusión de Ciencia y Tecnología
+$adminId         = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
 
 if ($cveAreaUsuario === 0) redirigir('public/hub.php');
 
@@ -114,8 +115,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
         
         if ($titulo) {
+            // SEGURIDAD: Validar si el creador es admin para evitar violaciones de integridad si re-activamos FKs
+            $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
+            $checkAdmin->execute([$adminId]);
+            $idAutor = $checkAdmin->fetch() ? $adminId : null;
+
             $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
-            $stmt->execute([$titulo, $descripcion, $color, $adminId ?: null, $asignado_a, $cveAreaUsuario]);
+            $stmt->execute([$titulo, $descripcion, $color, $idAutor, $asignado_a, $cveAreaContexto]);
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=tarea_creada#kanban');
             exit;
         }
@@ -232,10 +238,10 @@ if ($mes > 0 && $mes <= 12) {
     }
 }
 
-// 5. Consultar tareas KANBAN filtradas por ÁREA
+// 5. Consultar tareas KANBAN filtradas por ÁREA FIJA (Difusión)
 $listaTareas = ['pendiente' => [], 'en_proceso' => [], 'completada' => []];
 $stmtT = $pdo->prepare("SELECT t.*, a.nombre AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id WHERE t.cve_area = ? ORDER BY t.estatus DESC, t.id DESC");
-$stmtT->execute([$cveAreaUsuario]);
+$stmtT->execute([$cveAreaContexto]);
 $tareas = $stmtT->fetchAll(PDO::FETCH_ASSOC);
 foreach ($tareas as $t) {
     if (isset($listaTareas[$t['estatus']])) $listaTareas[$t['estatus']][] = $t;
@@ -248,7 +254,7 @@ $stmtAdmins = $pdo->prepare("SELECT a.id, a.nombre
          LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
          WHERE a.activo = true AND p.cve_area = ? 
          ORDER BY a.nombre ASC");
-$stmtAdmins->execute([$cveAreaUsuario]);
+$stmtAdmins->execute([$cveAreaContexto]);
 $adminsDisponibles = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
 
 $mesesNombres = [1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'];
