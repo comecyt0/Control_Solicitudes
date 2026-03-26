@@ -141,6 +141,18 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
     - **Control Centralizado**: La lista de áreas funcionales se gestiona desde `$areas_funcionales` en el header, permitiendo habilitar módulos uno a uno conforme se completan.
     - **Nota Técnica (BOM)**: Todos los archivos PHP deben guardarse estrictamente en **UTF-8 sin BOM**. El uso de BOM causa errores de "Headers already sent" al iniciar sesiones o realizar redirecciones.
 
+- **🚨 Fix Chat No Carga + Aislamiento por Área (v6.1, 2026-03-26)**:
+    - **Síntoma 1 — Chat no carga para usuarios de Personal (no-admin)**: `areas/difusion/api/chat.php` solo permitía `admin_id` en sesión. El personal (`user_id`) recibía 401. Solución: cambiar la guardia de auth a `empty($_SESSION['admin_id']) && empty($_SESSION['user_id'])`.
+    - **Síntoma 2 — Canal grupal mostraba mensajes de otras áreas**: `listar` en `areas/difusion/api/chat.php` no filtraba por `cve_area`. Solo filt­raba `destinatario_id IS NULL`. Solución: agregar `JOIN` con `cat_personal` y filtrar `p.cve_area = :cve_area`.
+    - **Síntoma 3 — Lista de contactos DM mostraba admins de otras áreas**: `admins` en el chat de Difusión usó una subquery compleja por email que podía fallar y tenía fallback a todos los admins del sistema. Solución: reemplazar por la misma query robusta de `admin/api/chat.php`: `SELECT FROM cat_personal WHERE cve_area = ?`.
+    - **Síntoma 4 — Las burbujas de mensajes nunca se mostraban como `propio`**: `renderBurbuja()` comparaba `parseInt(m.admin_id) === ADMIN_ID`, pero `m.admin_id` y `ADMIN_ID` son strings con prefijo (`'A5'`, `'P12'`). `parseInt('A5')` devuelve `NaN` — siempre `false`. Solución: `String(m.admin_id) === String(ADMIN_ID)`.
+    - **Síntoma 5 — Usuario propio aparecía en lista DM**: `cargarAdmins()` comparaba `aid !== ADMIN_ID` donde `aid = parseInt(a.id)` (NaN para 'A5'). Solución: `String(a.id) !== String(ADMIN_ID)` y usar `a.id` directamente en el listener.
+    - **Síntoma 6 — `enviar` usaba `validarCsrfPost()`**: Es `:void` y emite HTML, rompiendo JSON. Solución: validación CSRF inline (misma regla global de APIs JSON).
+    - **Síntoma 7 — `enviar` no insertaba `usuario_id`**: Solo inser­taba `admin_id`, dejando `NULL` para mensajes de Personal. Solución: `INSERT ... (admin_id, usuario_id, destinatario_id, destinatario_usuario_id, ...)`.
+    - **Archivos modificados**: `areas/difusion/api/chat.php`, `includes/header_admin.php`.
+    - **Regla permanente**: Comparar IDs de chat **siempre como string** (`String(a.id) === String(ADMIN_ID)`). Los prefijos A/P hacen que `parseInt` devuelva `NaN`. NUNCA usar `parseInt()` sobre IDs con prefijo alfabético.
+    - **Reconstruir Docker**: `docker compose up -d --build app`
+
 - **🚨 Fix Banner de Anuncios No Visible (v5.3, 2026-03-25)**:
     - **Síntoma**: Al crear o editar un anuncio con imagen en `areas/difusion/anuncios.php`, el registro se guardaba correctamente en BD pero la imagen nunca aparecía. El campo `banner_url` quedaba `NULL`.
     - **Causa Raíz**: `areas/difusion/api/anuncios.php` usaba `dirname(__DIR__, 2)` para calcular la ruta de destino del upload. Desde `areas/difusion/api/`, subir 2 niveles con `dirname` llega a `C:\Intranet\areas\` — **NO a la raíz del proyecto**. El directorio `areas/public/uploads/anuncios/` nunca existe, `move_uploaded_file()` retorna `false`, la función retorna `null` silenciosamente (estaba suprimido con `@`), y el registro se guarda sin imagen.
@@ -171,3 +183,20 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
     - **Prefijos de ID**: Implementación de sistema de prefijos en API y JS (`A` para Admins, `P` para Personal) para manejar destinatarios de forma unificada.
     - **Visibilidad Total**: El sidebar del chat en Difusión ahora muestra a todos los miembros del área registrados en `cat_personal`.
     - **Avatares Determinísticos**: Actualización de la lógica de color JS para generar avatares consistentes basados en strings alfanuméricos.
+
+## Integración de IA Local (Ollama) — Marzo 2026
+- **Tecnología**: [Ollama](https://ollama.com/) corriendo en Docker (`ai_ollama`) con [Open WebUI](https://openwebui.com/) (`ai_webui`) en el puerto `3001`.
+- **Modelo**: `qwen2.5-coder:1.5b` (seleccionado por eficiencia en GPU de 2GB).
+- **Conectividad App → IA**: 
+  - **URL Crítica**: En entornos Docker de Windows, `localhost` falla para comunicación entre contenedores. Se debe usar siempre **`http://host.docker.internal:11434`** en los archivos `config/ai_config.php` y `admin/api/agente_ia.php`.
+- **Botón en Sidebar**: Se integró en `includes/header_admin.php` para fácil acceso al asistente.
+- **Agente de Edición (Aider)**: Script `iniciar_agente.ps1` disponible en raíz para edición de código por voz/chat vía terminal.
+
+## Historial de Errores y Soluciones Críticas (Log 2026-03-25)
+- **Error `Foreign key violation (creado_por)=(28)`**:
+  - **Causa**: El usuario logueado tenía ID 28 de `cat_personal` pero no existía en `administradores`. La tabla `df_eventos_editoriales` exigía un ID de admin.
+  - **Solución**: Se añadió validación en `areas/difusion/calendario_editorial.php` para verificar la existencia del ID en `administradores`. Si no existe, se inserta `NULL` evitando el `Fatal error`.
+- **Error `No se pudo conectar con Ollama Local`**:
+  - **Causa**: Uso de `localhost` dentro del contenedor `app` (Docker).
+  - **Solución**: Cambio a `host.docker.internal`.
+- **Rebuild Obligatorio**: Se refuerza la regla de que **CUALQUIER cambio en PHP/HTML exige `docker compose up -d --build app`** debido a que no existe Bind-Mount dinámico en el stack actual bajo Windows.

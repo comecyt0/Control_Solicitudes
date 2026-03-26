@@ -1,0 +1,29 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ai_ollama_data:/root/.ollama
+    # Sin GPU para máxima estabilidad en hardware antiguo (Maxwell)
+    restart: always
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: ai_webui
+    ports:
+      - "3001:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_AUTH=False
+      - WEBUI_NAME=Claude Local
+    volumes:
+      - ai_webui_data:/app/backend/data
+    depends_on:
+      - ollama
+    restart: always
+
+volumes:
+  ai_ollama_data:
+  ai_webui_data:

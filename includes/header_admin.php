@@ -115,6 +115,10 @@ try {
                 <i class="fa-solid fa-chart-pie nav-icon"></i>
                 <span>Dashboard</span>
             </a>
+            <a href="#" onclick="toggleAsistenteIA(); return false;" class="nav-link">
+                <i class="fa-solid fa-robot nav-icon"></i>
+                <span>Asistente IA</span>
+            </a>
         </div>
 
         <?php if ($slug_menu === 'sistemas'): ?>
@@ -474,7 +478,7 @@ try {
         </div>
         <div style="flex:1; display:flex; flex-direction:column;">
             <span style="font-size:0.9rem; font-weight:700; color:#fff;">Asistente IA COMECyT</span>
-            <span style="font-size:0.7rem; color:rgba(255,255,255,0.8);">Powered by Groq · LLaMA 3</span>
+            <span style="font-size:0.7rem; color:rgba(255,255,255,0.8);">Ollama Local · Qwen 2.5</span>
         </div>
         <button onclick="toggleAsistenteIA()" style="background:rgba(255,255,255,0.15); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer;">
             <i class="fa-solid fa-xmark" style="font-size:0.8rem;"></i>
@@ -691,10 +695,11 @@ try {
             avatar.innerHTML  = '<i class="fa-solid fa-users" style="font-size:0.8rem;"></i>';
             avatar.style.background = 'linear-gradient(135deg,#662331,#8b2f42)';
             nombre.textContent = 'General';
-            sub.textContent    = 'Canal grupal · Todos los administradores';
+            sub.textContent    = 'Canal grupal · Equipo del área';
             document.getElementById('chatInput').placeholder = 'Escribe al equipo--';
         } else {
-            const admin = listaAdmins.find(a => parseInt(a.id) === adminId);
+            // adminId es string con prefijo (ej. 'A5' o 'P12')
+            const admin = listaAdmins.find(a => String(a.id) === String(adminId));
             canalNombreActual = admin ? admin.nombre.split(' ')[0] : 'Mensaje Directo';
             avatar.innerHTML  = '';
             avatar.style.background = 'transparent';
@@ -816,7 +821,8 @@ try {
 
     // -? Renderizar burbuja de mensaje con Reacciones -----------?
     function renderBurbuja(m) {
-        const propio = parseInt(m.admin_id) === ADMIN_ID;
+        // ADMIN_ID es string con prefijo (ej. 'A5' o 'P12'), comparar como string
+        const propio = String(m.admin_id) === String(ADMIN_ID);
         const mid    = parseInt(m.id);
         const wrap   = document.createElement('div');
         wrap.className = 'chat-bubble-wrap';
@@ -1017,10 +1023,10 @@ try {
 
                     btn.appendChild(av);
                     btn.appendChild(info);
-                    btn.addEventListener('click', () => chatSeleccionarCanal(aid));
+                    btn.addEventListener('click', () => chatSeleccionarCanal(a.id));
 
-                    // Ocultar el propio admin en la lista DM
-                    if (aid !== ADMIN_ID) lista.appendChild(btn);
+                    // Ocultar el propio usuario en la lista DM (comparar como string con prefijo)
+                    if (String(a.id) !== String(ADMIN_ID)) lista.appendChild(btn);
 
                     // Llenar select de asignación de tareas
                     if (sel) {

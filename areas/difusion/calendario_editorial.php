@@ -34,9 +34,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $color = postParam('color', '#e11d48'); // Color por defecto editorial
         
         if ($titulo && $fechaInicio && $fechaFin) {
+            // SEGURIDAD: Validar que el adminId exista en la tabla administradores antes de insertar
+            // (Evita el error de Foreign Key violation si el usuario logueado es usuario regular pero no admin)
+            $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
+            $checkAdmin->execute([$adminId]);
+            $idAutor = $checkAdmin->fetch() ? $adminId : null;
+
             // Insertar en tabla editorial (Siempre publico=false para esta vista editorial interna)
             $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, FALSE)");
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $adminId ?: null]);
+            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $idAutor]);
             
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_creado');
             exit;
