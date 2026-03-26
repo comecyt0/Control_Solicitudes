@@ -215,6 +215,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
+- **🚨 Migración de Esquema Difusión (v8.1, 2026-03-26)**:
+    - **Problema**: `Fatal error: Undefined column "cve_area"`. La tabla `df_eventos_editoriales` no tenía la columna para filtrar por área, causando el bloqueo total del calendario.
+    - **Solución**: Se añadió la columna `cve_area` (INTEGER) mediante `ALTER TABLE` y se migraron los registros existentes al ID 6 para evitar que desaparecieran.
 - **🚨 Renderizado de Colores en Calendario (v8.0, 2026-03-26)**:
     - **Problema**: Los eventos en la cuadrícula del calendario tenían colores de fondo y borde estáticos, ignorando la elección del usuario en el modal.
     - **Solución**: Se implementó renderizado dinámico mediante estilos inline. Ahora cada "post-it" del calendario usa su color de base de datos para el `border-top` y una transparencia del 10% del mismo color para el `background-color`.
