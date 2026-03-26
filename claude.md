@@ -200,3 +200,6 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Causa**: Uso de `localhost` dentro del contenedor `app` (Docker).
   - **Solución**: Cambio a `host.docker.internal`.
 - **Rebuild Obligatorio**: Se refuerza la regla de que **CUALQUIER cambio en PHP/HTML exige `docker compose up -d --build app`** debido a que no existe Bind-Mount dinámico en el stack actual bajo Windows.
+- **Error `Botón Eliminar Anuncios no responde` (2026-03-26)**:
+  - **Causa**: Argumento de callback mal posicionado en `COMECyTUI.confirm` (se pasaba el título como 2º parámetro).
+  - **Solución**: Corregido en 20 archivos para usar: `COMECyTUI.confirm(msg, callback, null, { titulo: "..." })`.

@@ -213,7 +213,7 @@ function guardarAnuncio(e) {
 }
 
 function eliminarAnuncio(id) {
-    COMECyTUI.confirm("¿Estás seguro de eliminar este anuncio de forma permanente?", "Eliminar Anuncio", () => {
+    COMECyTUI.confirm("¿Estás seguro de eliminar este anuncio de forma permanente?", () => {
         const fd = new FormData();
         fd.append('accion', 'eliminar');
         fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
@@ -229,7 +229,7 @@ function eliminarAnuncio(id) {
                     COMECyTUI.alert('Error: ' + d.error);
                 }
             });
-    });
+    }, null, { titulo: "Eliminar Anuncio" });
 }
 </script>
 
