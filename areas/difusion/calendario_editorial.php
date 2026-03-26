@@ -251,7 +251,7 @@ foreach ($tareas as $t) {
 // 6. Admins para asignación
 $stmtAdmins = $pdo->prepare("SELECT a.id, a.nombre 
          FROM administradores a 
-         LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
+         INNER JOIN cat_personal p ON (LOWER(p.correo_institucional) = LOWER(a.email) OR LOWER(p.correo_personal) = LOWER(a.email))
          WHERE a.activo = true AND p.cve_area = ? 
          ORDER BY a.nombre ASC");
 $stmtAdmins->execute([$cveAreaContexto]);
