@@ -253,3 +253,14 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 
 - **Distribución en Detalle (Grid Alignment)**: Los componentes de seguimiento (Chat, Notas) deben insertarse *dentro* del contenedor `.detail-layout` y utilizar `grid-column: 1 / -1` para asegurar que respeten los márgenes del sidebar y mantengan una visualización profesional de ancho completo.
 - **Fix Técnico (Estructura)**: Se corrigió una corrupción de etiquetas HTML (`</form>`, `</div>` duplicados) y la pérdida del `endif` de la lógica de estatus que causaba errores de sintaxis al final del archivo.
+
+## v9.0 - Módulo Ejecutivo: Dirección General
+**Fecha**: 2026-03-26
+**Cambios**:
+- Creación de `areas/direccion_general/dashboard.php` con estética premium, guinda y oro.
+- Implementación de `gestion_solicitudes.php` con **Control Editorial**: permite editar solicitudes ciudadanas antes de publicarlas.
+- Desarrollo de `calendario_editorial.php` para gestión de tareas (Kanban) y agenda interna del área 4.
+- Integración de wrappers para Chat e IA que disparan herramientas globales del sistema.
+- Activación de `direccion_general` en el firewall de `header_admin.php`.
+
+**Error Corregido**: Se detectó una discrepancia histórica entre el ID DB (2) y el ID Código (4) para DG; se mantuvo el ID 4 para preservar la coherencia del sistema de slugs sin romper accesos existentes.
