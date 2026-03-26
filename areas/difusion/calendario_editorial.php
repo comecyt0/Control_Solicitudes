@@ -240,7 +240,13 @@ if ($mes > 0 && $mes <= 12) {
 
 // 5. Consultar tareas KANBAN filtradas por ÁREA FIJA (Difusión)
 $listaTareas = ['pendiente' => [], 'en_proceso' => [], 'completada' => []];
-$stmtT = $pdo->prepare("SELECT t.*, a.nombre AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id WHERE t.cve_area = ? ORDER BY t.estatus DESC, t.id DESC");
+// Hybrid JOIN para soportar tanto Administradores como Personal como "asignado_a"
+$stmtT = $pdo->prepare("SELECT t.*, COALESCE(a.nombre, p.nombre) AS asignado_nombre 
+         FROM sb_kanban_tareas t 
+         LEFT JOIN administradores a ON t.asignado_a = a.id 
+         LEFT JOIN cat_personal p ON t.asignado_a = p.cve_personal 
+         WHERE t.cve_area = ? 
+         ORDER BY t.estatus DESC, t.id DESC");
 $stmtT->execute([$cveAreaContexto]);
 $tareas = $stmtT->fetchAll(PDO::FETCH_ASSOC);
 foreach ($tareas as $t) {
@@ -248,13 +254,13 @@ foreach ($tareas as $t) {
     else $listaTareas['pendiente'][] = $t;
 }
 
-// 6. Admins para asignación
-$stmtAdmins = $pdo->prepare("SELECT a.id, a.nombre 
-         FROM administradores a 
-         INNER JOIN cat_personal p ON (LOWER(p.correo_institucional) = LOWER(a.email) OR LOWER(p.correo_personal) = LOWER(a.email))
-         WHERE a.activo = true AND p.cve_area = ? 
-         ORDER BY a.nombre ASC");
-$stmtAdmins->execute([$cveAreaContexto]);
+// 6. Admins / Personal para asignación (Difusión usa IDs 6 y 18 en cat_personal)
+$stmtAdmins = $pdo->prepare("SELECT p.cve_personal AS id, 
+                CONCAT(p.nombre, ' ', p.appat, ' ', p.apmat) AS nombre 
+         FROM cat_personal p
+         WHERE p.activo = true AND p.cve_area IN (6, 18) 
+         ORDER BY p.nombre ASC");
+$stmtAdmins->execute();
 $adminsDisponibles = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
 
 $mesesNombres = [1=>'Enero',2=>'Febrero',3=>'Marzo',4=>'Abril',5=>'Mayo',6=>'Junio',7=>'Julio',8=>'Agosto',9=>'Septiembre',10=>'Octubre',11=>'Noviembre',12=>'Diciembre'];

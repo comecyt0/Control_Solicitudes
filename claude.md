@@ -215,10 +215,12 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
-- **🚨 Sync UI Calendario Editorial (v7.5, 2026-03-26)**:
-    - **Problema 1**: Falta de interactividad (botones hover/modales) corregida en v7.4.
-    - **Problema 2**: Botón "Editar" no respondía por un `TypeError` al intentar acceder a un campo oculto inexistente (`e_es_institucional`) y falta de argumentos en el llamado JS.
-    - **Solución**: Restauración del campo oculto y sincronización de argumentos (8) en el loop PHP.
+- **🚨 Sync UI Calendario Editorial (v7.7, 2026-03-26)**:
+    - **Problema**: La lista de personal para asignar tareas estaba vacía porque se filtraba solo por "Administradores" de un área específica (ID 6), pero el equipo real está en `cat_personal` bajo IDs mixtos (6 y 18).
+    - **Solución**: Se cambió la fuente de la lista de asignación a `cat_personal` filtrando por áreas 6 y 18 simultáneamente. Se implementó un `COALESCE` en el JOIN de tareas para mostrar nombres tanto de la tabla de administradores como de personal.
+- **🚨 Sync UI Calendario Editorial (v7.6, 2026-03-26)**:
+    - **Problema**: El botón "Editar" seguía sin funcionar debido a que el JavaScript buscaba los IDs `btnEliminarEvento` y `btnActualizarEvento`, los cuales faltaban en el HTML del modal.
+    - **Solución**: Restauración de los IDs de los botones en el footer del modal editar. Se verificó la consistencia entre el DOM y las funciones JS.
 - **Error `Lista de DMs vacía / Chat sin branding por área` (2026-03-26)**:
   - **Causa**: La consulta de miembros usaba la columna `habilitado` (inexistente) en lugar de `activo`. Además, el título "Equipo TI" estaba fijo en el HTML.
   - **Solución**: Corrección masiva de `habilitado` → `activo` en 21 archivos. Se implementó la variable `$chat_area_label` en `header_admin.php` para inyectar dinámicamente el nombre del área en el encabezado y subtextos del chat.
