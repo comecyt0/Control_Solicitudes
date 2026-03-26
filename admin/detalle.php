@@ -511,50 +511,81 @@ require_once __DIR__ . '/../includes/header_admin.php';
     </details>
 </div>
 
-<!-- CANAL DE COMUNICACIÓN (RETROALIMENTACIÓN) -->
-<div class="card" style="margin-top:20px; border-top: 4px solid var(--color-primary); display: flex; flex-direction: column; height: 500px;">
-    <div class="card-header" style="border-bottom: 1px solid #eee; padding: 12px 20px; background: linear-gradient(to right, #fff, #fbfbfb);">
-        <h2 class="card-title" style="font-size: 1rem; color: var(--color-primary);">
-            <i class="fa-solid fa-comments"></i> Canal de Comunicación con el Solicitante
-        </h2>
+<!-- CANAL DE COMUNICACIÓN (RETROALIMENTACIÓN) — DISEÑO PREMIUM -->
+<div class="card" style="margin-top:20px; border-top: 4px solid var(--color-primary); display: flex; flex-direction: column; height: 550px; background: #fff; box-shadow: var(--shadow-md); border-radius: var(--radius-lg); overflow: hidden;">
+    <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding: 15px 20px; background: linear-gradient(to right, #fff, #f8fafc); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 class="card-title" style="font-size: 1.1rem; color: var(--color-primary); margin:0;">
+                <i class="fa-solid fa-comments"></i> Chat de Seguimiento con el Solicitante
+            </h2>
+            <p class="text-muted" style="font-size: 0.75rem; margin: 2px 0 0 25px;">La comunicación aquí es visible para el ciudadano.</p>
+        </div>
         <div class="d-flex align-center gap-8">
-            <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:10px;">Enlace Directo</span>
+            <span class="badge" style="background:rgba(102, 35, 49, 0.05); color:var(--color-primary); font-size:10px; border: 1px solid rgba(102, 35, 49, 0.1);">Canal Directo</span>
         </div>
     </div>
     
-    <!-- Area de Chat -->
-    <div id="retroLista" style="flex: 1; overflow-y: auto; padding: 20px; background: #fafafa; display: flex; flex-direction: column; gap: 4px;">
-        <!-- Mensajes dinámicos -->
+    <!-- Area de Chat con Scroll Estilizado -->
+    <div id="retroLista" style="flex: 1; overflow-y: auto; padding: 20px; background: #fdfdfd; display: flex; flex-direction: column; gap: 8px;">
+        <div style="text-align: center; padding: 40px; color: #94a3b8;">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+            <p style="margin-top: 10px; font-size: 0.9rem;">Cargando conversación...</p>
+        </div>
     </div>
 
-    <!-- Input de Chat -->
-    <div style="padding: 16px; background: #fff; border-top: 1px solid #eee;">
-        <form id="formRetro" style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; gap: 8px;">
-                <textarea id="retroMensaje" class="form-control" rows="1" placeholder="Enviar mensaje al ciudadano..." 
-                          style="flex: 1; resize: none; border-radius: 20px; padding: 10px 18px; line-height: 1.4; border-color: #e2e8f0;"></textarea>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <label for="retroArchivo" class="btn btn-outline" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-color: #cbd5e1; color: #64748b;" title="Adjuntar archivo">
-                        <i class="fa-solid fa-paperclip"></i>
+    <!-- Input de Chat Enriquecido -->
+    <div style="padding: 18px 20px; background: #fff; border-top: 1px solid #f1f5f9;">
+        <form id="formRetro" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; gap: 12px; align-items: flex-end;">
+                <div style="flex: 1; position: relative;">
+                    <textarea id="retroMensaje" class="form-control" rows="1" placeholder="Escribe un mensaje para el solicitante..." 
+                              style="width: 100%; resize: none; border-radius: 24px; padding: 12px 20px; line-height: 1.5; border: 1px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease; background: #f8fafc;"
+                              onfocus="this.style.borderColor='var(--color-primary)'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(102,35,49,0.05)';"
+                              onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.style.boxShadow='none';"></textarea>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 2px;">
+                    <label for="retroArchivo" class="btn btn-outline" style="border-radius: 50%; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-color: #e2e8f0; color: #64748b; background: #fff; transition: all 0.2s;" 
+                           onmouseover="this.style.background='#f1f5f9'; this.style.color='var(--color-primary)';" 
+                           onmouseout="this.style.background='#fff'; this.style.color='#64748b';" title="Adjuntar documento o imagen">
+                        <i class="fa-solid fa-paperclip" style="font-size: 1.1rem;"></i>
                     </label>
                     <input type="file" id="retroArchivo" style="display: none;">
-                    <button type="submit" id="btnEnviarRetro" class="btn btn-primary" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
-                        <i class="fa-solid fa-paper-plane"></i>
+                    
+                    <button type="submit" id="btnEnviarRetro" class="btn btn-primary" style="border-radius: 50%; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(102,35,49,0.25); transition: transform 0.2s;"
+                            onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';" title="Enviar mensaje">
+                        <i class="fa-solid fa-paper-plane" style="font-size: 1.1rem; margin-left: -2px;"></i>
                     </button>
                 </div>
             </div>
-            <div id="filePreview" style="display: none; font-size: 0.75rem; color: var(--color-primary); padding-left: 10px;">
-                <i class="fa-solid fa-paperclip"></i> <b>Archivo seleccionado:</b> <span id="fileName"></span>
-                <button type="button" onclick="document.getElementById('retroArchivo').value=''; document.getElementById('filePreview').style.display='none';" style="border:none; background:none; color:#ef4444; margin-left:8px; cursor:pointer;">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+            
+            <!-- Preview de Archivo -->
+            <div id="filePreview" style="display: none; font-size: 0.8rem; color: var(--color-primary); background: rgba(102,35,49,0.05); padding: 8px 15px; border-radius: 12px; border: 1px dashed rgba(102,35,49,0.2); animation: slideIn 0.3s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fa-solid fa-file-circle-check"></i> <b>Preparado:</b> <span id="fileName"></span></span>
+                    <button type="button" onclick="document.getElementById('retroArchivo').value=''; document.getElementById('filePreview').style.display='none';" style="border:none; background:none; color:#ef4444; cursor:pointer; font-size: 1rem;">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-// Manejo de preview de archivo
+// --- CONFIGURACIÓN GLOBAL ---
+const SOLICITUD_ID_COMENTARIOS = <?= (int)$sol['id'] ?>;
+const CSRF_TOKEN_COMENTARIOS = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>';
+const BASE_URL_COMENTARIOS    = '<?= rtrim(BASE_URL, "/") ?>/';
+
+// --- UTILERÍAS ---
+function escapeHtml(t) {
+    if (!t) return '';
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+
+// --- MANEJO DE ARCHIVOS ---
 document.getElementById('retroArchivo').addEventListener('change', function() {
     const preview = document.getElementById('filePreview');
     const nameSpan = document.getElementById('fileName');
@@ -566,25 +597,7 @@ document.getElementById('retroArchivo').addEventListener('change', function() {
     }
 });
 
-<script>
-// ── Comentarios internos ────────────────────────────────────────
-const SOLICITUD_ID_COMENTARIOS = <?= (int)$sol['id'] ?>;
-const CSRF_TOKEN_COMENTARIOS = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>';
-const BASE_URL_COMENTARIOS    = '<?= rtrim(BASE_URL, "/") ?>/';
-
-// Depuración en consola
-console.log('UI Evidencias cargando para solicitud: ' + SOLICITUD_ID_COMENTARIOS);
-if (typeof COMECyTUI === 'undefined') {
-    console.error('ALERTA: COMECyTUI no se cargó correctamente.');
-    window.COMECyTUI = {
-        alert: (m) => alert(m),
-        confirm: (m, ok) => { if(confirm(m)) ok(); },
-        prompt: (m, ok) => { let v = prompt(m); if(v !== null) ok(v); },
-        toast: (m) => console.log('Toast: ' + m)
-    };
-}
-
-// ── Retroalimentación y Seguimiento (Chat Público-Admin) ──────
+// --- LÓGICA DE RETROALIMENTACIÓN (CHAT PÚBLICO) ---
 function cargarRetroalimentacion() {
     fetch(BASE_URL_COMENTARIOS + 'public/api/comentarios_solicitud.php?accion=listar&solicitud_id=' + SOLICITUD_ID_COMENTARIOS)
         .then(r => r.json())
@@ -592,38 +605,44 @@ function cargarRetroalimentacion() {
             const lista = document.getElementById('retroLista');
             if (!data.ok) return;
             if (!data.comentarios.length) {
-                lista.innerHTML = '<p class="text-muted fs-sm" style="padding:15px; text-align:center;">No hay mensajes de seguimiento aún.</p>';
+                lista.innerHTML = `
+                    <div style="text-align:center; padding: 40px; color: #94a3b8;">
+                        <i class="fa-solid fa-comment-dots fa-3x" style="opacity: 0.3; margin-bottom: 15px;"></i>
+                        <p style="font-size: 0.9rem;">No hay mensajes de seguimiento aún.<br>Inicie la conversación con el solicitante.</p>
+                    </div>`;
                 return;
             }
             lista.innerHTML = data.comentarios.map(c => {
                 const esAdmin = c.remitente_tipo === 'admin';
                 const alineacion = esAdmin ? 'flex-end' : 'flex-start';
-                const bg = esAdmin ? 'linear-gradient(135deg,#662331,#8b2f42)' : '#f3f4f6';
-                const color = esAdmin ? '#fff' : '#111827';
-                const radius = esAdmin ? '14px 14px 2px 14px' : '14px 14px 14px 2px';
+                const bg = esAdmin ? 'linear-gradient(135deg, #662331, #8b2f42)' : '#fff';
+                const color = esAdmin ? '#fff' : '#1e293b';
+                const radius = esAdmin ? '18px 18px 4px 18px' : '18px 18px 18px 4px';
+                const border = esAdmin ? 'none' : '1px solid #e2e8f0';
+                const shadow = esAdmin ? '0 4px 12px rgba(102,35,49,0.15)' : '0 2px 5px rgba(0,0,0,0.05)';
 
                 let adjuntoHtml = '';
                 if (c.archivo_url) {
                     const ext = c.archivo_nombre.split('.').pop().toLowerCase();
                     const isImg = ['jpg','jpeg','png'].includes(ext);
                     adjuntoHtml = `
-                        <div style="margin-top:8px; border-top:1px solid ${esAdmin ? 'rgba(255,255,255,0.2)' : '#e5e7eb'}; padding-top:8px;">
-                            <a href="${c.archivo_url}" target="_blank" style="color:${esAdmin ? '#fff' : 'var(--color-primary)'}; text-decoration:none; font-size:0.75rem; display:flex; align-items:center; gap:6px;">
+                        <div style="margin-top:10px; border-top:1px solid ${esAdmin ? 'rgba(255,255,255,0.2)' : '#f1f5f9'}; padding-top:8px;">
+                            <a href="${c.archivo_url}" target="_blank" style="color:${esAdmin ? '#fff' : 'var(--color-primary)'}; text-decoration:none; font-size:0.8rem; display:flex; align-items:center; gap:8px; font-weight: 500;">
                                 <i class="fa-solid ${isImg ? 'fa-image' : 'fa-file-pdf'}"></i>
-                                ${c.archivo_nombre.substring(0, 20)}...
+                                <span style="text-decoration: underline;">${c.archivo_nombre.substring(0, 25)}...</span>
                             </a>
                         </div>
                     `;
                 }
 
                 return `
-                <div style="display:flex; flex-direction:column; align-items:${alineacion}; margin-bottom:12px; max-width:100%;">
-                    <div style="background:${bg}; color:${color}; border-radius:${radius}; padding:10px 14px; max-width:85%; box-shadow:var(--shadow-sm);">
-                        <div style="font-size:0.65rem; opacity:0.8; margin-bottom:4px; font-weight:700; display:flex; justify-content:space-between; gap:10px;">
-                            <span>${c.nombre_remitente}</span>
+                <div style="display:flex; flex-direction:column; align-items:${alineacion}; margin-bottom:15px; width:100%;">
+                    <div style="background:${bg}; color:${color}; border-radius:${radius}; padding:12px 16px; max-width:80%; box-shadow:${shadow}; border:${border}; position: relative;">
+                        <div style="font-size:0.65rem; opacity:0.85; margin-bottom:5px; font-weight:700; display:flex; justify-content:space-between; gap:15px; font-family: 'Inter', sans-serif; letter-spacing: 0.3px;">
+                            <span>${esAdmin ? '<i class="fa-solid fa-shield-halved"></i> SOPORTE' : '<i class="fa-solid fa-user"></i> SOLICITANTE'}</span>
                             <span>${c.fecha_fmt}</span>
                         </div>
-                        <p style="margin:0; font-size:0.85rem; line-height:1.4; white-space:pre-wrap;">${escapeHtml(c.mensaje)}</p>
+                        <p style="margin:0; font-size:0.92rem; line-height:1.5; white-space:pre-wrap; font-weight: 400;">${escapeHtml(c.mensaje)}</p>
                         ${adjuntoHtml}
                     </div>
                 </div>
@@ -636,7 +655,8 @@ function cargarRetroalimentacion() {
 document.getElementById('formRetro').addEventListener('submit', function(e) {
     e.preventDefault();
     const btn = document.getElementById('btnEnviarRetro');
-    const msg = document.getElementById('retroMensaje').value.trim();
+    const msgInput = document.getElementById('retroMensaje');
+    const msg = msgInput.value.trim();
     const fileInput = document.getElementById('retroArchivo');
     
     if (!msg && !fileInput.files.length) return;
@@ -654,11 +674,13 @@ document.getElementById('formRetro').addEventListener('submit', function(e) {
         .then(r => r.json())
         .then(d => {
             if (d.ok) {
-                document.getElementById('retroMensaje').value = '';
+                msgInput.value = '';
                 fileInput.value = '';
+                document.getElementById('filePreview').style.display = 'none';
                 cargarRetroalimentacion();
             } else {
-                COMECyTUI.alert(d.error, 'Error');
+                if (typeof COMECyTUI !== 'undefined') COMECyTUI.alert(d.error, 'Error');
+                else alert(d.error);
             }
         })
         .finally(() => {
@@ -667,10 +689,189 @@ document.getElementById('formRetro').addEventListener('submit', function(e) {
         });
 });
 
-// Cargar datos iniciales
-cargarComentarios();
-cargarEvidencias();
-cargarRetroalimentacion();
+// --- LÓGICA DE NOTAS INTERNAS (SOLO ADMINS) ---
+function cargarComentarios() {
+    fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php?solicitud_id=' + SOLICITUD_ID_COMENTARIOS)
+        .then(r => r.json())
+        .then(data => {
+            const lista = document.getElementById('comentariosLista');
+            if (!data.ok) return;
+            if (!data.comentarios.length) {
+                lista.innerHTML = '<p class="text-muted fs-sm" style="padding:8px 0; font-style: italic;">Sin notas internas registradas.</p>';
+                return;
+            }
+            lista.innerHTML = data.comentarios.map(c => `
+                <div data-cid="${c.id}" style="background:#f8fafc; border: 1px solid #e2e8f0; border-radius:10px; padding:12px; margin-bottom:10px; border-left: 3px solid #94a3b8;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
+                        <div>
+                            <span style="font-size:0.75rem; font-weight:700; color:#475569;">
+                                <i class="fa-solid fa-user-tie"></i> ${c.admin_nombre}
+                            </span>
+                            <span class="text-muted" style="font-size:0.7rem; margin-left:8px;">${c.fecha_fmt}</span>
+                        </div>
+                        <button onclick="eliminarComentario(${c.id})" class="btn btn-outline btn-sm" style="padding:2px 6px; color:#F87171; border:none; background:none;"
+                                title="Eliminar nota"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                    <p style="margin:0; font-size:0.85rem; color:#1e293b; line-height:1.4; white-space:pre-wrap;">${escapeHtml(c.comentario)}</p>
+                </div>
+            `).join('');
+        });
+}
+
+function eliminarComentario(id) {
+    if (typeof COMECyTUI !== 'undefined') {
+        COMECyTUI.confirm('¿Deseas eliminar esta nota interna permanentemente?', () => {
+            ejecutarEliminacionComentario(id);
+        }, null, { titulo: 'Eliminar Nota' });
+    } else if (confirm('¿Deseas eliminar esta nota?')) {
+        ejecutarEliminacionComentario(id);
+    }
+}
+
+function ejecutarEliminacionComentario(id) {
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+    fd.append('accion', 'eliminar');
+    fd.append('comentario_id', id);
+    fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(d => { if (d.ok) cargarComentarios(); });
+}
+
+document.getElementById('formComentario').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const textarea = document.getElementById('nuevoComentario');
+    const texto = textarea.value.trim();
+    if (!texto) return;
+    const btn = document.getElementById('btnAgregarComentario');
+    btn.disabled = true;
+
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+    fd.append('accion', 'agregar');
+    fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
+    fd.append('comentario', texto);
+
+    fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(d => {
+            if (d.ok) {
+                textarea.value = '';
+                cargarComentarios();
+            } else {
+                alert(d.error || 'No se pudo guardar la nota.');
+            }
+        })
+        .finally(() => btn.disabled = false);
+});
+
+// --- LÓGICA DE EVIDENCIAS ---
+function cargarEvidencias() {
+    fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php?solicitud_id=' + SOLICITUD_ID_COMENTARIOS)
+        .then(r => r.json())
+        .then(data => {
+            const lista = document.getElementById('evidenciasLista');
+            if (!data.ok || !data.evidencias.length) {
+                lista.innerHTML = '<p class="text-muted fs-sm" style="grid-column: 1/-1; text-align: center; padding: 20px;">Sin documentos adjuntos de seguimiento.</p>';
+                return;
+            }
+            lista.innerHTML = data.evidencias.map(e => {
+                const ext = e.archivo_nombre.split('.').pop().toLowerCase();
+                const isImg = ['jpg','jpeg','png'].includes(ext);
+                return `
+                <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;" onmouseover="this.style.borderColor='var(--color-primary)';" onmouseout="this.style.borderColor='#e2e8f0';">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <div style="width: 40px; height: 40px; background: #f8fafc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--color-primary); border: 1px solid #f1f5f9;">
+                            <i class="fa-solid ${isImg ? 'fa-image' : 'fa-file-lines'}"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 0.8rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #334155;">
+                                ${e.archivo_nombre}
+                            </div>
+                            <div class="text-muted" style="font-size: 0.65rem;">${e.fecha_fmt}</div>
+                        </div>
+                    </div>
+                    ${e.comentario ? `<p style="font-size: 0.75rem; color: #64748b; margin: 8px 0; line-height: 1.3;">${escapeHtml(e.comentario)}</p>` : ''}
+                    <div style="display: flex; gap: 6px; margin-top: 10px;">
+                        <a href="${e.url}" target="_blank" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.7rem; justify-content: center;">Ver</a>
+                        <button onclick="eliminarEvidencia(${e.id})" class="btn btn-sm btn-outline" style="padding: 5px 8px; font-size: 0.7rem; color: #ef4444; border-color: #fca5a5; background: #fef2f2;">
+                             <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        });
+}
+
+function eliminarEvidencia(id) {
+    if (typeof COMECyTUI !== 'undefined') {
+        COMECyTUI.confirm('¿Seguro que deseas eliminar esta evidencia? Se borrará permanentemente.', () => {
+            ejecutarEliminacionEvidencia(id);
+        });
+    } else if (confirm('¿Eliminar esta evidencia?')) {
+        ejecutarEliminacionEvidencia(id);
+    }
+}
+
+function ejecutarEliminacionEvidencia(id) {
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+    fd.append('accion', 'eliminar');
+    fd.append('evidencia_id', id);
+    fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(d => { if (d.ok) cargarEvidencias(); });
+}
+
+function abrirModalEvidencia() {
+    if (typeof COMECyTUI !== 'undefined') {
+        COMECyTUI.prompt('Ingresa una descripción para este documento:', (comentario) => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = ev => {
+                const file = ev.target.files[0];
+                if (!file) return;
+                subirEvidencia(file, comentario);
+            };
+            input.click();
+        }, { titulo: 'Cargar Documento' });
+    }
+}
+
+function subirEvidencia(file, comentario) {
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+    fd.append('accion', 'agregar');
+    fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
+    fd.append('comentario', comentario);
+    fd.append('archivo', file);
+    
+    fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(d => {
+            if (d.ok) {
+                if (typeof COMECyTUI !== 'undefined') COMECyTUI.toast('Guardado con éxito', 'success');
+                cargarEvidencias();
+            } else alert(d.error);
+        });
+}
+
+function aplicarPlantilla(contenido) {
+    if (contenido) {
+        document.getElementById('comentario').value = contenido;
+    }
+}
+
+// INICIALIZACIÓN
+document.addEventListener('DOMContentLoaded', () => {
+    cargarComentarios();
+    cargarEvidencias();
+    cargarRetroalimentacion();
+    
+    // Auto recarga del chat público (opcional para el admin)
+    setInterval(cargarRetroalimentacion, 60000); 
+});
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
