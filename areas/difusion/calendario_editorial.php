@@ -435,15 +435,59 @@ $extraHead = '
     box-shadow: -1px -1px 2px rgba(0,0,0,0.05);
     border-radius: 0 0 0 2px;
 }
-
-.evento-titulo {
+/* Titulo del Post-It */
+.evento-pildora .evento-titulo {
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+}
+
+/* Evento Acciones Dropdown/Botones */
+.evento-acciones {
+    display: flex;
+    gap: 4px;
+    margin-top: 0;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.evento-pildora:hover .evento-acciones {
+    opacity: 1;
+    max-height: 30px;
+    margin-top: 4px;
+    padding-bottom: 2px;
+}
+
+.btn-evento-accion {
+    flex: 1;
+    background: rgba(255,255,255,0.7);
+    border: none;
+    border-radius: 4px;
+    padding: 4px 0;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: #475569;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.btn-evento-accion:hover {
+    background: #ffffff;
+    color: var(--color-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.day-header-container {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .cumple-mini-avatar {
@@ -649,15 +693,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <?php foreach ($calendarioEventos[$dia] ?? [] as $ev): 
                     $colorNota = isset($ev['es_cumple']) ? 'nota-dorado' : 'nota-difusion';
                 ?>
-                    <div class="evento-pildora <?= $colorNota ?>" 
-                         onclick="event.stopPropagation(); 
-                         <?php if(isset($ev['es_cumple'])): ?>
-                            abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '<?=esc($ev['descripcion'])?>', '<?= BASE_URL ?>public/uploads/avatares/<?=esc($ev['foto_perfil'])?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')
-                         <?php elseif(isset($ev['es_institucional']) && $ev['es_institucional'] && $cveAreaUsuario !== 1): ?>
-                            abrirModalVer('<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d', strtotime($ev['fecha_fin']))?>')
-                         <?php else: ?>
-                            abrirModalEditar(<?=$ev['id']?>, '<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d', strtotime($ev['fecha_fin']))?>', '<?=($ev['color'])?>', <?=($ev['publico']?1:0)?>, <?= (isset($ev['es_institucional']) && $ev['es_institucional']) ? '1' : '0' ?>)
-                         <?php endif; ?>">
+                    <div class="evento-pildora <?= $colorNota ?>">
                         <div class="evento-titulo">
                             <?php if(isset($ev['es_cumple'])): ?>
                                 <?php if(!empty($ev['foto_perfil'])): ?>
@@ -666,7 +702,23 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                                     <div class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-cake-candles"></i></div>
                                 <?php endif; ?>
                             <?php endif; ?>
-                            <?= esc($ev['titulo']) ?>
+                             <?= esc($ev['titulo']) ?>
+                        </div>
+                        <div class="evento-acciones">
+                            <?php if(isset($ev['es_cumple'])): ?>
+                                <button type="button" class="btn-evento-accion" title="Ver Perfil" onclick="event.stopPropagation(); abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '<?=esc($ev['descripcion'])?>', '<?= BASE_URL ?>public/uploads/avatares/<?=esc($ev['foto_perfil'])?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')">
+                                    <i class="fa-solid fa-cake-candles"></i>
+                                </button>
+                            <?php else: ?>
+                                <button type="button" class="btn-evento-accion" title="Ver Detalle" onclick="event.stopPropagation(); abrirModalVer('<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('d/m/Y H:i', strtotime($ev['fecha_inicio']))?>', '<?=date('d/m/Y H:i', strtotime($ev['fecha_fin']))?>')">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <?php if(!(isset($ev['es_institucional']) && $ev['es_institucional'] && $cveAreaUsuario !== 1)): ?>
+                                <button type="button" class="btn-evento-accion" title="Editar" onclick="event.stopPropagation(); abrirModalEditar(<?=$ev['id']?>, '<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_fin']))?>', '<?=($ev['color'])?>', <?=($ev['publico']?1:0)?>)">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <?php endif; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -751,18 +803,46 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     </div>
 </div>
 
-<!-- Modal Ver/Editar Evento -->
+<!-- Modal Ver Evento -->
+<div class="modal-backdrop" id="modalVerEvento">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fa-solid fa-calendar-day"></i> <span id="v_titulo">Detalle de Evento</span>
+            </h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalVerEvento')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom: 1rem;">
+                <p style="margin: 0; font-size: 0.85rem; color: #64748b; font-weight: 600;">Fecha y Hora</p>
+                <p style="margin: 0.2rem 0; font-weight: 500;"><i class="fa-regular fa-clock text-accent"></i> <span id="v_horario"></span></p>
+            </div>
+            <div>
+                <p style="margin: 0; font-size: 0.85rem; color: #64748b; font-weight: 600;">Descripción</p>
+                <div style="margin-top: 0.4rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <p style="margin: 0; white-space: pre-wrap; color: #334155; line-height: 1.5;" id="v_descripcion"></p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="cerrarModal('modalVerEvento')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Evento -->
 <div class="modal-backdrop" id="modalEditarEvento">
     <div class="modal">
         <div class="modal-header">
-            <h3 class="modal-title"><i class="fa-solid fa-calendar-day"></i> Detalle de Evento</h3>
-            <button type="button" class="modal-close" onclick="cerrarModal('modalEditarEvento')"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="modal-title">Editar Evento Editorial</h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalEditarEvento')">&times;</button>
         </div>
         <form method="POST" id="formEditarEvento">
             <?= csrfField() ?>
-            <input type="hidden" name="_accion" id="e_accion" value="editar_evento">
+            <input type="hidden" name="_accion" value="editar_evento" id="e_accion">
             <input type="hidden" name="evento_id" id="e_evento_id">
-            <input type="hidden" name="es_institucional" id="e_es_institucional">
             <div class="modal-body">
                 <div class="form-group mb-16">
                     <label class="form-label">Título</label>
@@ -774,20 +854,29 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 </div>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;" class="mb-16">
                     <div class="form-group">
-                        <label class="form-label">Inicio</label>
-                        <input type="date" name="fecha_inicio" id="e_fecha_inicio" class="form-control" required>
+                        <label class="form-label">Desde</label>
+                        <input type="datetime-local" name="fecha_inicio" id="e_fecha_inicio" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Fin</label>
-                        <input type="date" name="fecha_fin" id="e_fecha_fin" class="form-control" required>
+                        <label class="form-label">Hasta</label>
+                        <input type="datetime-local" name="fecha_fin" id="e_fecha_fin" class="form-control" required>
                     </div>
                 </div>
+                <div class="form-group mb-16">
+                    <label class="form-label">Color</label>
+                    <input type="color" name="color" id="e_color" class="form-control" style="height:40px;">
+                </div>
+                <div class="form-group">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" name="publico" id="e_publico"> Mostrar en Calendario Público
+                    </label>
+                </div>
             </div>
-            <div class="modal-footer d-flex justify-content-between" id="footerEditarEvento">
-                <button type="button" class="btn btn-danger" onclick="eliminarEvento()" id="btnEliminarEvento">Eliminar</button>
+            <div class="modal-footer" style="display:flex; justify-content:space-between;">
+                <button type="button" class="btn btn-outline" style="color:red; border-color:red;" onclick="eliminarEvento()">Eliminar</button>
                 <div>
                     <button type="button" class="btn btn-outline" onclick="cerrarModal('modalEditarEvento')">Cerrar</button>
-                    <button type="submit" class="btn btn-primary" id="btnActualizarEvento">Actualizar</button>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
                 </div>
             </div>
         </form>
@@ -900,18 +989,10 @@ function abrirModalCrearDesdeCelda(ini, fin) {
     abrirModal('modalCrearEvento');
 }
 function abrirModalVer(titulo, desc, ini, fin) {
-    document.getElementById('e_titulo').value = titulo;
-    document.getElementById('e_titulo').readOnly = true;
-    document.getElementById('e_descripcion').value = desc;
-    document.getElementById('e_descripcion').readOnly = true;
-    document.getElementById('e_fecha_inicio').value = ini;
-    document.getElementById('e_fecha_inicio').readOnly = true;
-    document.getElementById('e_fecha_fin').value = fin;
-    document.getElementById('e_fecha_fin').readOnly = true;
-    document.getElementById('e_publico').disabled = true;
-    document.getElementById('btnEliminarEvento').style.display = 'none';
-    document.getElementById('btnActualizarEvento').style.display = 'none';
-    abrirModal('modalEditarEvento');
+    document.getElementById('v_titulo').textContent = titulo;
+    document.getElementById('v_horario').textContent = ini + ' - ' + fin;
+    document.getElementById('v_descripcion').textContent = desc || 'Sin detalles adicionales registrados.';
+    abrirModal('modalVerEvento');
 }
 function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
     document.getElementById('mc_nombre').textContent = nombre;

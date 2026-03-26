@@ -199,6 +199,7 @@ if (isset($_SESSION['user_area'])) {
         </div>
         <?php endif; ?>
 
+        <?php if (!($slug_menu === 'difusion' && $activeMenu === 'calendario')): ?>
         <div class="nav-group">
             <span class="nav-group-label">Acceso Publico</span>
             <a href="<?= BASE_URL ?>public/index.php" target="_blank" class="nav-link">
@@ -206,6 +207,7 @@ if (isset($_SESSION['user_area'])) {
                 <span>Vista Intranet</span>
             </a>
         </div>
+        <?php endif; ?>
     </nav>
 
     <?php require_once __DIR__ . '/sidebar_footer.php'; ?>
