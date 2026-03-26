@@ -250,7 +250,7 @@ if ($accion === 'admins') {
                 UPPER(SUBSTRING(p.nombre FROM 1 FOR 1)) AS inicial
          FROM cat_personal p
          LEFT JOIN administradores a ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
-         WHERE p.cve_area = ? AND p.habilitado = true
+         WHERE p.cve_area = ? AND p.activo = true
          ORDER BY p.nombre"
     );
     $stmt->execute([$cveArea]);

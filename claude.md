@@ -212,3 +212,7 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Causa**: Error de sintaxis SQL en todos los archivos `api/chat.php`. Se intentaba usar la columna inexistente `id_personal` en lugar de `cve_personal` para las uniones con `cat_personal`.
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
+
+- **Error `Lista de DMs vacía / Chat sin branding por área` (2026-03-26)**:
+  - **Causa**: La consulta de miembros usaba la columna `habilitado` (inexistente) en lugar de `activo`. Además, el título "Equipo TI" estaba fijo en el HTML.
+  - **Solución**: Corrección masiva de `habilitado` → `activo` en 21 archivos. Se implementó la variable `$chat_area_label` en `header_admin.php` para inyectar dinámicamente el nombre del área en el encabezado y subtextos del chat.

@@ -77,6 +77,14 @@ try {
 } catch (Throwable $e) {
     error_log("[Header] Fallo al contar solicitudes: " . $e->getMessage());
 }
+
+// Personalización de Chat por Área
+$chat_area_label = 'Equipo TI';
+if (isset($_SESSION['user_area'])) {
+    $chat_area_label = 'Equipo de ' . $_SESSION['user_area'];
+} elseif (isset($_SESSION['admin_rol']) && $_SESSION['admin_rol'] !== 'sistemas') {
+    $chat_area_label = 'Administración';
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -239,7 +247,7 @@ try {
 
         <div style="padding:14px 12px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">
             <span style="font-size:0.8rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
-                <i class="fa-solid fa-comments"></i> Equipo TI
+                <i class="fa-solid fa-comments"></i> <?= $chat_area_label ?>
             </span>
             <span style="font-size:0.64rem; color:rgba(255,255,255,0.55); display:block; margin-top:2px;">COMECyT · Chat Interno</span>
         </div>
@@ -695,7 +703,7 @@ try {
             avatar.innerHTML  = '<i class="fa-solid fa-users" style="font-size:0.8rem;"></i>';
             avatar.style.background = 'linear-gradient(135deg,#662331,#8b2f42)';
             nombre.textContent = 'General';
-            sub.textContent    = 'Canal grupal · Equipo del área';
+            sub.textContent    = 'Canal grupal · <?= $chat_area_label ?>';
             document.getElementById('chatInput').placeholder = 'Escribe al equipo--';
         } else {
             // adminId es string con prefijo (ej. 'A5' o 'P12')
