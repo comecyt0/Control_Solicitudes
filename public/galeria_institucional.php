@@ -27,7 +27,7 @@ $archivos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $pageTitle = 'Galería Institucional COMECyT';
 $activeMenu = 'galeria';
-$hideSidebar = true;
+$hideSidebar = false;
 
 $extraHead = '<style>
 .galeria-hero {

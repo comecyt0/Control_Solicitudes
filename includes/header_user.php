@@ -71,8 +71,18 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
             </a>
             <a href="<?= BASE_URL ?>public/calendario.php"
                class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
-                <i class="fa-solid fa-calendar nav-icon"></i>
+                <i class="fa-solid fa-calendar-days nav-icon"></i>
                 <span>Calendario Institucional</span>
+            </a>
+            <a href="<?= BASE_URL ?>public/calendario.php?solicitar=1"
+               class="nav-link">
+                <i class="fa-solid fa-calendar-plus nav-icon" style="color: #b45309;"></i>
+                <span>Agendar Espacio</span>
+            </a>
+            <a href="<?= BASE_URL ?>public/galeria_institucional.php"
+               class="nav-link <?= $activeMenu === 'galeria' ? 'active' : '' ?>">
+                <i class="fa-solid fa-photo-film nav-icon"></i>
+                <span>Galería Institucional</span>
             </a>
         </div>
     </nav>

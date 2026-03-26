@@ -254,9 +254,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Distribución en Detalle (Grid Alignment)**: Los componentes de seguimiento (Chat, Notas) deben insertarse *dentro* del contenedor `.detail-layout` y utilizar `grid-column: 1 / -1` para asegurar que respeten los márgenes del sidebar y mantengan una visualización profesional de ancho completo.
 - **Fix Técnico (Estructura)**: Se corrigió una corrupción de etiquetas HTML (`</form>`, `</div>` duplicados) y la pérdida del `endif` de la lógica de estatus que causaba errores de sintaxis al final del archivo.
 
-## v9.2 - Acceso Rápido: Agendar Espacio
+## v9.3 - Navegación Unificada: Sidebar Público
 **Fecha**: 2026-03-26
 **Cambios**:
-- Adición de botón "Agendar Espacio" en el Hero del Hub Global (`public/index.php`).
-- Implementación de lógica JS en `public/calendario.php` para auto-abrir el modal de solicitud mediante el parámetro `?solicitar=1`.
-- Mejora de la experiencia de usuario centrada en la agilidad del trámite institucional.
+- Actualización de `includes/header_user.php` para incluir todos los accesos directos del Hub en el sidebar.
+- Habilitación del sidebar en `public/galeria_institucional.php` (anteriormente oculto).
+- Incursión de enlaces directos a "Agendar Espacio" y "Galería Institucional" en la navegación lateral persistente.
