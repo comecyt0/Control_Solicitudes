@@ -20,7 +20,7 @@ $stmtE = $pdo->query("SELECT COUNT(*) FROM eventos WHERE fecha_inicio >= CURRENT
 $proximosEventos = (int) $stmtE->fetchColumn();
 
 // Tareas del Área (DG)
-$stmtT = $pdo->query("SELECT COUNT(*) FROM df_tareas WHERE cve_area = 4 AND estatus != 'completada'");
+$stmtT = $pdo->query("SELECT COUNT(*) FROM sb_kanban_tareas WHERE cve_area = 4 AND estatus != 'completada'");
 $tareasPendientes = (int) $stmtT->fetchColumn();
 
 $pageTitle  = 'Dashboard de Dirección General';
