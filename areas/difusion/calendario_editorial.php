@@ -15,7 +15,9 @@ $pdo = getConnection();
 $mensajeFlash = '';
 $tipoFlash = '';
 $cveAreaUsuario  = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0);
-$cveAreaContexto = 6; // ÁREA FIJA: Departamento de Difusión de Ciencia y Tecnología
+// ÁREAS DE DIFUSIÓN: 6 (Heredado/Tareas), 16 (Personal real/Divulgación), 18 (Coordinación)
+$cveAreaContexto = 6; 
+$listaAreasDifusion = [6, 16, 18];
 $adminId         = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
 
 if ($cveAreaUsuario === 0) redirigir('public/hub.php');
@@ -42,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $idAutor = $checkAdmin->fetch() ? $adminId : null;
 
             // Insertar en tabla editorial (Siempre publico=false para esta vista editorial interna)
-            $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, FALSE)");
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $idAutor]);
+            $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area) VALUES (?, ?, ?, ?, ?, ?, FALSE, ?)");
+            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $idAutor, $cveAreaContexto]);
             
             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=evento_creado');
             exit;
@@ -186,8 +188,9 @@ $diaSemanaInicio = (int)$dtMes->format('N');
 $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
-// 1. Consultar eventos EDITORIALES (Propios del área)
-$stmt = $pdo->prepare("SELECT * FROM df_eventos_editoriales WHERE fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+// 1. Consultar eventos EDITORIALES (Propios del área/Unificado)
+$inAreas = implode(',', $listaAreasDifusion);
+$stmt = $pdo->prepare("SELECT * FROM df_eventos_editoriales WHERE cve_area IN ($inAreas) AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -238,27 +241,27 @@ if ($mes > 0 && $mes <= 12) {
     }
 }
 
-// 5. Consultar tareas KANBAN filtradas por ÁREA FIJA (Difusión)
+// 5. Consultar tareas KANBAN filtradas por ÁREA (Unificado)
 $listaTareas = ['pendiente' => [], 'en_proceso' => [], 'completada' => []];
 // Hybrid JOIN para soportar tanto Administradores como Personal como "asignado_a"
 $stmtT = $pdo->prepare("SELECT t.*, COALESCE(a.nombre, p.nombre) AS asignado_nombre 
          FROM sb_kanban_tareas t 
          LEFT JOIN administradores a ON t.asignado_a = a.id 
          LEFT JOIN cat_personal p ON t.asignado_a = p.cve_personal 
-         WHERE t.cve_area = ? 
+         WHERE t.cve_area IN ($inAreas) 
          ORDER BY t.estatus DESC, t.id DESC");
-$stmtT->execute([$cveAreaContexto]);
+$stmtT->execute();
 $tareas = $stmtT->fetchAll(PDO::FETCH_ASSOC);
 foreach ($tareas as $t) {
     if (isset($listaTareas[$t['estatus']])) $listaTareas[$t['estatus']][] = $t;
     else $listaTareas['pendiente'][] = $t;
 }
 
-// 6. Admins / Personal para asignación (Difusión usa IDs 6 y 18 en cat_personal)
+// 6. Admins / Personal para asignación (Unifica 6, 16 y 18 para mostrar a todo el equipo)
 $stmtAdmins = $pdo->prepare("SELECT p.cve_personal AS id, 
                 CONCAT(p.nombre, ' ', p.appat, ' ', p.apmat) AS nombre 
          FROM cat_personal p
-         WHERE p.activo = true AND p.cve_area IN (6, 18) 
+         WHERE p.activo = true AND p.cve_area IN ($inAreas) 
          ORDER BY p.nombre ASC");
 $stmtAdmins->execute();
 $adminsDisponibles = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);

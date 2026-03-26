@@ -215,6 +215,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
+- **🚨 Unificación de Áreas Difusión (v7.9, 2026-03-26)**:
+    - **Problema**: El equipo de Difusión está repartido en IDs de área inconsistentes (`16` para personal, `6` para tareas heredadas). Esto causaba que el selector de personal apareciera vacío.
+    - **Solución**: Se implementó una lógica de "Áreas Unificadas" ([6, 16, 18]) en todos los filtros de `calendario_editorial.php`. Se corrigió el `INSERT` de eventos editoriales para que asigne correctamente el `cve_area`.
 - **🚨 Pulido Calendario Editorial (v7.8, 2026-03-26)**:
     - **Privacidad**: Eliminación del checkbox "Mostrar en calendario público" (HTML/JS) y forzado de `publico=FALSE` en el backend para procesos editoriales internos.
     - **Colores**: Se añadieron selectores de color en los modales de creación (Eventos y Kanban). Se corrigió la persistencia de color en los modales de edición (JS `abrirModal`).
