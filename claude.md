@@ -218,8 +218,6 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Corrección masiva de `habilitado` → `activo` en 21 archivos. Se implementó la variable `$chat_area_label` en `header_admin.php` para inyectar dinámicamente el nombre del área en el encabezado y subtextos del chat.
 
 - **Error `Mensajes no se guardan en áreas departamentales` (IMPORTANTE) (2026-03-26)**:
-  - **Causa**: La tabla `sb_chat_mensajes` tenía un *Foreign Key* (`usuario_id`) que apuntaba a la columna inexistente `id_personal` en `cat_personal`, causando fallos silenciosos en el `INSERT` para usuarios no-administradores.
-  - **Solución**: Se eliminaron las restricciones obsoletas y se recrearon apuntando correctamente a `cve_personal`.
-    ```sql
-    ALTER TABLE sb_chat_mensajes ADD CONSTRAINT sb_chat_mensajes_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES cat_personal(cve_personal) ON DELETE SET NULL;
-    ```
+  - **Causa 1 (Esquema)**: La tabla `sb_chat_mensajes` tenía un *Foreign Key* (`usuario_id`) que apuntaba a la columna inexistente `id_personal` en `cat_personal`, causando fallos silenciosos en el `INSERT` para usuarios no-administradores.
+  - **Causa 2 (Ruteo - "Difusión Trap")**: La lógica de inicio de sesión no mapeaba correctamente los IDs de área a Slugs, forzando a todos los usuarios departamentales al dashboard de Difusión (área 6) mientras su chat seguía filtrado por su área real (ej: 16). Esto hacía que el chat pareciera vacío.
+  - **Solución**: Se eliminaron las restricciones obsoletas y se recrearon apuntando a `cve_personal`. Se implementó un `slugMap` en `auth.php` para garantizar que cada usuario llegue a su dashboard correcto con el contexto de chat adecuado.

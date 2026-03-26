@@ -210,11 +210,39 @@ function iniciarSesionUsuario(string $email, string $password): bool
     session_regenerate_id(true);
 
     $nombreCompleto = trim($user['nombre'] . ' ' . $user['appat'] . ' ' . $user['apmat']);
+    $cveArea = (int)($user['cve_area'] ?? 6);
+
+    // Mapeo de Slugs por Area (Arquitectura v5.2)
+    $slugMap = [
+        1  => 'sistemas',
+        2  => 'secretaria_particular',
+        3  => 'secretaria_tecnica',
+        4  => 'direccion_general',
+        5  => 'administracion_finanzas',
+        6  => 'difusion',
+        7  => 'planeacion_evaluacion',
+        8  => 'juridico_igualdad',
+        9  => 'apoyo_investigacion',
+        10 => 'desarrollo_vinculacion',
+        11 => 'comunicacion_social',
+        12 => 'archivo',
+        13 => 'vinculacion',
+        14 => 'investigacion_cientifica',
+        15 => 'formacion_rrhh',
+        16 => 'desarrollo_tecnologico',
+        17 => 'financiamiento',
+        18 => 'financiamiento_divulgacion',
+        19 => 'juridico',
+        20 => 'atencion_ciudadana'
+    ];
+    $slugActivo = $slugMap[$cveArea] ?? 'difusion';
 
     $_SESSION['user_id']       = $user['id'];
     $_SESSION['user_nombre']   = $nombreCompleto;
     $_SESSION['user_email']    = $user['email'];
-    $_SESSION['user_cve_area'] = $user['cve_area'] ?? 1;
+    $_SESSION['user_cve_area'] = $cveArea;
+    $_SESSION['area_id']       = $cveArea;
+    $_SESSION['area_slug_activa'] = $slugActivo;
     $_SESSION['user_area']     = $user['des_area'] ?? 'General';
     $_SESSION['user_foto']     = $user['foto_perfil'] ?? null;
     $_SESSION['ultimo_acceso'] = time();
