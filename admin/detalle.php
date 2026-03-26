@@ -495,33 +495,76 @@ require_once __DIR__ . '/../includes/header_admin.php';
 </div>
 <?php endif; ?>
 
-<!-- Sección de Comentarios Internos -->
-<div class="card" style="margin-top:20px; border-left:4px solid var(--color-primary);">
-    <div class="card-header">
-        <h2 class="card-title">
-            <i class="fa-solid fa-comments"></i>
-            Notas Internas del Equipo TI
+    <!-- Notas Internas del equipo (Colapsable) -->
+    <details style="margin-top:16px; border:1px solid #e2e8f0; border-radius:var(--radius-md);">
+        <summary style="padding:10px 14px; cursor:pointer; font-weight:600; color:var(--text-muted); font-size:13px; background:#f8fafc;">
+            <i class="fa-solid fa-lock" style="margin-right:6px;"></i> Notas Internas de Gestión (Solo Staff)
+        </summary>
+        <div style="padding:16px;">
+            <div id="comentariosLista" style="margin-bottom:12px;"></div>
+            <form id="formComentario" style="display:flex; gap:8px;">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
+                <input type="text" id="nuevoComentario" name="comentario" class="form-control" placeholder="Añadir nota interna rápida..." style="height:36px; font-size:13px;">
+                <button type="submit" class="btn btn-primary btn-sm" id="btnAgregarComentario">Guardar</button>
+            </form>
+        </div>
+    </details>
+</div>
+
+<!-- CANAL DE COMUNICACIÓN (RETROALIMENTACIÓN) -->
+<div class="card" style="margin-top:20px; border-top: 4px solid var(--color-primary); display: flex; flex-direction: column; height: 500px;">
+    <div class="card-header" style="border-bottom: 1px solid #eee; padding: 12px 20px; background: linear-gradient(to right, #fff, #fbfbfb);">
+        <h2 class="card-title" style="font-size: 1rem; color: var(--color-primary);">
+            <i class="fa-solid fa-comments"></i> Canal de Comunicación con el Solicitante
         </h2>
-        <span class="badge" style="background:rgba(102,35,49,0.1);color:var(--color-primary);border:1px solid rgba(102,35,49,0.2);font-size:0.7rem;">Solo admins</span>
+        <div class="d-flex align-center gap-8">
+            <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:10px;">Enlace Directo</span>
+        </div>
+    </div>
+    
+    <!-- Area de Chat -->
+    <div id="retroLista" style="flex: 1; overflow-y: auto; padding: 20px; background: #fafafa; display: flex; flex-direction: column; gap: 4px;">
+        <!-- Mensajes dinámicos -->
     </div>
 
-    <!-- Lista de comentarios -->
-    <div id="comentariosLista" style="margin-bottom:16px;"></div>
-
-    <!-- Formulario de nuevo comentario -->
-    <form id="formComentario" style="display:flex;gap:10px;align-items:flex-end;">
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
-        <div style="flex:1;">
-            <label class="form-label" for="nuevoComentario">Agregar nota interna</label>
-            <textarea id="nuevoComentario" name="comentario" class="form-control" rows="2"
-                      placeholder="Escribe una nota solo visible al equipo de TI..."
-                      maxlength="2000" style="resize:vertical;"></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary" id="btnAgregarComentario">
-            <i class="fa-solid fa-paper-plane"></i> Enviar
-        </button>
-    </form>
+    <!-- Input de Chat -->
+    <div style="padding: 16px; background: #fff; border-top: 1px solid #eee;">
+        <form id="formRetro" style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; gap: 8px;">
+                <textarea id="retroMensaje" class="form-control" rows="1" placeholder="Enviar mensaje al ciudadano..." 
+                          style="flex: 1; resize: none; border-radius: 20px; padding: 10px 18px; line-height: 1.4; border-color: #e2e8f0;"></textarea>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <label for="retroArchivo" class="btn btn-outline" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-color: #cbd5e1; color: #64748b;" title="Adjuntar archivo">
+                        <i class="fa-solid fa-paperclip"></i>
+                    </label>
+                    <input type="file" id="retroArchivo" style="display: none;">
+                    <button type="submit" id="btnEnviarRetro" class="btn btn-primary" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="filePreview" style="display: none; font-size: 0.75rem; color: var(--color-primary); padding-left: 10px;">
+                <i class="fa-solid fa-paperclip"></i> <b>Archivo seleccionado:</b> <span id="fileName"></span>
+                <button type="button" onclick="document.getElementById('retroArchivo').value=''; document.getElementById('filePreview').style.display='none';" style="border:none; background:none; color:#ef4444; margin-left:8px; cursor:pointer;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<script>
+// Manejo de preview de archivo
+document.getElementById('retroArchivo').addEventListener('change', function() {
+    const preview = document.getElementById('filePreview');
+    const nameSpan = document.getElementById('fileName');
+    if (this.files && this.files[0]) {
+        nameSpan.textContent = this.files[0].name;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+});
 
 <script>
 // ── Comentarios internos ────────────────────────────────────────
@@ -541,191 +584,93 @@ if (typeof COMECyTUI === 'undefined') {
     };
 }
 
-function cargarComentarios() {
-    fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php?solicitud_id=' + SOLICITUD_ID_COMENTARIOS)
+// ── Retroalimentación y Seguimiento (Chat Público-Admin) ──────
+function cargarRetroalimentacion() {
+    fetch(BASE_URL_COMENTARIOS + 'public/api/comentarios_solicitud.php?accion=listar&solicitud_id=' + SOLICITUD_ID_COMENTARIOS)
         .then(r => r.json())
         .then(data => {
-            const lista = document.getElementById('comentariosLista');
+            const lista = document.getElementById('retroLista');
             if (!data.ok) return;
             if (!data.comentarios.length) {
-                lista.innerHTML = '<p class="text-muted fs-sm" style="padding:8px 0;">Sin notas internas aún.</p>';
+                lista.innerHTML = '<p class="text-muted fs-sm" style="padding:15px; text-align:center;">No hay mensajes de seguimiento aún.</p>';
                 return;
             }
-            lista.innerHTML = data.comentarios.map(c => `
-                <div data-cid="${c.id}" style="background:var(--bg-muted);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:10px;">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-                        <div>
-                            <span style="font-size:0.78rem;font-weight:700;color:var(--color-primary);">
-                                <i class="fa-solid fa-user"></i> ${c.admin_nombre}
-                            </span>
-                            <span class="text-muted" style="font-size:0.72rem;margin-left:8px;">${c.fecha_fmt}</span>
+            lista.innerHTML = data.comentarios.map(c => {
+                const esAdmin = c.remitente_tipo === 'admin';
+                const alineacion = esAdmin ? 'flex-end' : 'flex-start';
+                const bg = esAdmin ? 'linear-gradient(135deg,#662331,#8b2f42)' : '#f3f4f6';
+                const color = esAdmin ? '#fff' : '#111827';
+                const radius = esAdmin ? '14px 14px 2px 14px' : '14px 14px 14px 2px';
+
+                let adjuntoHtml = '';
+                if (c.archivo_url) {
+                    const ext = c.archivo_nombre.split('.').pop().toLowerCase();
+                    const isImg = ['jpg','jpeg','png'].includes(ext);
+                    adjuntoHtml = `
+                        <div style="margin-top:8px; border-top:1px solid ${esAdmin ? 'rgba(255,255,255,0.2)' : '#e5e7eb'}; padding-top:8px;">
+                            <a href="${c.archivo_url}" target="_blank" style="color:${esAdmin ? '#fff' : 'var(--color-primary)'}; text-decoration:none; font-size:0.75rem; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid ${isImg ? 'fa-image' : 'fa-file-pdf'}"></i>
+                                ${c.archivo_nombre.substring(0, 20)}...
+                            </a>
                         </div>
-                        <button onclick="eliminarComentario(${c.id})" class="btn btn-outline btn-sm" style="padding:3px 7px;color:#F87171;border:none;"
-                                title="Eliminar mi nota"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                    <p style="margin:0;font-size:0.88rem;color:var(--text-primary);line-height:1.5;white-space:pre-wrap;">${escapeHtml(c.comentario)}</p>
-                </div>
-            `).join('');
-        })
-        .catch(() => {});
-}
+                    `;
+                }
 
-function escapeHtml(t) {
-    const d = document.createElement('div');
-    d.textContent = t;
-    return d.innerHTML;
-}
-
-function eliminarComentario(id) {
-    COMECyTUI.confirm('¿Deseas eliminar esta nota interna permanentemente?', () => {
-        const fd = new FormData();
-        fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-        fd.append('accion', 'eliminar');
-        fd.append('comentario_id', id);
-        fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php', { method:'POST', body:fd })
-            .then(r => r.json())
-            .then(d => { if (d.ok) cargarComentarios(); })
-            .catch(() => {});
-    }, null, { titulo: 'Eliminar Nota' });
-}
-
-document.getElementById('formComentario').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const textarea = document.getElementById('nuevoComentario');
-    const texto = textarea.value.trim();
-    if (!texto) return;
-    const btn = document.getElementById('btnAgregarComentario');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-    fd.append('accion', 'agregar');
-    fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
-    fd.append('comentario', texto);
-
-    fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php', { method:'POST', body:fd })
-        .then(r => r.json())
-        .then(d => {
-            if (d.ok) {
-                textarea.value = '';
-                cargarComentarios();
-            } else {
-                COMECyTUI.alert(d.error || 'No se pudo guardar la nota interna.', 'Error');
-            }
-        })
-        .catch(() => COMECyTUI.toast('Error de conexión con el servidor', 'error'))
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar';
-        });
-});
-
-// Plantillas de respuesta
-function aplicarPlantilla(contenido) {
-    if (contenido) {
-        document.getElementById('comentario').value = contenido;
-    }
-}
-
-// ── Gestión de Evidencias ───────────────────────────────────────
-function cargarEvidencias() {
-    fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php?solicitud_id=' + SOLICITUD_ID_COMENTARIOS)
-        .then(r => r.json())
-        .then(data => {
-            const lista = document.getElementById('evidenciasLista');
-            if (!data.ok || !data.evidencias.length) {
-                lista.innerHTML = '<p class="text-muted fs-sm" style="grid-column: 1/-1; text-align: center; padding: 10px;">Sin evidencias cargadas.</p>';
-                return;
-            }
-            lista.innerHTML = data.evidencias.map(e => {
-                const isImg = ['jpg','jpeg','png'].includes(e.archivo_nombre.split('.').pop().toLowerCase());
                 return `
-                <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; background: #fff; position: relative;">
-                    <div style="display: flex; align-items: flex-start; gap: 10px;">
-                        <div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--color-primary);">
-                            <i class="fa-solid ${isImg ? 'fa-image' : 'fa-file-lines'}"></i>
+                <div style="display:flex; flex-direction:column; align-items:${alineacion}; margin-bottom:12px; max-width:100%;">
+                    <div style="background:${bg}; color:${color}; border-radius:${radius}; padding:10px 14px; max-width:85%; box-shadow:var(--shadow-sm);">
+                        <div style="font-size:0.65rem; opacity:0.8; margin-bottom:4px; font-weight:700; display:flex; justify-content:space-between; gap:10px;">
+                            <span>${c.nombre_remitente}</span>
+                            <span>${c.fecha_fmt}</span>
                         </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="font-size: 0.75rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${e.archivo_nombre}">
-                                ${e.archivo_nombre.substring(0, 15)}...
-                            </div>
-                            <div class="text-muted" style="font-size: 0.65rem;">${e.fecha_fmt}</div>
-                        </div>
-                    </div>
-                    ${e.comentario ? `<p style="font-size: 0.7rem; color: #64748b; margin: 8px 0; line-height: 1.2;">${escapeHtml(e.comentario)}</p>` : ''}
-                    <div style="display: flex; gap: 5px; margin-top: 8px;">
-                        <a href="${e.url}" target="_blank" class="btn btn-sm btn-outline" style="flex: 1; padding: 2px; font-size: 0.65rem;">Ver</a>
-                        <button onclick="eliminarEvidencia(${e.id})" class="btn btn-sm btn-outline" style="padding: 2px 6px; font-size: 0.65rem; color: #ef4444; border-color: #fca5a5;">
-                             <i class="fa-solid fa-trash-can"></i>
-                        </button>
+                        <p style="margin:0; font-size:0.85rem; line-height:1.4; white-space:pre-wrap;">${escapeHtml(c.mensaje)}</p>
+                        ${adjuntoHtml}
                     </div>
                 </div>
                 `;
             }).join('');
+            lista.scrollTop = lista.scrollHeight;
         });
 }
 
-function eliminarEvidencia(id) {
-    COMECyTUI.confirm('¿Seguro que deseas eliminar esta evidencia? Se borrará el archivo físicamente del servidor.', () => {
-        const fd = new FormData();
-        fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-        fd.append('accion', 'eliminar');
-        fd.append('evidencia_id', id);
-        fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
-            .then(r => r.json())
-            .then(d => { if (d.ok) cargarEvidencias(); });
-    }, null, { titulo: 'Borrar Evidencia' });
-}
+document.getElementById('formRetro').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnEnviarRetro');
+    const msg = document.getElementById('retroMensaje').value.trim();
+    const fileInput = document.getElementById('retroArchivo');
+    
+    if (!msg && !fileInput.files.length) return;
 
-function abrirModalEvidencia() {
-    console.log('Abriendo modal de evidencia...');
-    try {
-        COMECyTUI.prompt('Ingresa una descripción breve o comentario para esta evidencia:', (comentario) => {
-            console.log('Comentario recibido: ' + comentario);
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.jpg,.jpeg,.png,.pdf,.docx,.doc,.xls,.xlsx,.zip';
-            input.onchange = e => {
-                const file = e.target.files[0];
-                if (!file) {
-                    console.log('Carga cancelada: no hay archivo.');
-                    return;
-                }
-                
-                const fd = new FormData();
-                fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-                fd.append('accion', 'agregar');
-                fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
-                fd.append('comentario', comentario);
-                fd.append('archivo', file);
-                
-                COMECyTUI.toast('Subiendo archivo...', 'info');
-                fetch(BASE_URL_COMENTARIOS + 'admin/api/evidencias.php', { method:'POST', body:fd })
-                    .then(r => r.json())
-                    .then(d => {
-                        if (d.ok) {
-                            COMECyTUI.toast('Evidencia guardada exitosamente', 'success');
-                            cargarEvidencias();
-                        } else {
-                            COMECyTUI.alert(d.error, 'Error de Carga');
-                        }
-                    })
-                    .catch(() => COMECyTUI.toast('Error de conexión', 'error'));
-            };
-            input.click();
-        }, { titulo: 'Nueva Evidencia', placeholder: 'Ej. Reporte técnico inicial...' });
-    } catch (e) {
-        console.error('Fallo crítico al abrir modal:', e);
-        // Fallback al nativo si todo falla
-        let c = prompt('Error en UI. Comentario para evidencia:');
-        if (c !== null) { /* lógica manual rápida */ }
-    }
-}
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    const fd = new FormData();
+    fd.append('accion', 'enviar');
+    fd.append('solicitud_id', SOLICITUD_ID_COMENTARIOS);
+    fd.append('mensaje', msg);
+    if (fileInput.files[0]) fd.append('archivo', fileInput.files[0]);
+
+    fetch(BASE_URL_COMENTARIOS + 'public/api/comentarios_solicitud.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(d => {
+            if (d.ok) {
+                document.getElementById('retroMensaje').value = '';
+                fileInput.value = '';
+                cargarRetroalimentacion();
+            } else {
+                COMECyTUI.alert(d.error, 'Error');
+            }
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        });
+});
 
 // Cargar datos iniciales
 cargarComentarios();
 cargarEvidencias();
+cargarRetroalimentacion();
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -417,6 +417,163 @@ if ($usuariologueado) {
         </div>
     </div>
     <?php endif; ?>
+
+    <!-- CANAL DE COMUNICACIÓN (RETROALIMENTACIÓN) -->
+    <div class="card" style="margin-top:20px; border-top: 4px solid var(--color-primary); display: flex; flex-direction: column; height: 500px;">
+        <div class="card-header" style="border-bottom: 1px solid #eee; padding: 12px 20px; background: linear-gradient(to right, #fff, #fbfbfb);">
+            <h2 class="card-title" style="font-size: 1rem; color: var(--color-primary);">
+                <i class="fa-solid fa-comments"></i> Comunicación con el Personal de Atención
+            </h2>
+            <div class="d-flex align-center gap-8">
+                <span class="badge" style="background:#f1f5f9; color:#64748b; font-size:10px;">Enlace Directo</span>
+            </div>
+        </div>
+        
+        <!-- Area de Chat -->
+        <div id="retroLista" style="flex: 1; overflow-y: auto; padding: 20px; background: #fafafa; display: flex; flex-direction: column; gap: 4px;">
+            <p class="text-muted fs-sm" style="padding:15px; text-align:center;">Cargando mensajes...</p>
+        </div>
+
+        <!-- Input de Chat -->
+        <div style="padding: 16px; background: #fff; border-top: 1px solid #eee;">
+            <form id="formRetro" style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; gap: 8px;">
+                    <textarea id="retroMensaje" class="form-control" rows="1" placeholder="Enviar mensaje o consulta..." 
+                              style="flex: 1; resize: none; border-radius: 20px; padding: 10px 18px; line-height: 1.4; border-color: #e2e8f0;"></textarea>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label for="retroArchivo" class="btn btn-outline" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-color: #cbd5e1; color: #64748b;" title="Adjuntar archivo">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </label>
+                        <input type="file" id="retroArchivo" style="display: none;">
+                        <button type="submit" id="btnEnviarRetro" class="btn btn-primary" style="border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="filePreview" style="display: none; font-size: 0.75rem; color: var(--color-primary); padding-left: 10px;">
+                    <i class="fa-solid fa-paperclip"></i> <b>Archivo seleccionado:</b> <span id="fileName"></span>
+                    <button type="button" onclick="document.getElementById('retroArchivo').value=''; document.getElementById('filePreview').style.display='none';" style="border:none; background:none; color:#ef4444; margin-left:8px; cursor:pointer;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    const SOLICITUD_ID_RETRO = <?= (int)$resultado['id'] ?>;
+    const FOLIO_RETRO = '<?= esc($resultado['folio']) ?>';
+    const API_URL_RETRO = '<?= BASE_URL ?>public/api/comentarios_solicitud.php';
+
+    function escapeHtml(t) {
+        if (!t) return '';
+        const d = document.createElement('div');
+        d.textContent = t;
+        return d.innerHTML;
+    }
+
+    function cargarRetroalimentacion() {
+        fetch(`${API_URL_RETRO}?accion=listar&solicitud_id=${SOLICITUD_ID_RETRO}&folio=${FOLIO_RETRO}`)
+            .then(r => r.json())
+            .then(data => {
+                const lista = document.getElementById('retroLista');
+                if (!data.ok) {
+                    lista.innerHTML = `<p class="text-error" style="padding:15px;">${data.error}</p>`;
+                    return;
+                }
+                if (!data.comentarios.length) {
+                    lista.innerHTML = '<p class="text-muted fs-sm" style="padding:15px; text-align:center;">No hay mensajes aún.</p>';
+                    return;
+                }
+                lista.innerHTML = data.comentarios.map(c => {
+                    const esAdmin = c.remitente_tipo === 'admin';
+                    const alineacion = esAdmin ? 'flex-start' : 'flex-end';
+                    const bg = esAdmin ? '#f3f4f6' : 'linear-gradient(135deg,#662331,#8b2f42)';
+                    const color = esAdmin ? '#111827' : '#fff';
+                    const radius = esAdmin ? '14px 14px 14px 2px' : '14px 14px 2px 14px';
+
+                    let adjuntoHtml = '';
+                    if (c.archivo_url) {
+                        const ext = c.archivo_nombre.split('.').pop().toLowerCase();
+                        const isImg = ['jpg','jpeg','png'].includes(ext);
+                        adjuntoHtml = `
+                            <div style="margin-top:8px; border-top:1px solid ${esAdmin ? '#e5e7eb' : 'rgba(255,255,255,0.2)'}; padding-top:8px;">
+                                <a href="${c.archivo_url}" target="_blank" style="color:${esAdmin ? 'var(--color-primary)' : '#fff'}; text-decoration:none; font-size:0.75rem; display:flex; align-items:center; gap:6px;">
+                                    <i class="fa-solid ${isImg ? 'fa-image' : 'fa-file-pdf'}"></i>
+                                    ${c.archivo_nombre.substring(0, 20)}...
+                                </a>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                    <div style="display:flex; flex-direction:column; align-items:${alineacion}; margin-bottom:12px; max-width:100%;">
+                        <div style="background:${bg}; color:${color}; border-radius:${radius}; padding:10px 14px; max-width:85%; box-shadow:var(--shadow-sm);">
+                            <div style="font-size:0.65rem; opacity:0.8; margin-bottom:4px; font-weight:700; display:flex; justify-content:space-between; gap:10px;">
+                                <span>${esAdmin ? 'Sistemas/Admin' : 'Usted'}</span>
+                                <span>${c.fecha_fmt}</span>
+                            </div>
+                            <p style="margin:0; font-size:0.85rem; line-height:1.4; white-space:pre-wrap;">${escapeHtml(c.mensaje)}</p>
+                            ${adjuntoHtml}
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                lista.scrollTop = lista.scrollHeight;
+            });
+    }
+
+    document.getElementById('retroArchivo').addEventListener('change', function() {
+        const preview = document.getElementById('filePreview');
+        const nameSpan = document.getElementById('fileName');
+        if (this.files && this.files[0]) {
+            nameSpan.textContent = this.files[0].name;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+
+    document.getElementById('formRetro').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnEnviarRetro');
+        const msg = document.getElementById('retroMensaje').value.trim();
+        const fileInput = document.getElementById('retroArchivo');
+        
+        if (!msg && !fileInput.files.length) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        const fd = new FormData();
+        fd.append('accion', 'enviar');
+        fd.append('solicitud_id', SOLICITUD_ID_RETRO);
+        fd.append('folio', FOLIO_RETRO);
+        fd.append('mensaje', msg);
+        if (fileInput.files[0]) fd.append('archivo', fileInput.files[0]);
+
+        fetch(API_URL_RETRO, { method:'POST', body:fd })
+            .then(r => r.json())
+            .then(d => {
+                if (d.ok) {
+                    document.getElementById('retroMensaje').value = '';
+                    fileInput.value = '';
+                    document.getElementById('filePreview').style.display = 'none';
+                    cargarRetroalimentacion();
+                } else {
+                    alert(d.error);
+                }
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+            });
+    });
+
+    cargarRetroalimentacion();
+    // Auto recarga cada 30 seg
+    setInterval(cargarRetroalimentacion, 30000);
+    </script>
     <?php endif; ?>
 
 </div>

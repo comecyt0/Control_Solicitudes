@@ -2,6 +2,7 @@
 
 ## Visión General
 Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite a usuarios externos solicitar espacios de calendario y a administradores gestionar dichas solicitudes.
+- **Chat de Solicitudes (Retroalimentación)**: Sistema de comunicación bidireccional entre ciudadanos (público) y personal (admin) dentro de cada solicitud, con soporte para carga de documentos.
 
 ## Credenciales de Acceso Actuales
 - **Administrador principal**: `desarrollo.comecyt@edomex.gob.mx` / `F3rn4nd0`
@@ -10,9 +11,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 
 ## Arquitectura
 - **Backend**: PHP 8.1 (Vanilla)
-- **Base de Datos**: PostgreSQL 15
+- **Base de Datos**: PostgreSQL 15 (Tablas: `solicitudes`, `sb_chat_mensajes`, `solicitud_respuestas`)
 - **Servidor**: Apache (Dockerizado)
 - **Frontend**: HTML5, Vanilla CSS, JS (ES6+)
+- **Nuevas APIs**: `public/api/comentarios_solicitud.php` (Seguimiento externo con folio).
 - **Infraestructura**: Docker + Docker Compose
 
 ## Estructura de Carpetas
@@ -221,3 +223,7 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Causa 1 (Esquema)**: La tabla `sb_chat_mensajes` tenía un *Foreign Key* (`usuario_id`) que apuntaba a la columna inexistente `id_personal` en `cat_personal`, causando fallos silenciosos en el `INSERT` para usuarios no-administradores.
   - **Causa 2 (Ruteo - "Difusión Trap")**: La lógica de inicio de sesión no mapeaba correctamente los IDs de área a Slugs, forzando a todos los usuarios departamentales al dashboard de Difusión (área 6) mientras su chat seguía filtrado por su área real (ej: 16). Esto hacía que el chat pareciera vacío.
   - **Solución**: Se eliminaron las restricciones obsoletas y se recrearon apuntando a `cve_personal`. Se implementó un `slugMap` en `auth.php` para garantizar que cada usuario llegue a su dashboard correcto con el contexto de chat adecuado.
+
+- **Nuevo: Sistema de Retroalimentación de Solicitudes (2026-03-26)**:
+  - **Componentes**: Tabla `solicitud_respuestas`, API unificada `public/api/comentarios_solicitud.php`.
+  - **Funcionalidad**: Chat paralelo a las notas internas que permite adjuntar archivos entre solicitante (vía folio) y administrador de sistemas.
