@@ -102,12 +102,12 @@ if ($accion === 'listar') {
                                SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', COALESCE('A' || r.admin_id, 'P' || r.usuario_id), 'nombre', COALESCE(ra.nombre, rp.nombre)))
                                FROM sb_chat_reacciones r
                                LEFT JOIN administradores ra ON ra.id = r.admin_id
-                               LEFT JOIN cat_personal rp ON rp.id_personal = r.usuario_id
+                               LEFT JOIN cat_personal rp ON rp.cve_personal = r.usuario_id
                                WHERE r.mensaje_id = m.id
                            ) as reacciones
                     FROM sb_chat_mensajes m
                     LEFT JOIN administradores a ON a.id = m.admin_id
-                    LEFT JOIN cat_personal p2 ON p2.id_personal = m.usuario_id
+                    LEFT JOIN cat_personal p2 ON p2.cve_personal = m.usuario_id
                     LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
                     WHERE $where
                     ORDER BY m.id DESC
@@ -128,12 +128,12 @@ if ($accion === 'listar') {
                            SELECT json_agg(json_build_object('emoji', r.emoji, 'admin_id', COALESCE('A' || r.admin_id, 'P' || r.usuario_id), 'nombre', COALESCE(ra.nombre, rp.nombre)))
                            FROM sb_chat_reacciones r
                            LEFT JOIN administradores ra ON ra.id = r.admin_id
-                           LEFT JOIN cat_personal rp ON rp.id_personal = r.usuario_id
+                           LEFT JOIN cat_personal rp ON rp.cve_personal = r.usuario_id
                            WHERE r.mensaje_id = m.id
                        ) as reacciones
                 FROM sb_chat_mensajes m
                 LEFT JOIN administradores a ON a.id = m.admin_id
-                LEFT JOIN cat_personal p2 ON p2.id_personal = m.usuario_id
+                LEFT JOIN cat_personal p2 ON p2.cve_personal = m.usuario_id
                 LEFT JOIN cat_personal p ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
                 WHERE $where
                 ORDER BY m.id ASC
@@ -246,7 +246,7 @@ if ($accion === 'admins') {
     // Listar TODOS los miembros del área desde cat_personal
     // Pero detectar si tienen una cuenta de admin asociada para usar su AdminID si existe
     $stmt = $pdo->prepare(
-        "SELECT p.id_personal, p.nombre, a.id as admin_id, a.rol,
+        "SELECT p.cve_personal, p.nombre, a.id as admin_id, a.rol,
                 UPPER(SUBSTRING(p.nombre FROM 1 FOR 1)) AS inicial
          FROM cat_personal p
          LEFT JOIN administradores a ON (p.correo_institucional = a.email OR p.correo_personal = a.email)
@@ -259,7 +259,7 @@ if ($accion === 'admins') {
     $admins = [];
     foreach ($listaRaw as $row) {
         $admins[] = [
-            'id'      => $row['admin_id'] ? 'A' . $row['admin_id'] : 'P' . $row['id_personal'],
+            'id'      => $row['admin_id'] ? 'A' . $row['admin_id'] : 'P' . $row['cve_personal'],
             'nombre'  => $row['nombre'],
             'rol'     => $row['rol'] ?? 'Staff',
             'inicial' => $row['inicial']
