@@ -871,7 +871,8 @@ require_once __DIR__ . '/../includes/header_admin.php';
                 <?php if (isset($calendarioEventos[$dia])): ?>
                     <?php foreach ($calendarioEventos[$dia] as $ev): ?>
                         <?php 
-                            $claseNota = $mapaColoresNotas[$ev['color']] ?? 'nota-azul';
+                            $colorBase = $ev['color'] ?? '#3788d8';
+                            $styleAttr = "background-color: {$colorBase}1a; border-top: 3px solid {$colorBase};";
                             $esCumple  = !empty($ev['es_cumple']);
                             // Construir URL de foto para el modal
                             $fotoUrl   = '';
@@ -879,7 +880,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
                                 $fotoUrl = BASE_URL . 'public/uploads/avatares/' . $ev['foto_perfil'];
                             }
                         ?>
-                         <div class="evento-pildora <?= $claseNota ?><?= $esCumple ? ' es-cumple' : '' ?>" title="<?= esc($ev['titulo']) ?>">
+                         <div class="evento-pildora<?= $esCumple ? ' es-cumple' : '' ?>" style="<?= $styleAttr ?>" title="<?= esc($ev['titulo']) ?>">
                               <?php if ($esCumple): ?>
                               <!-- Fila de Cumpleaños con miniavatar -->
                               <div class="evento-titulo cumple-titulo" style="display:flex;align-items:center;gap:6px;">

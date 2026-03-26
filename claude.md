@@ -215,6 +215,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
+- **🎨 Colores Dinámicos en Calendario (v8.3, 2026-03-26)**:
+    - **Problema**: Los eventos solicitados con colores personalizados (vía `input type="color"`) se mostraban en azul por defecto porque el sistema usaba un mapa de 5 colores fijos.
+    - **Solución**: Se eliminó el mapeo estático y se implementó renderizado dinámico mediante estilos inline con canal alfa (10%).
+    - **Impacto**: Ahora tanto el calendario público como el administrativo muestran exactamente el color solicitado por el usuario o definido por el admin.
 - **🚨 Arreglo Subida Repositorio (v8.2, 2026-03-26)**:
     - **Problema**: El botón "Subir" se quedaba colgado en "Subiendo...". La causa era un error inesperado de base de datos (Violación de FK en `creado_por`) que el frontend no capturaba.
     - **Solución**: Se eliminó el constraint `df_multimedia_creado_por_fkey` para permitir que cualquier miembro del equipo suba archivos.

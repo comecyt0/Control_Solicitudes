@@ -346,8 +346,11 @@ require_once __DIR__ . '/../includes/header_user.php';
                             if ($esCumple && !empty($ev['foto_perfil'])) {
                                 $fotoUrl = BASE_URL . 'public/uploads/avatares/' . $ev['foto_perfil'];
                             }
+                            $colorBase = $ev['color'] ?? '#3788d8';
+                            $styleAttr = "background-color: {$colorBase}1a; border-top: 3px solid {$colorBase};";
                         ?>
-                        <div class="evento-pildora <?= $mapaColoresNotas[$ev['color']] ?? 'nota-azul' ?><?= $esCumple ? ' es-cumple' : '' ?>" 
+                        <div class="evento-pildora <?= $esCumple ? ' es-cumple' : '' ?>" 
+                             style="<?= $styleAttr ?>"
                              onclick="event.stopPropagation(); <?= $esCumple ? "abrirModalCumple('".esc(addslashes($ev['nombre_cumple']))."', '".esc($fotoUrl)."', '".$ev['edad']."', '".date('d/m', strtotime($ev['fecha_inicio']))."')" : "verDetalleEvento('".esc($ev['titulo'])."', '".esc($ev['descripcion']??'Sin detalles')."', '".date('H:i', strtotime($ev['fecha_inicio']))."', '".date('H:i', strtotime($ev['fecha_fin']))."')" ?>">
                             <div class="evento-titulo" style="display:flex; align-items:center; gap:5px;">
                                 <?php if ($esCumple): ?>
