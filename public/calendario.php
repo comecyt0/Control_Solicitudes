@@ -582,6 +582,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }, { root: null, rootMargin: "0px 0px 0px 0px", threshold: 0.1 });
     reveals.forEach(el => revealOnScroll.observe(el));
+
+    // Auto-abrir modal de solicitud si viene el parametro
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('solicitar') === '1') {
+        setTimeout(abrirModalSolicitud, 500);
+    }
 });
 </script>
 

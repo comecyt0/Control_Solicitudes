@@ -258,13 +258,16 @@ require_once __DIR__ . '/../includes/header_user.php';
         <h1>¡Bienvenido/a a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
         <p>Dashboard central de servicios e información institucional del COMECyT. Gestiona tus requerimientos técnicos, explora galerías multimedia y mantente enterado de los últimos comunicados oficiales.</p>
         
-        <?php if (!empty($_SESSION['admin_id']) || !empty($_SESSION['ss_id'])): ?>
-        <div style="margin-top: 24px;">
+        <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+            <?php if (!empty($_SESSION['admin_id']) || !empty($_SESSION['ss_id'])): ?>
             <a href="<?= BASE_URL ?>public/router.php" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 15px rgba(102, 35, 49, 0.25); border-radius: 12px; padding: 14px 28px; font-weight: 700;">
                 <i class="fa-solid fa-rocket" style="margin-right: 8px;"></i> Mi Panel Administrativo
             </a>
+            <?php endif; ?>
+            <a href="<?= BASE_URL ?>public/calendario.php?solicitar=1" class="btn btn-outline btn-lg" style="border-radius: 12px; padding: 14px 28px; font-weight: 700; background: #fff;">
+                <i class="fa-solid fa-calendar-plus" style="margin-right: 8px; color: #b45309;"></i> Agendar Espacio
+            </a>
         </div>
-        <?php endif; ?>
     </div>
     <div class="intranet-hero-icon">
         <i class="fa-solid fa-shapes"></i>
