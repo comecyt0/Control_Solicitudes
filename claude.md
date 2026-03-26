@@ -260,5 +260,16 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - Paridad total entre `areas/direccion_general/calendario_editorial.php` y su contraparte en Difusión.
 - Eliminación de IFRAMES en Dirección General; ahora utiliza renderizado directo "Sticky Notes".
 - Consolidación de tareas: Se migró la tabla redundante `df_tareas` a la tabla unificada `sb_kanban_tareas` (filtrada por `cve_area = 4`).
-- **Permisos Elevados**: Se configuró la lógica para que Dirección General (Área 4) pueda editar y eliminar eventos institucionales públicos (tabla `eventos`), privilegio anteriormente exclusivo de Sistemas.
-- Unificación estilística: Uso de la paleta Guinda institucional (`#662331`) con el comportamiento dinámico de Difusión.
+
+## v10.1 - Fix: Dashboard DG
+**Fecha**: 2026-03-27
+**Cambios**:
+- Actualización de `areas/direccion_general/dashboard.php` para usar `sb_kanban_tareas` tras la eliminación de `df_tareas`.
+
+## v10.2 - Refinamiento de Permisos y Visibilidad Pública (DG)
+**Fecha**: 2026-03-27
+**Cambios**:
+- Implementación de control de visibilidad pública (`publico`) en el calendario de Dirección General.
+- Habilitación completa de edición/eliminación para Área 4 y Área 1 de eventos institucionales.
+- Adición de checkbox de "Mostrar en Calendario Público" en modales de creación y edición.
+- Corrección de firma JavaScript para soportar el parámetro de visibilidad en modales.
