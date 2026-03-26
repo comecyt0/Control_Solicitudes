@@ -422,6 +422,79 @@ require_once __DIR__ . '/../includes/header_admin.php';
             <?php endif; ?>
         </div>
     </div>
+    <!-- Notas Internas del equipo (Colapsable) — Ahora dentro de la cuadrícula -->
+    <div style="grid-column: 1 / -1; margin-top: 20px;">
+        <details style="border:1px solid #e2e8f0; border-radius:var(--radius-md); background: #fff;">
+            <summary style="padding:12px 16px; cursor:pointer; font-weight:600; color:var(--text-muted); font-size:13px; background:#f8fafc; border-radius:var(--radius-md);">
+                <i class="fa-solid fa-lock" style="margin-right:6px;"></i> Notas Internas de Gestión (Solo Staff)
+            </summary>
+            <div style="padding:16px;">
+                <div id="comentariosLista" style="margin-bottom:12px;"></div>
+                <form id="formComentario" style="display:flex; gap:8px;">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
+                    <input type="text" id="nuevoComentario" name="comentario" class="form-control" placeholder="Añadir nota interna rápida..." style="height:38px; font-size:13px;">
+                    <button type="submit" class="btn btn-primary btn-sm" id="btnAgregarComentario">Guardar</button>
+                </form>
+            </div>
+        </details>
+    </div>
+
+    <!-- CANAL DE COMUNICACIÓN (RETROALIMENTACIÓN) — Ahora dentro de la cuadrícula -->
+    <div style="grid-column: 1 / -1; margin-top: 10px;">
+        <div class="card" style="border-top: 4px solid var(--color-primary); display: flex; flex-direction: column; height: 550px; background: #fff; box-shadow: var(--shadow-md); border-radius: var(--radius-lg); overflow: hidden;">
+            <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding: 15px 20px; background: linear-gradient(to right, #fff, #f8fafc); display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 class="card-title" style="font-size: 1.1rem; color: var(--color-primary); margin:0;">
+                        <i class="fa-solid fa-comments"></i> Chat de Seguimiento con el Solicitante
+                    </h2>
+                    <p class="text-muted" style="font-size: 0.75rem; margin: 2px 0 0 25px;">La comunicación aquí es visible para el ciudadano.</p>
+                </div>
+                <div class="d-flex align-center gap-8">
+                    <span class="badge" style="background:rgba(102, 35, 49, 0.05); color:var(--color-primary); font-size:10px; border: 1px solid rgba(102, 35, 49, 0.1);">Canal Directo</span>
+                </div>
+            </div>
+            
+            <div id="retroLista" style="flex: 1; overflow-y: auto; padding: 20px; background: #fdfdfd; display: flex; flex-direction: column; gap: 8px;">
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">Cargando conversación...</p>
+                </div>
+            </div>
+
+            <div style="padding: 18px 20px; background: #fff; border-top: 1px solid #f1f5f9;">
+                <form id="formRetro" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; gap: 12px; align-items: flex-end;">
+                        <div style="flex: 1; position: relative;">
+                            <textarea id="retroMensaje" class="form-control" rows="1" placeholder="Escribe un mensaje para el solicitante..." 
+                                      style="width: 100%; resize: none; border-radius: 24px; padding: 12px 20px; line-height: 1.5; border: 1px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease; background: #f8fafc;"
+                                      onfocus="this.style.borderColor='var(--color-primary)'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(102,35,49,0.05)';"
+                                      onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.style.boxShadow='none';"></textarea>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 2px;">
+                            <label for="retroArchivo" class="btn btn-outline" style="border-radius: 50%; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-color: #e2e8f0; color: #64748b; background: #fff; transition: all 0.2s;" 
+                                   onmouseover="this.style.background='#f1f5f9'; this.style.color='var(--color-primary)';" 
+                                   onmouseout="this.style.background='#fff'; this.style.color='#64748b';" title="Adjuntar documento o imagen">
+                                <i class="fa-solid fa-paperclip" style="font-size: 1.1rem;"></i>
+                            </label>
+                            <input type="file" id="retroArchivo" style="display: none;">
+                            <button type="submit" id="btnEnviarRetro" class="btn btn-primary" style="border-radius: 50%; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(102,35,49,0.25); transition: transform 0.2s;"
+                                    onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';" title="Enviar mensaje">
+                                <i class="fa-solid fa-paper-plane" style="font-size: 1.1rem; margin-left: -2px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="filePreview" style="display: none; font-size: 0.8rem; color: var(--color-primary); background: rgba(102,35,49,0.05); padding: 8px 15px; border-radius: 12px; border: 1px dashed rgba(102,35,49,0.2); animation: slideIn 0.3s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span><i class="fa-solid fa-file-circle-check"></i> <b>Preparado:</b> <span id="fileName"></span></span>
+                            <button type="button" onclick="document.getElementById('retroArchivo').value=''; document.getElementById('filePreview').style.display='none';" style="border:none; background:none; color:#ef4444; cursor:pointer; font-size: 1rem;">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: Cambiar Estatus -->
@@ -494,82 +567,6 @@ require_once __DIR__ . '/../includes/header_admin.php';
     </div>
 </div>
 <?php endif; ?>
-
-    <!-- Notas Internas del equipo (Colapsable) -->
-    <details style="margin-top:16px; border:1px solid #e2e8f0; border-radius:var(--radius-md);">
-        <summary style="padding:10px 14px; cursor:pointer; font-weight:600; color:var(--text-muted); font-size:13px; background:#f8fafc;">
-            <i class="fa-solid fa-lock" style="margin-right:6px;"></i> Notas Internas de Gestión (Solo Staff)
-        </summary>
-        <div style="padding:16px;">
-            <div id="comentariosLista" style="margin-bottom:12px;"></div>
-            <form id="formComentario" style="display:flex; gap:8px;">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>">
-                <input type="text" id="nuevoComentario" name="comentario" class="form-control" placeholder="Añadir nota interna rápida..." style="height:36px; font-size:13px;">
-                <button type="submit" class="btn btn-primary btn-sm" id="btnAgregarComentario">Guardar</button>
-            </form>
-        </div>
-    </details>
-</div>
-
-<!-- CANAL DE COMUNICACIÓN (RETROALIMENTACIÓN) — DISEÑO PREMIUM -->
-<div class="card" style="margin-top:20px; border-top: 4px solid var(--color-primary); display: flex; flex-direction: column; height: 550px; background: #fff; box-shadow: var(--shadow-md); border-radius: var(--radius-lg); overflow: hidden;">
-    <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding: 15px 20px; background: linear-gradient(to right, #fff, #f8fafc); display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <h2 class="card-title" style="font-size: 1.1rem; color: var(--color-primary); margin:0;">
-                <i class="fa-solid fa-comments"></i> Chat de Seguimiento con el Solicitante
-            </h2>
-            <p class="text-muted" style="font-size: 0.75rem; margin: 2px 0 0 25px;">La comunicación aquí es visible para el ciudadano.</p>
-        </div>
-        <div class="d-flex align-center gap-8">
-            <span class="badge" style="background:rgba(102, 35, 49, 0.05); color:var(--color-primary); font-size:10px; border: 1px solid rgba(102, 35, 49, 0.1);">Canal Directo</span>
-        </div>
-    </div>
-    
-    <!-- Area de Chat con Scroll Estilizado -->
-    <div id="retroLista" style="flex: 1; overflow-y: auto; padding: 20px; background: #fdfdfd; display: flex; flex-direction: column; gap: 8px;">
-        <div style="text-align: center; padding: 40px; color: #94a3b8;">
-            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
-            <p style="margin-top: 10px; font-size: 0.9rem;">Cargando conversación...</p>
-        </div>
-    </div>
-
-    <!-- Input de Chat Enriquecido -->
-    <div style="padding: 18px 20px; background: #fff; border-top: 1px solid #f1f5f9;">
-        <form id="formRetro" style="display: flex; flex-direction: column; gap: 12px;">
-            <div style="display: flex; gap: 12px; align-items: flex-end;">
-                <div style="flex: 1; position: relative;">
-                    <textarea id="retroMensaje" class="form-control" rows="1" placeholder="Escribe un mensaje para el solicitante..." 
-                              style="width: 100%; resize: none; border-radius: 24px; padding: 12px 20px; line-height: 1.5; border: 1px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s ease; background: #f8fafc;"
-                              onfocus="this.style.borderColor='var(--color-primary)'; this.style.background='#fff'; this.style.boxShadow='0 0 0 3px rgba(102,35,49,0.05)';"
-                              onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.style.boxShadow='none';"></textarea>
-                </div>
-                <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 2px;">
-                    <label for="retroArchivo" class="btn btn-outline" style="border-radius: 50%; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; border-color: #e2e8f0; color: #64748b; background: #fff; transition: all 0.2s;" 
-                           onmouseover="this.style.background='#f1f5f9'; this.style.color='var(--color-primary)';" 
-                           onmouseout="this.style.background='#fff'; this.style.color='#64748b';" title="Adjuntar documento o imagen">
-                        <i class="fa-solid fa-paperclip" style="font-size: 1.1rem;"></i>
-                    </label>
-                    <input type="file" id="retroArchivo" style="display: none;">
-                    
-                    <button type="submit" id="btnEnviarRetro" class="btn btn-primary" style="border-radius: 50%; width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(102,35,49,0.25); transition: transform 0.2s;"
-                            onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';" title="Enviar mensaje">
-                        <i class="fa-solid fa-paper-plane" style="font-size: 1.1rem; margin-left: -2px;"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Preview de Archivo -->
-            <div id="filePreview" style="display: none; font-size: 0.8rem; color: var(--color-primary); background: rgba(102,35,49,0.05); padding: 8px 15px; border-radius: 12px; border: 1px dashed rgba(102,35,49,0.2); animation: slideIn 0.3s ease;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fa-solid fa-file-circle-check"></i> <b>Preparado:</b> <span id="fileName"></span></span>
-                    <button type="button" onclick="document.getElementById('retroArchivo').value=''; document.getElementById('filePreview').style.display='none';" style="border:none; background:none; color:#ef4444; cursor:pointer; font-size: 1rem;">
-                        <i class="fa-solid fa-circle-xmark"></i>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 
 <script>
 // --- CONFIGURACIÓN GLOBAL ---
