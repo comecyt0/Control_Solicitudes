@@ -714,7 +714,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
                                 <?php if(!(isset($ev['es_institucional']) && $ev['es_institucional'] && $cveAreaUsuario !== 1)): ?>
-                                <button type="button" class="btn-evento-accion" title="Editar" onclick="event.stopPropagation(); abrirModalEditar(<?=$ev['id']?>, '<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_fin']))?>', '<?=($ev['color'])?>', <?=($ev['publico']?1:0)?>)">
+                                <button type="button" class="btn-evento-accion" title="Editar" onclick="event.stopPropagation(); abrirModalEditar(<?=$ev['id']?>, '<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_fin']))?>', '<?=($ev['color'])?>', <?=($ev['publico']?1:0)?>, <?= (isset($ev['es_institucional']) && $ev['es_institucional']) ? '1' : '0' ?>)">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                                 <?php endif; ?>
@@ -843,6 +843,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
             <?= csrfField() ?>
             <input type="hidden" name="_accion" value="editar_evento" id="e_accion">
             <input type="hidden" name="evento_id" id="e_evento_id">
+            <input type="hidden" name="es_institucional" id="e_es_institucional">
             <div class="modal-body">
                 <div class="form-group mb-16">
                     <label class="form-label">Título</label>

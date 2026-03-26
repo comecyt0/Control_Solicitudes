@@ -215,10 +215,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
-- **🚨 Fix Kanban Crash/Visibility en Áreas (v7.3, 2026-03-26)**:
-    - **Causa 1 (Integridad)**: `PDOException (23502)` por `NOT NULL` en `creado_por`. Usuarios de `cat_personal` no podían ser registrados como autores. **Solución**: `ALTER TABLE ... DROP NOT NULL`.
-    - **Causa 2 (Selección)**: El listado de equipo estaba vacío por comparaciones de correo sensibles a mayúsculas. **Solución**: Se implementó `LOWER()` en el JOIN entre `administradores` y `cat_personal`.
-    - **Causa 3 (Contexto)**: Las páginas departamentales usaban el área de la sesión en lugar del área de la página. **Solución**: Se forzó `$cveAreaContexto = 6` en Difusión.
+- **🚨 Sync UI Calendario Editorial (v7.4, 2026-03-26)**:
+    - **Problema**: El calendario de Difusión carecía de interactividad (botones en hover y modales de detalle) comparado con el administrativo.
+    - **Solución**: Inyección de CSS para `.evento-acciones`, adición de botones de Ver/Editar con lógica de permisos departamentales y eliminación del acceso a "Vista Pública" en el sidebar para este módulo.
 - **Error `Lista de DMs vacía / Chat sin branding por área` (2026-03-26)**:
   - **Causa**: La consulta de miembros usaba la columna `habilitado` (inexistente) en lugar de `activo`. Además, el título "Equipo TI" estaba fijo en el HTML.
   - **Solución**: Corrección masiva de `habilitado` → `activo` en 21 archivos. Se implementó la variable `$chat_area_label` en `header_admin.php` para inyectar dinámicamente el nombre del área en el encabezado y subtextos del chat.
