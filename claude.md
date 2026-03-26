@@ -215,6 +215,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
+- **🚨 Pulido Calendario Editorial (v7.8, 2026-03-26)**:
+    - **Privacidad**: Eliminación del checkbox "Mostrar en calendario público" (HTML/JS) y forzado de `publico=FALSE` en el backend para procesos editoriales internos.
+    - **Colores**: Se añadieron selectores de color en los modales de creación (Eventos y Kanban). Se corrigió la persistencia de color en los modales de edición (JS `abrirModal`).
+    - **Cumpleaños**: Corrección en la construcción de la URL de avatar para que, si no hay foto, el modal de detalle muestre correctamente el icono de pastel (`fa-cake-candles`) en lugar de un enlace roto.
 - **🚨 Sync UI Calendario Editorial (v7.7, 2026-03-26)**:
     - **Problema**: La lista de personal para asignar tareas estaba vacía porque se filtraba solo por "Administradores" de un área específica (ID 6), pero el equipo real está en `cat_personal` bajo IDs mixtos (6 y 18).
     - **Solución**: Se cambió la fuente de la lista de asignación a `cat_personal` filtrando por áreas 6 y 18 simultáneamente. Se implementó un `COALESCE` en el JOIN de tareas para mostrar nombres tanto de la tabla de administradores como de personal.

@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $color = postParam('color', '#e11d48');
         
         if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
-            $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
+            $publico = 'FALSE'; // Forzado a FALSE en entorno editorial
             if ($esInstitucionalManual === 0) {
                 $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
                 $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
@@ -712,7 +712,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         </div>
                         <div class="evento-acciones">
                             <?php if(isset($ev['es_cumple'])): ?>
-                                <button type="button" class="btn-evento-accion" title="Ver Perfil" onclick="event.stopPropagation(); abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '<?=esc($ev['descripcion'])?>', '<?= BASE_URL ?>public/uploads/avatares/<?=esc($ev['foto_perfil'])?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')">
+                                <button type="button" class="btn-evento-accion" title="Ver Perfil" onclick="event.stopPropagation(); abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '<?=esc($ev['descripcion'])?>', '<?= !empty($ev['foto_perfil']) ? BASE_URL . "public/uploads/avatares/" . esc($ev['foto_perfil']) : "" ?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')">
                                     <i class="fa-solid fa-cake-candles"></i>
                                 </button>
                             <?php else: ?>
@@ -800,6 +800,10 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <input type="date" name="fecha_fin" id="c_fecha_fin" class="form-control" required>
                     </div>
                 </div>
+                <div class="form-group mb-16">
+                    <label class="form-label">Color de Nota</label>
+                    <input type="color" name="color" value="#e11d48" class="form-control" style="height:40px; cursor:pointer;">
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" onclick="cerrarModal('modalCrearEvento')">Cerrar</button>
@@ -870,13 +874,8 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     </div>
                 </div>
                 <div class="form-group mb-16">
-                    <label class="form-label">Color</label>
-                    <input type="color" name="color" id="e_color" class="form-control" style="height:40px;">
-                </div>
-                <div class="form-group">
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                        <input type="checkbox" name="publico" id="e_publico"> Mostrar en Calendario Público
-                    </label>
+                    <label class="form-label">Color de Nota</label>
+                    <input type="color" name="color" id="e_color" class="form-control" style="height:40px; cursor:pointer;">
                 </div>
             </div>
             <div class="modal-footer" style="display:flex; justify-content:space-between;">
@@ -909,7 +908,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     <label class="form-label">Descripción extendida</label>
                     <textarea name="descripcion" class="form-control" rows="3"></textarea>
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-16">
                     <label class="form-label">Asignar a compañero de equipo</label>
                     <select name="asignado_a" class="form-control">
                         <option value="">-- Sin Asignar --</option>
@@ -917,6 +916,10 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                             <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Color de Categoría</label>
+                    <input type="color" name="color" value="#3b82f6" class="form-control" style="height:40px; cursor:pointer;">
                 </div>
             </div>
             <div class="modal-footer">
@@ -947,7 +950,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     <label class="form-label">Descripción</label>
                     <textarea name="descripcion" id="et_descripcion" class="form-control" rows="3"></textarea>
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-16">
                     <label class="form-label">Asignado a</label>
                     <select name="asignado_a" id="et_asignado_a" class="form-control">
                         <option value="">-- Sin Asignar --</option>
@@ -955,6 +958,10 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                             <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Color de Categoría</label>
+                    <input type="color" name="color" id="et_color" class="form-control" style="height:40px; cursor:pointer;">
                 </div>
             </div>
             <div class="modal-footer d-flex justify-content-between">
@@ -1029,8 +1036,7 @@ function abrirModalEditar(id, t, d, ini, fin, c, p, esInst) {
     document.getElementById('e_fecha_inicio').readOnly = false;
     document.getElementById('e_fecha_fin').value = fin;
     document.getElementById('e_fecha_fin').readOnly = false;
-    document.getElementById('e_publico').checked = (p == 1);
-    document.getElementById('e_publico').disabled = false;
+    document.getElementById('e_color').value = c;
     
     document.getElementById('btnEliminarEvento').style.display = 'block';
     document.getElementById('btnActualizarEvento').style.display = 'block';
@@ -1066,6 +1072,7 @@ function abrirModalEditarTarea(id, t, d, c, a) {
     document.getElementById('et_id').value = id;
     document.getElementById('et_titulo').value = t;
     document.getElementById('et_descripcion').value = d;
+    document.getElementById('et_color').value = c;
     document.getElementById('et_asignado_a').value = a || '';
     abrirModal('modalEditarTarea');
 }
