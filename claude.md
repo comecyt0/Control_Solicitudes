@@ -277,3 +277,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 **Cambios**:
 - Corrección de la consulta de eventos globales en el módulo de Dirección General.
 - Se eliminó la referencia a la columna inexistente `cve_area` en la tabla `eventos`, restaurando la visualización de la agenda institucional.
+
+## v10.4 - Hardening de Permisos y Robustez SQL (DG)
+**Fecha**: 2026-03-27
+**Cambios**:
+- Refactorización de consultas PRG para usar parámetros en valores booleanos (PostgreSQL).
+- Implementación de bloque `try-catch` en el procesamiento de acciones para evitar fallos silenciosos.
+- Refuerzo de la lógica de permisos para asegurar que el `user_cve_area` del personal de Dirección General sea reconocido correctamente en operaciones de escritura/borrado.

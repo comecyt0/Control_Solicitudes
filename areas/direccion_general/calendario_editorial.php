@@ -1,9 +1,8 @@
 <?php
 /**
- * COMECyT — Calendario Editorial (Dirección General)
+ * COMECyT — Calendario Editorial (Dirección General) v10.4
  * Diseño y funcionalidad sincronizados con Difusión pero con permisos elevados.
  * Filtra eventos de df_eventos_editoriales y tareas de sb_kanban_tareas por cve_area = 4.
- * PERMISO ESPECIAL: Dirección General (Área 4) puede editar/eliminar eventos GLOABLES.
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -19,123 +18,131 @@ $cveAreaUsuario  = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_are
 $cveAreaContexto = 4; // Dirección General
 $adminId         = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
 
+// DEBUG (Temporal): Activo para diagnosticar fallos en producción
+// file_put_contents(__DIR__ . '/../../debug_dg.txt', "[".date('Y-m-d H:i:s')."] User: $adminId | Area: $cveAreaUsuario | POST: " . json_encode($_POST) . "\n", FILE_APPEND);
+
 if ($cveAreaUsuario === 0) redirigir('public/hub.php');
 
 // -------------------------------------------------------
 // Procesar acciones de Calendario (PRG)
 // -------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
-    validarCsrfPost();
-    $accion = $_POST['_accion'];
-    
-    if ($accion === 'crear_evento') {
-        $titulo = trim(postParam('titulo'));
-        $descripcion = trim(postParam('descripcion'));
-        $fechaInicio = postParam('fecha_inicio');
-        $fechaFin = postParam('fecha_fin');
-        $color = postParam('color', '#662331'); 
-        $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
+    try {
+        validarCsrfPost();
+        $accion = $_POST['_accion'];
         
-        if ($titulo && $fechaInicio && $fechaFin) {
-            $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
-            $checkAdmin->execute([$adminId]);
-            $idAutor = $checkAdmin->fetch() ? $adminId : null;
-
-            $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area) VALUES (?, ?, ?, ?, ?, ?, $publico, ?)");
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $idAutor, $cveAreaContexto]);
+        if ($accion === 'crear_evento') {
+            $titulo = trim(postParam('titulo'));
+            $descripcion = trim(postParam('descripcion'));
+            $fechaInicio = postParam('fecha_inicio');
+            $fechaFin = postParam('fecha_fin');
+            $color = postParam('color', '#662331'); 
+            $publico = isset($_POST['publico']) ? true : false;
             
-            header('Location: calendario_editorial.php?flash=evento_creado');
-            exit;
-        }
-    } elseif ($accion === 'editar_evento') {
-        $id = (int) postParam('evento_id');
-        $esInstitucionalManual = (int) postParam('es_institucional');
-        
-        // PERMISOS DG: Pueden editar institucionales (Área 4) o Sistemas (Área 1)
-        if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
-             die("Acceso denegado: Solo Dirección y Sistemas gestionan la agenda global.");
-        }
+            if ($titulo && $fechaInicio && $fechaFin) {
+                // Verificar si es administrador o personal para el ID de autor
+                $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
+                $checkAdmin->execute([$adminId]);
+                $idAutor = $checkAdmin->fetch() ? $adminId : null;
 
-        $titulo = trim(postParam('titulo'));
-        $descripcion = trim(postParam('descripcion'));
-        $fechaInicio = postParam('fecha_inicio');
-        $fechaFin    = postParam('fecha_fin');
-        $color       = postParam('color', '#662331');
-        $publico     = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-        
-        if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
-            if ($esInstitucionalManual === 0) {
-                $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ? AND cve_area = ?");
-                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id, $cveAreaContexto]);
-            } else {
-                // Es institucional (Global)
-                $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
-                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
+                $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $idAutor, $publico ? 1 : 0, $cveAreaContexto]);
+                
+                header('Location: calendario_editorial.php?flash=evento_creado');
+                exit;
             }
-            header('Location: calendario_editorial.php?flash=evento_editado');
-            exit;
-        }
-    } elseif ($accion === 'eliminar_evento') {
-        $id = (int) postParam('evento_id');
-        $esInstitucionalManual = (int) postParam('es_institucional');
-        
-        if ($id > 0) {
+        } elseif ($accion === 'editar_evento') {
+            $id = (int) postParam('evento_id');
+            $esInstitucionalManual = (int) postParam('es_institucional');
+            
+            // PERMISOS DG: Pueden editar institucionales (Área 4) o Sistemas (Área 1)
             if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
-                die("Acceso denegado.");
+                 die("Acceso denegado: Solo Dirección y Sistemas gestionan la agenda global.");
             }
 
-            if ($esInstitucionalManual === 0) {
-                $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ? AND cve_area = ?");
-                $stmt->execute([$id, $cveAreaContexto]);
-            } else {
-                $stmt = $pdo->prepare("DELETE FROM eventos WHERE id = ?");
-                $stmt->execute([$id]);
+            $titulo = trim(postParam('titulo'));
+            $descripcion = trim(postParam('descripcion'));
+            $fechaInicio = postParam('fecha_inicio');
+            $fechaFin    = postParam('fecha_fin');
+            $color       = postParam('color', '#662331');
+            $publico     = isset($_POST['publico']) ? true : false;
+            
+            if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
+                if ($esInstitucionalManual === 0) {
+                    $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ? WHERE id = ? AND cve_area = ?");
+                    $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 1 : 0), $id, $cveAreaContexto]);
+                } else {
+                    // Es institucional (Global)
+                    $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ? WHERE id = ?");
+                    $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 1 : 0), $id]);
+                }
+                header('Location: calendario_editorial.php?flash=evento_editado');
+                exit;
             }
-            header('Location: calendario_editorial.php?flash=evento_eliminado');
-            exit;
+        } elseif ($accion === 'eliminar_evento') {
+            $id = (int) postParam('evento_id');
+            $esInstitucionalManual = (int) postParam('es_institucional');
+            
+            if ($id > 0) {
+                if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
+                    die("Acceso denegado.");
+                }
+
+                if ($esInstitucionalManual === 0) {
+                    $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ? AND cve_area = ?");
+                    $stmt->execute([$id, $cveAreaContexto]);
+                } else {
+                    $stmt = $pdo->prepare("DELETE FROM eventos WHERE id = ?");
+                    $stmt->execute([$id]);
+                }
+                header('Location: calendario_editorial.php?flash=evento_eliminado');
+                exit;
+            }
+        } elseif ($accion === 'crear_tarea') {
+            $titulo = trim(postParam('titulo'));
+            $descripcion = trim(postParam('descripcion'));
+            $color = postParam('color', '#662331');
+            $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
+            
+            if ($titulo) {
+                $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
+                $stmt->execute([$titulo, $descripcion, $color, $adminId, $asignado_a, $cveAreaContexto]);
+                header('Location: calendario_editorial.php?flash=tarea_creada#kanban');
+                exit;
+            }
+        } elseif ($accion === 'editar_tarea') {
+            $id = (int) postParam('tarea_id');
+            $titulo = trim(postParam('titulo'));
+            $descripcion = trim(postParam('descripcion'));
+            $color = postParam('color', '#662331');
+            $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
+            
+            if ($id > 0 && $titulo) {
+                $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET titulo = ?, descripcion = ?, color = ?, asignado_a = ? WHERE id = ? AND cve_area = ?");
+                $stmt->execute([$titulo, $descripcion, $color, $asignado_a, $id, $cveAreaContexto]);
+                header('Location: calendario_editorial.php?flash=tarea_editada#kanban');
+                exit;
+            }
+        } elseif ($accion === 'mover_tarea') {
+            $id = (int) postParam('tarea_id');
+            $nuevoEstatus = postParam('nuevo_estatus');
+            if ($id > 0 && in_array($nuevoEstatus, ['pendiente', 'en_proceso', 'completada'])) {
+                $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET estatus = ? WHERE id = ? AND cve_area = ?");
+                $stmt->execute([$nuevoEstatus, $id, $cveAreaContexto]);
+                header('Location: calendario_editorial.php?flash=tarea_movida#kanban');
+                exit;
+            }
+        } elseif ($accion === 'eliminar_tarea') {
+            $id = (int) postParam('tarea_id');
+            if ($id > 0) {
+                $stmt = $pdo->prepare("DELETE FROM sb_kanban_tareas WHERE id = ? AND cve_area = ?");
+                $stmt->execute([$id, $cveAreaContexto]);
+                header('Location: calendario_editorial.php?flash=tarea_eliminada#kanban');
+                exit;
+            }
         }
-    } elseif ($accion === 'crear_tarea') {
-        $titulo = trim(postParam('titulo'));
-        $descripcion = trim(postParam('descripcion'));
-        $color = postParam('color', '#662331');
-        $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
-        
-        if ($titulo) {
-            $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
-            $stmt->execute([$titulo, $descripcion, $color, $adminId, $asignado_a, $cveAreaContexto]);
-            header('Location: calendario_editorial.php?flash=tarea_creada#kanban');
-            exit;
-        }
-    } elseif ($accion === 'editar_tarea') {
-        $id = (int) postParam('tarea_id');
-        $titulo = trim(postParam('titulo'));
-        $descripcion = trim(postParam('descripcion'));
-        $color = postParam('color', '#662331');
-        $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
-        
-        if ($id > 0 && $titulo) {
-            $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET titulo = ?, descripcion = ?, color = ?, asignado_a = ? WHERE id = ? AND cve_area = ?");
-            $stmt->execute([$titulo, $descripcion, $color, $asignado_a, $id, $cveAreaContexto]);
-            header('Location: calendario_editorial.php?flash=tarea_editada#kanban');
-            exit;
-        }
-    } elseif ($accion === 'mover_tarea') {
-        $id = (int) postParam('tarea_id');
-        $nuevoEstatus = postParam('nuevo_estatus');
-        if ($id > 0 && in_array($nuevoEstatus, ['pendiente', 'en_proceso', 'completada'])) {
-            $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET estatus = ? WHERE id = ? AND cve_area = ?");
-            $stmt->execute([$nuevoEstatus, $id, $cveAreaContexto]);
-            header('Location: calendario_editorial.php?flash=tarea_movida#kanban');
-            exit;
-        }
-    } elseif ($accion === 'eliminar_tarea') {
-        $id = (int) postParam('tarea_id');
-        if ($id > 0) {
-            $stmt = $pdo->prepare("DELETE FROM sb_kanban_tareas WHERE id = ? AND cve_area = ?");
-            $stmt->execute([$id, $cveAreaContexto]);
-            header('Location: calendario_editorial.php?flash=tarea_eliminada#kanban');
-            exit;
-        }
+    } catch (Exception $e) {
+        die("Error en la operación: " . $e->getMessage());
     }
 }
 
@@ -172,7 +179,7 @@ $stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, 
 $stmt->execute([$cveAreaContexto, $finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 2. Consultar eventos INSTITUCIONALES (Globales/Públicos o Editables por DG)
+// 2. Consultar eventos INSTITUCIONALES
 $stmtG = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, TRUE as es_institucional FROM eventos WHERE (publico = TRUE) AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmtG->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosGlobales = $stmtG->fetchAll(PDO::FETCH_ASSOC);
@@ -456,7 +463,6 @@ function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 function abrirModalCrear() { abrirModal('modalCrearEvento'); }
 function abrirModalCrearDesdeCelda(ini, fin) {
-    // Si la fecha enviada es solo date (YYYY-MM-DD), completamos con hora para el datetime-local
     if (ini.length === 10) ini += "T09:00";
     if (fin.length === 10) fin += "T10:00";
     document.getElementById('c_fecha_inicio').value = ini;
