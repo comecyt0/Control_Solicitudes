@@ -239,6 +239,8 @@ $extraHead = '
     border-radius: 16px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    position: relative;
+    z-index: 100;
 }
 
 .header-text-zone h2 {

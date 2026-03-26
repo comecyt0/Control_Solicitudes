@@ -254,9 +254,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Distribución en Detalle (Grid Alignment)**: Los componentes de seguimiento (Chat, Notas) deben insertarse *dentro* del contenedor `.detail-layout` y utilizar `grid-column: 1 / -1` para asegurar que respeten los márgenes del sidebar y mantengan una visualización profesional de ancho completo.
 - **Fix Técnico (Estructura)**: Se corrigió una corrupción de etiquetas HTML (`</form>`, `</div>` duplicados) y la pérdida del `endif` de la lógica de estatus que causaba errores de sintaxis al final del archivo.
 
-## v9.3 - Navegación Unificada: Sidebar Público
+## v9.4 - Corrección UI: Z-Index en Calendario
 **Fecha**: 2026-03-26
 **Cambios**:
-- Actualización de `includes/header_user.php` para incluir todos los accesos directos del Hub en el sidebar.
-- Habilitación del sidebar en `public/galeria_institucional.php` (anteriormente oculto).
-- Incursión de enlaces directos a "Agendar Espacio" y "Galería Institucional" en la navegación lateral persistente.
+- Resolución de conflicto de capas en `public/calendario.php`.
+- Se asignó `z-index: 100` y `position: relative` al header del calendario (`.page-header-calendario`).
+- Asegura que el panel de buzón (mailbox) siempre se muestre por encima de la cuadrícula del calendario y no sea tapado por esta.
