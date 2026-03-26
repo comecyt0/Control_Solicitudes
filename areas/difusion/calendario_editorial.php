@@ -874,10 +874,10 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 </div>
             </div>
             <div class="modal-footer" style="display:flex; justify-content:space-between;">
-                <button type="button" class="btn btn-outline" style="color:red; border-color:red;" onclick="eliminarEvento()">Eliminar</button>
+                <button type="button" id="btnEliminarEvento" class="btn btn-outline" style="color:red; border-color:red;" onclick="eliminarEvento()">Eliminar</button>
                 <div>
                     <button type="button" class="btn btn-outline" onclick="cerrarModal('modalEditarEvento')">Cerrar</button>
-                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                    <button type="submit" id="btnActualizarEvento" class="btn btn-primary">Actualizar</button>
                 </div>
             </div>
         </form>

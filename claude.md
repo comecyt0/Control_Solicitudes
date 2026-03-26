@@ -215,9 +215,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
-- **🚨 Sync UI Calendario Editorial (v7.4, 2026-03-26)**:
-    - **Problema**: El calendario de Difusión carecía de interactividad (botones en hover y modales de detalle) comparado con el administrativo.
-    - **Solución**: Inyección de CSS para `.evento-acciones`, adición de botones de Ver/Editar con lógica de permisos departamentales y eliminación del acceso a "Vista Pública" en el sidebar para este módulo.
+- **🚨 Sync UI Calendario Editorial (v7.5, 2026-03-26)**:
+    - **Problema 1**: Falta de interactividad (botones hover/modales) corregida en v7.4.
+    - **Problema 2**: Botón "Editar" no respondía por un `TypeError` al intentar acceder a un campo oculto inexistente (`e_es_institucional`) y falta de argumentos en el llamado JS.
+    - **Solución**: Restauración del campo oculto y sincronización de argumentos (8) en el loop PHP.
 - **Error `Lista de DMs vacía / Chat sin branding por área` (2026-03-26)**:
   - **Causa**: La consulta de miembros usaba la columna `habilitado` (inexistente) en lugar de `activo`. Además, el título "Equipo TI" estaba fijo en el HTML.
   - **Solución**: Corrección masiva de `habilitado` → `activo` en 21 archivos. Se implementó la variable `$chat_area_label` en `header_admin.php` para inyectar dinámicamente el nombre del área en el encabezado y subtextos del chat.
