@@ -652,7 +652,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     <div class="evento-pildora <?= $colorNota ?>" 
                          onclick="event.stopPropagation(); 
                          <?php if(isset($ev['es_cumple'])): ?>
-                            abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '<?=esc($ev['descripcion'])?>', '<?=esc($ev['foto_perfil'])?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')
+                            abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '<?=esc($ev['descripcion'])?>', '<?= BASE_URL ?>public/uploads/avatares/<?=esc($ev['foto_perfil'])?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')
                          <?php elseif(isset($ev['es_institucional']) && $ev['es_institucional'] && $cveAreaUsuario !== 1): ?>
                             abrirModalVer('<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d', strtotime($ev['fecha_fin']))?>')
                          <?php else: ?>
@@ -661,7 +661,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <div class="evento-titulo">
                             <?php if(isset($ev['es_cumple'])): ?>
                                 <?php if(!empty($ev['foto_perfil'])): ?>
-                                    <img src="<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar">
+                                    <img src="<?= BASE_URL ?>public/uploads/avatares/<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar">
                                 <?php else: ?>
                                     <div class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-cake-candles"></i></div>
                                 <?php endif; ?>
