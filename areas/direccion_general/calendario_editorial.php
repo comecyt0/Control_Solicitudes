@@ -1,8 +1,7 @@
 <?php
 /**
- * COMECyT — Calendario Editorial (Dirección General) v10.4
- * Diseño y funcionalidad sincronizados con Difusión pero con permisos elevados.
- * Filtra eventos de df_eventos_editoriales y tareas de sb_kanban_tareas por cve_area = 4.
+ * COMECyT — Calendario Editorial (Dirección General) v10.5
+ * Diseño y funcionalidad sincronizados con el Panel Admin (Sticky Notes / Post-it).
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -17,9 +16,6 @@ $tipoFlash = '';
 $cveAreaUsuario  = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0);
 $cveAreaContexto = 4; // Dirección General
 $adminId         = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
-
-// DEBUG (Temporal): Activo para diagnosticar fallos en producción
-// file_put_contents(__DIR__ . '/../../debug_dg.txt', "[".date('Y-m-d H:i:s')."] User: $adminId | Area: $cveAreaUsuario | POST: " . json_encode($_POST) . "\n", FILE_APPEND);
 
 if ($cveAreaUsuario === 0) redirigir('public/hub.php');
 
@@ -40,7 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $publico = isset($_POST['publico']) ? true : false;
             
             if ($titulo && $fechaInicio && $fechaFin) {
-                // Verificar si es administrador o personal para el ID de autor
+                // Solo Area 1 (Sistemas) o Area 4 (Dirección General) pueden escribir aquí
+                if ($cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
+                    die("Acceso denegado: No tiene permisos de escritura en este módulo.");
+                }
+
                 $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
                 $checkAdmin->execute([$adminId]);
                 $idAutor = $checkAdmin->fetch() ? $adminId : null;
@@ -55,9 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $id = (int) postParam('evento_id');
             $esInstitucionalManual = (int) postParam('es_institucional');
             
-            // PERMISOS DG: Pueden editar institucionales (Área 4) o Sistemas (Área 1)
-            if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
-                 die("Acceso denegado: Solo Dirección y Sistemas gestionan la agenda global.");
+            if (($cveAreaUsuario !== 1 && $cveAreaUsuario !== 4)) {
+                 die("Acceso denegado.");
             }
 
             $titulo = trim(postParam('titulo'));
@@ -72,7 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                     $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ? WHERE id = ? AND cve_area = ?");
                     $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 1 : 0), $id, $cveAreaContexto]);
                 } else {
-                    // Es institucional (Global)
                     $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ? WHERE id = ?");
                     $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 1 : 0), $id]);
                 }
@@ -84,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $esInstitucionalManual = (int) postParam('es_institucional');
             
             if ($id > 0) {
-                if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
+                if ($cveAreaUsuario !== 1 && $cveAreaUsuario !== 4) {
                     die("Acceso denegado.");
                 }
 
@@ -175,7 +173,7 @@ $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
 // 1. Consultar eventos de DIRECCIÓN (Propios del área)
-$stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico FROM df_eventos_editoriales WHERE cve_area = ? AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+$stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, FALSE as es_institucional FROM df_eventos_editoriales WHERE cve_area = ? AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmt->execute([$cveAreaContexto, $finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -193,9 +191,14 @@ foreach ($eventosGlobales as $eg) {
 // 3. Mapear a Calendario por Día
 $calendarioEventos = [];
 foreach ($eventosRaw as $ev) {
-    $diaEv = (int) (new DateTime($ev['fecha_inicio']))->format('d');
-    if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
-    $calendarioEventos[$diaEv][] = $ev;
+    try {
+        $dIni = new DateTime($ev['fecha_inicio']);
+        $diaEv = (int)$dIni->format('d');
+        if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
+        // Añadir hora formateada
+        $ev['hora_formateada'] = $dIni->format('H:i');
+        $calendarioEventos[$diaEv][] = $ev;
+    } catch (Exception $e) {}
 }
 
 // 4. Consultar y Añadir CUMPLEAÑOS
@@ -219,6 +222,7 @@ if ($mes > 0 && $mes <= 12) {
             'foto_perfil' => $cp['foto_perfil'] ?? null, 
             'nombre_cumple'=> $nombreCompleto, 
             'edad' => $edadAnios,
+            'hora_formateada' => 'Todo el día'
         ];
     }
 }
@@ -256,49 +260,60 @@ $extraHead = '
 :root {
     --color-primary: #662331;
     --color-primary-dark: #4d1a25;
-    --color-primary-light: #8a3a4a;
-    --color-primary-hover: #7a2c3b;
-    --color-accent: #B19A6D;
 }
 
+/* Diseño Sticky Note (Post-it) Premium */
 .calendar-wrapper { background: #ffffff; border-radius: 16px; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08); overflow: hidden; margin-top: 1.5rem; border: 1px solid rgba(0,0,0,0.05); }
 .calendar-header-nav { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 2rem; background: #fdfdfd; border-bottom: 1px solid rgba(0,0,0,0.06); }
 .calendar-header-nav h3 { margin: 0; font-size: 1.4rem; font-weight: 700; color: var(--color-primary); }
-.nav-btn-group { display: flex; gap: 0.5rem; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8fafc; gap: 1px; }
 .calendar-day-name { padding: 1rem 0.5rem; text-align: right; font-weight: 800; font-size: 0.75rem; color: #64748b; background: #ffffff; text-transform: uppercase; }
 .calendar-cell { min-height: 140px; padding: 0.5rem; background: #ffffff; cursor: pointer; display: flex; flex-direction: column; gap: 0.4rem; overflow: hidden; }
-.calendar-cell.today .day-number { color: #fff; background: var(--color-primary); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; }
 .day-number { font-weight: 700; color: #334155; align-self: flex-end; }
+.calendar-cell.today .day-number { color: #fff; background: var(--color-primary); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; }
 
-.evento-pildora { font-size: 0.75rem; padding: 0.5rem 0.6rem; border-radius: 2px 2px 12px 2px; color: #1e293b; margin-bottom: 0.25rem; position: relative; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05); border-top: 3px solid var(--color-primary); width:100%; box-sizing:border-box;}
-.evento-pildora:hover { transform: scale(1.02); z-index: 10; cursor: move; }
-.evento-titulo { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 5px; }
+/* Sticky Note Style */
+.evento-pildora { 
+    font-size: 0.75rem; 
+    padding: 0.5rem 0.6rem; 
+    border-radius: 2px 2px 12px 2px; 
+    color: #1e293b; 
+    margin-bottom: 0.25rem; 
+    position: relative; 
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05), inset -10px -10px 20px rgba(0,0,0,0.03); 
+    border-top: 3px solid var(--color-primary); 
+    width:100%; box-sizing:border-box;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex; flex-direction: column; gap: 0.2rem;
+}
+.evento-pildora:hover { 
+    transform: scale(1.02) translateY(-2px) rotate(-1deg); 
+    box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.1); 
+    z-index: 10; 
+}
+.evento-pildora::after { 
+    content: ""; position: absolute; bottom: 0; right: 0; 
+    border-width: 0 0 10px 10px; border-style: solid; 
+    border-color: rgba(0,0,0,0.06) white; border-radius: 0 0 0 2px; 
+}
+
+.evento-titulo { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.evento-hora { font-size: 0.65rem; opacity: 0.75; font-weight: 500; display: flex; align-items: center; gap: 3px; }
+
 .evento-acciones { display: flex; gap: 4px; opacity: 0; max-height: 0; overflow: hidden; transition: all 0.2s; }
 .evento-pildora:hover .evento-acciones { opacity: 1; max-height: 30px; margin-top: 4px; }
 .btn-evento-accion { flex: 1; background: rgba(255,255,255,0.7); border: none; border-radius: 4px; padding: 4px 0; cursor: pointer; font-size: 0.75rem; color: #475569; }
 
 .kanban-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; padding: 1.5rem 0; }
-.kanban-col { background: #f1f5f9; border-radius: 12px; min-height: 500px; display: flex; flex-direction: column; border: 1px solid #e2e8f0; }
+.kanban-col { background: #f1f5f9; border-radius: 12px; min-height: 500px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; }
 .kanban-col-header { padding: 1.25rem; font-weight: 800; color: white; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; }
-.bg-pendiente { background-color: #3b82f6; }
-.bg-en-proceso { background-color: #f59e0b; }
-.bg-completada { background-color: #10b981; }
+.bg-pendiente { background-color: #3b82f6; } .bg-en-proceso { background-color: #f59e0b; } .bg-completada { background-color: #10b981; }
 .tarea-card { background: #fff; border-radius: 10px; padding: 1.25rem; margin: 10px; border: 1px solid #e2e8f0; border-top: 5px solid var(--color-primary); cursor: grab; }
 
 .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 2000; align-items: center; justify-content: center; }
 .modal-backdrop.active { display: flex; }
 .modal { background: #fff; width: 100%; max-width: 550px; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); overflow: hidden; }
 .modal-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: white; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-.modal-body { padding: 1.5rem 2rem; }
-.modal-footer { padding: 1.25rem 2rem; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 10px; }
-.form-control { border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px 12px; width: 100%; }
-.form-label { font-weight: 700; color: #475569; font-size: 0.85rem; margin-bottom: 4px; display: block; }
-
-.checkbox-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px; background: #fff1f2; border-radius: 8px; border: 1px solid #fecaca; }
-.checkbox-wrapper input { width: 18px; height: 18px; cursor: pointer; }
-.checkbox-wrapper label { cursor: pointer; font-weight: 700; color: #be123c; font-size: 0.85rem; }
-
 .nota-dorado { background: #fef08a !important; border-top-color: #ca8a04 !important; }
 .cumple-mini-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ca8a04; }
 </style>';
@@ -339,12 +354,14 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <?php foreach ($calendarioEventos[$dia] ?? [] as $ev): 
                     $colorNota = isset($ev['es_cumple']) ? 'nota-dorado' : '';
                     $customStyle = (!isset($ev['es_cumple']) && !empty($ev['color'])) ? 'style="border-top-color: '.$ev['color'].'; background-color: '.$ev['color'].'1a;"' : '';
+                    $esPersonalDG = ($cveAreaUsuario === 1 || $cveAreaUsuario === 4 || $cveAreaUsuario === 2); // Agregamos 2 temporalmente para Juan Perez
                 ?>
                     <div class="evento-pildora <?= $colorNota ?>" <?= $customStyle ?>>
+                        <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= $ev['hora_formateada'] ?></div>
                         <div class="evento-titulo">
                             <?php if(isset($ev['es_cumple'])): ?>
                                 <?php if(!empty($ev['foto_perfil'])): ?><img src="<?= BASE_URL ?>public/uploads/avatares/<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar">
-                                <?php else: ?><div class="cumple-mini-avatar" style="background:#fef08a; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-cake-candles" style="color:#ca8a04; font-size:0.7rem;"></i></div><?php endif; ?>
+                                <?php else: ?><div class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-cake-candles"></i></div><?php endif; ?>
                             <?php endif; ?>
                              <?= esc($ev['titulo']) ?>
                              <?php if(isset($ev['publico']) && $ev['publico']): ?><i class="fa-solid fa-earth-americas" style="font-size:0.65rem; color:var(--color-primary); margin-left:5px;" title="Público"></i><?php endif; ?>
@@ -354,8 +371,8 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                                 <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalCumple('<?=esc($ev['nombre_cumple'])?>', '', '<?=$ev['foto_perfil'] ? BASE_URL.'public/uploads/avatares/'.esc($ev['foto_perfil']) : ''?>', '<?=$ev['edad']?>', '<?=date('d M', strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-cake-candles"></i></button>
                             <?php else: ?>
                                 <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalVer('<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('d/m/Y H:i', strtotime($ev['fecha_inicio']))?>', '<?=date('d/m/Y H:i', strtotime($ev['fecha_fin']))?>')"><i class="fa-solid fa-eye"></i></button>
-                                <?php if($cveAreaUsuario === 1 || $cveAreaUsuario === 4): ?>
-                                <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalEditar(<?=$ev['id']?>, '<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_fin']))?>', '<?=($ev['color'])?>', <?= ($ev['publico']?1:0) ?>, <?= (isset($ev['es_institucional']) && $ev['es_institucional']) ? '1' : '0' ?>)"><i class="fa-solid fa-pen"></i></button>
+                                <?php if($esPersonalDG): ?>
+                                <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalEditar(<?=$ev['id']?>, '<?=esc($ev['titulo'])?>', '<?=esc($ev['descripcion'])?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_fin']))?>', '<?=($ev['color'])?>', <?= ($ev['publico']?1:0) ?>, <?= ($ev['es_institucional'] ? '1' : '0') ?>)"><i class="fa-solid fa-pen"></i></button>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
