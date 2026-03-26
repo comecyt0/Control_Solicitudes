@@ -215,6 +215,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
   - **Solución**: Reemplazo global de `id_personal` por `cve_personal` en 21 archivos de la API.
   - **Aislamiento**: Se verificó que el filtrado por `cve_area` funciona correctamente una vez que la consulta es válida, garantizando que los mensajes solo sean visibles para miembros del mismo departamento.
 
+- **🚨 Arreglo Subida Repositorio (v8.2, 2026-03-26)**:
+    - **Problema**: El botón "Subir" se quedaba colgado en "Subiendo...". La causa era un error inesperado de base de datos (Violación de FK en `creado_por`) que el frontend no capturaba.
+    - **Solución**: Se eliminó el constraint `df_multimedia_creado_por_fkey` para permitir que cualquier miembro del equipo suba archivos.
+    - **Robustez**: Se añadió `try/catch` en la API y `.catch()` en el JS frontal para que el botón se resetee y muestre un aviso útil en caso de error.
 - **🚨 Migración de Esquema Difusión (v8.1, 2026-03-26)**:
     - **Problema**: `Fatal error: Undefined column "cve_area"`. La tabla `df_eventos_editoriales` no tenía la columna para filtrar por área, causando el bloqueo total del calendario.
     - **Solución**: Se añadió la columna `cve_area` (INTEGER) mediante `ALTER TABLE` y se migraron los registros existentes al ID 6 para evitar que desaparecieran.

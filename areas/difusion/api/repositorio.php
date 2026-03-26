@@ -82,11 +82,14 @@ if ($accion === 'crear') {
          exit;
     }
     
-    $stmt = $pdo->prepare("INSERT INTO df_multimedia (titulo, descripcion, tipo, archivo_ruta, creado_por) VALUES (?, ?, ?, ?, ?)");
-    if ($stmt->execute([$titulo, $desc, $tipo, $nombreGuardado, $id_admin])) {
+    try {
+        $stmt = $pdo->prepare("INSERT INTO df_multimedia (titulo, descripcion, tipo, archivo_ruta, creado_por) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$titulo, $desc, $tipo, $nombreGuardado, $id_admin]);
         echo json_encode(['ok' => true]);
-    } else {
-        echo json_encode(['ok' => false, 'error' => 'Error de Base de Datos.']);
+    } catch (PDOException $e) {
+        // Borrar el archivo si la BD falla para no dejar basura
+        if (file_exists($rutaFinal)) @unlink($rutaFinal);
+        echo json_encode(['ok' => false, 'error' => 'Error de Base de Datos: ' . $e->getMessage()]);
     }
 }
 elseif ($accion === 'eliminar') {

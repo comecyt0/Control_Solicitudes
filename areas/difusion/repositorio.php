@@ -509,9 +509,23 @@ document.getElementById('formSubir').addEventListener('submit', function(e) {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
     btn.disabled = true;
     fetch(this.action, { method: 'POST', body: new FormData(this) })
-        .then(r => r.json()).then(res => {
+        .then(r => {
+            if (!r.ok) throw new Error('Error de red o servidor (HTTP ' + r.status + ')');
+            return r.json();
+        })
+        .then(res => {
             if (res.ok) location.reload();
-            else { alert(res.error || 'Error al subir el archivo.'); btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir Material'; btn.disabled = false; }
+            else { 
+                alert(res.error || 'Error al subir el archivo.'); 
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir Material'; 
+                btn.disabled = false; 
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error crítico: ' + err.message + '. Intenta de nuevo o contacta a soporte.');
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir Material'; 
+            btn.disabled = false;
         });
 });
 
