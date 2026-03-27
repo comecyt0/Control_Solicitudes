@@ -292,7 +292,7 @@ require_once __DIR__ . '/../includes/header_user.php';
 // Obtener foto de perfil
 $fotoPerfil = null;
 if (!empty($_SESSION['user_id'])) {
-    $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM cat_personal WHERE id = ?");
+    $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM cat_personal WHERE cve_personal = ?");
     $stmtFoto->execute([$_SESSION['user_id']]);
     $fotoPerfil = $stmtFoto->fetchColumn();
 } elseif (!empty($_SESSION['admin_email'])) {
