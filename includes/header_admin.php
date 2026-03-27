@@ -1612,4 +1612,3 @@ function buscarGlobal(q) {
 </script>
 <script src="<?= BASE_URL ?>assets/js/NotificationBell.js?v=<?= time() ?>"></script>
 
-<?php require_once __DIR__ . '/footer_admin.php'; ?>
