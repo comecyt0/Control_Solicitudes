@@ -129,7 +129,7 @@ class NotificationBell {
         let html = '';
         const baseUrl = window.BASE_URL || '/';
         const adminLabels = {
-            chat: { label: 'Mensajes nuevos', icon: 'fa-comments', color: '#3B82F6', url: 'admin/chat.php' },
+            chat: { label: 'Mensajes nuevos', icon: 'fa-comments', color: '#3B82F6', url: 'admin/dashboard.php?openChat=1' },
             solicitudes: { label: 'Solicitudes nuevas', icon: 'fa-file-invoice', color: '#10B981', url: 'admin/solicitudes.php' },
             personal: { label: 'Cambios de personal', icon: 'fa-user-clock', color: '#F59E0B', url: 'admin/personal_actualizacion.php' },
             equipos: { label: 'Equipos pendientes', icon: 'fa-laptop-medical', color: '#6366F1', url: 'admin/equipos.php' },
@@ -150,7 +150,7 @@ class NotificationBell {
                 hasItems = true;
                 const config = configSet[key];
                 html += `
-                    <a href="${baseUrl}${config.url}" class="bell-item">
+                    <a href="${baseUrl}${config.url}" class="bell-item" ${config.url.includes('openChat=1') ? 'onclick="if(window.toggleChat){window.toggleChat();return false;}"' : ''}>
                         <div class="bell-item-icon" style="background: ${config.color}20; color: ${config.color}">
                             <i class="fa-solid ${config.icon}"></i>
                         </div>

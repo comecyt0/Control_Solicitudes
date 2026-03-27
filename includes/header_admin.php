@@ -1602,7 +1602,14 @@ function buscarGlobal(q) {
     }, 300);
 }
 
+    // -? Auto-abrir chat si viene de notificación ----------------
+    document.addEventListener('DOMContentLoaded', () => {
+        if (new URLSearchParams(window.location.search).get('openChat') === '1') {
+            setTimeout(() => { if (typeof toggleChat === 'function') toggleChat(); }, 500);
+        }
+    });
 
 </script>
 <script src="<?= BASE_URL ?>assets/js/NotificationBell.js?v=<?= time() ?>"></script>
 
+<?php require_once __DIR__ . '/footer_admin.php'; ?>
