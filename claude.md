@@ -53,6 +53,7 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 - **🚨 Notificaciones Silenciadas (Type Mismatch) 🚨**: Las APIs de notificación comparaban IDs con prefijo ('A1', 'P2') contra columnas INTEGER (`destinatario_id`), resultando siempre en 0 pendientes. **Solución**: Refactorizar la query para usar IDs numéricos y separar la lógica de destinatario por columnas de rol (`destinatario_id` vs `destinatario_usuario_id`).
 - **🔗 Chat 404 en Notificaciones (Navigation Bug)**: Las notificaciones apuntaban a `admin/chat.php`, pero el chat administrativo es un panel flotante en el Dashboard. **Solución**: Redirigir a `admin/dashboard.php?openChat=1` e interceptar el parámetro en `header_admin.php` para disparar `toggleChat()`automáticamente.
 - **📦 Refactorización Chat (Reducción Masiva de Código)**: Al extraer el chat a `chat_widget.php`, se eliminaron >1,200 líneas duplicadas en los headers. **Nota**: Esto es intencional para mejorar la modularidad; cualquier cambio en el chat ahora se hace en un solo archivo y afecta a todo el sistema.
+- **🚀 Chat V5.1 Premium**: Implementación de **Glassmorphism**, diseño responsivo móvil (sidebar auto-ocultable) e integración de gestión de **Tareas Kanban** y **Eventos de Calendario** directamente desde la interfaz de chat.
 - **PHP Tag Missing**: Omitir `<?php` al inicio tras una edición automática. **Solución**: Verificar siempre la etiqueta de apertura en reemplazos de bloque.
 
 ### 🖼️ UI/UX y Layout
