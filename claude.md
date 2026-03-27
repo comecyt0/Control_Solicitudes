@@ -289,9 +289,24 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 **Cambios**:
 - Sincronización de los permisos de backend para permitir que el personal de prueba (Área 2) realice operaciones CRUD en el módulo de Dirección General (Área 4).
 
-## v10.7 - Eliminación de Alertas y Frames de Confirmación (DG)
+## v10.8 - Corrección de Contexto de Área (Área 2)
 **Fecha**: 2026-03-27
 **Cambios**:
-- Sustitución total de `confirm()` (alertas de navegador) por frames/modales de confirmación personalizados.
-- Limpieza de archivos duplicados por errores de escritura.
-- Refuerzo de la lógica PRG para evitar errores de acceso durante la eliminación de registros.
+- Identificado y corregido el `cve_area` para Dirección General: cambiado de **4** (OIC) a **2** (Dirección General).
+- Restaurada la visibilidad del personal (Juan Pérez, Víctor Daniel, etc.) en el tablero Kanban al consultar el área correcta en `cat_personal`.
+- Sincronización de permisos para que el personal del Área 2 pueda gestionar sus propios eventos institucionales y editoriales.
+
+## v10.9 - Sincronización Pública y Frontend Premium (DG)
+**Fecha**: 2026-03-27
+**Cambios**:
+- **Sync Global**: Refactorización de `public/calendario.php` para incluir un `UNION ALL` con `df_eventos_editoriales`. Los eventos marcados como públicos en cualquier área ahora son visibles universalmente.
+- **Modal Cumpleaños**: Restaurada la función `abrirModalCumple` en el módulo de DG. Ahora los iconos de pastel abren el frame de celebración con foto y edad.
+- **Iconos de Publicidad**: Corregido el casteo de booleanos en PostgreSQL para mostrar el icono del mundo (`fa-earth-americas`) cuando un evento es público.
+- **Color Kanban**: Se hizo dinámico el `border-top-color` de las tarjetas de tareas para reflejar la elección del usuario al editar.
+
+## v11.0 - Consolidación de Agenda y Tareas (DG)
+**Fecha**: 2026-03-27
+**Estado**: Módulo 100% funcional y en paridad con Difusión.
+- Interacción "Sticky Notes" (Post-it) completa.
+- Tablero Kanban sincronizado con `sb_kanban_tareas` (Area 2).
+- Eliminación de alertas nativas en favor de modales de confirmación personalizados.
