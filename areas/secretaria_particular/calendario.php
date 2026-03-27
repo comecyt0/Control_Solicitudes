@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * COMECyT Control de Solicitudes
  * Panel de Administracion — Calendario / Agenda Institucional
@@ -220,7 +220,7 @@ if ($mes > 0 && $mes <= 12) {
             'publico' => false, 'es_cumple' => true,
             'foto_perfil'  => $cp['foto_perfil'] ?? null,
             'nombre_cumple'=> $nombreCompleto,
-            'edad'         => $edadAnios,
+            'edad' => '',$edadAnios,
         ];
     }
 }$mesesNombres = [
@@ -1619,3 +1619,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>
+

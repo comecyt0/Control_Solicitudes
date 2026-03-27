@@ -35,7 +35,7 @@
             </div>
             <!-- Nombre y edad -->
             <h2 id="mc_nombre_grande" style="margin: 0 0 0.25rem; font-size: 1.3rem; font-weight: 800; color: #1e293b; line-height: 1.3;"></h2>
-            <p id="mc_edad_label" style="margin: 0 0 1rem; color: #78350f; font-size: 1rem; font-weight: 600;"></p>
+            <p id="mc_edad_label" style="margin: 0 0 1rem; color: #78350f; font-size: 1rem; font-weight: 600; display:none;"></p>
             <!-- Fecha -->
             <div style="
                 display: inline-flex;

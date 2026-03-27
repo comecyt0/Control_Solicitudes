@@ -63,21 +63,18 @@ foreach ($cumpleanosRaw as $cump) {
     $dia = (int)DateTime::createFromFormat('Y-m-d', $cump['fecha_nacimiento'])->format('d');
     if (!isset($calendarioEventos[$dia])) $calendarioEventos[$dia] = [];
     
-    // Calcular edad
-    $anioNacimiento = (int)DateTime::createFromFormat('Y-m-d', $cump['fecha_nacimiento'])->format('Y');
-    $edadAnios = $anio - $anioNacimiento;
     $nombreLimpio = esc($cump['nombre']);
 
     $calendarioEventos[$dia][] = [
         'titulo'       => "🎂 " . $nombreLimpio,
-        'descripcion'  => 'Cumpleaños institucional (' . $edadAnios . ' años)',
+        'descripcion'  => 'Cumpleaños institucional',
         'fecha_inicio' => $anio . '-' . $mesAlineado . '-' . str_pad($dia, 2, '0', STR_PAD_LEFT) . ' 00:00:00',
         'fecha_fin'    => $anio . '-' . $mesAlineado . '-' . str_pad($dia, 2, '0', STR_PAD_LEFT) . ' 23:59:59',
         'color'        => '#B19A6D', // nota-dorado
         'es_cumple'    => true,
         'foto_perfil'  => $cump['foto_perfil'] ?? null,
         'nombre_cumple'=> $cump['nombre'],
-        'edad'         => $edadAnios
+        'edad'         => ''
     ];
 }
 foreach ($eventosRaw as $ev) {

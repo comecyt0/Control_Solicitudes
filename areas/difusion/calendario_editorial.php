@@ -224,11 +224,10 @@ if ($mes > 0 && $mes <= 12) {
     foreach ($cumpleaneros as $cp) {
         $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
         $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
-        $edadAnios = $anio - (int)(new DateTime($cp['fecha_nacimiento']))->format('Y');
         $calendarioEventos[$diaCumple][] = [
             'id' => null, 
             'titulo' => "🎂 " . $nombreCompleto, 
-            'descripcion' => 'Cumpleaños institucional (' . $edadAnios . ' años)',
+            'descripcion' => 'Cumpleaños institucional',
             'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple), 
             'fecha_fin' => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
             'color' => '#B19A6D', 
@@ -236,7 +235,7 @@ if ($mes > 0 && $mes <= 12) {
             'es_cumple' => true, 
             'foto_perfil' => $cp['foto_perfil'] ?? null, 
             'nombre_cumple'=> $nombreCompleto, 
-            'edad' => $edadAnios,
+            'edad' => '',
         ];
     }
 }

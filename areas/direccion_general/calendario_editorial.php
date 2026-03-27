@@ -178,9 +178,8 @@ if ($mes > 0 && $mes <= 12) {
     foreach ($stmtB->fetchAll(PDO::FETCH_ASSOC) as $cp) {
         $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
         $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
-        $edadAnios = $anio - (int)(new DateTime($cp['fecha_nacimiento']))->format('Y');
         $fotoUrl = !empty($cp['foto_perfil']) ? BASE_URL . 'public/uploads/avatares/' . $cp['foto_perfil'] : '';
-        $calendarioEventos[$diaCumple][] = ['id'=>null,'titulo'=>"🎂 ".$nombreCompleto,'descripcion'=>'Cumpleaños institucional','fecha_inicio'=>sprintf('%04d-%02d-%02d 00:00:00',$anio,$mes,$diaCumple),'fecha_fin'=>sprintf('%04d-%02d-%02d 23:59:59',$anio,$mes,$diaCumple),'color'=>'#B19A6D','publico'=>false,'es_cumple'=>true,'foto_perfil'=>$fotoUrl,'nombre_cumple'=>$nombreCompleto,'edad'=>$edadAnios,'hora_formateada'=>'Todo el día'];
+        $calendarioEventos[$diaCumple][] = ['id'=>null,'titulo'=>"🎂 ".$nombreCompleto,'descripcion'=>'Cumpleaños institucional','fecha_inicio'=>sprintf('%04d-%02d-%02d 00:00:00',$anio,$mes,$diaCumple),'fecha_fin'=>sprintf('%04d-%02d-%02d 23:59:59',$anio,$mes,$diaCumple),'color'=>'#B19A6D','publico'=>false,'es_cumple'=>true,'foto_perfil'=>$fotoUrl,'nombre_cumple'=>$nombreCompleto,'edad'=>'','hora_formateada'=>'Todo el día'];
     }
 }
 

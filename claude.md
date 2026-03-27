@@ -310,3 +310,11 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - Interacción "Sticky Notes" (Post-it) completa.
 - Tablero Kanban sincronizado con `sb_kanban_tareas` (Area 2).
 - Eliminación de alertas nativas en favor de modales de confirmación personalizados.
+
+## v11.1 - Privacidad: Eliminación de Edad de Calendarios
+**Fecha**: 2026-03-27
+**Cambios**:
+- Remoción total de la visualización de "años cumplidos" en todos los calendarios (Público, Admin y 19 Áreas).
+- **Frontend**: Se ocultó el campo de edad en `modal_cumple.php`.
+- **Backend**: Se eliminó la lógica de cálculo `$edadAnios` y se limpiaron las descripciones de los eventos de cumpleaños.
+- **Alcance**: Aplicado masivamente en `public/calendario.php`, `admin/calendario.php` y los 19 directorios de `/areas/`.
