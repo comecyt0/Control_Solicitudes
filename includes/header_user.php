@@ -117,6 +117,17 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
         </div>
         <div class="topbar-actions">
             <!-- El componente Universal Notification Bell se inyectará aquí automáticamente -->
+            <!-- Botón Chat -->
+            <button class="topbar-btn" id="chatToggleBtn" onclick="toggleChat()" title="Chat del equipo"
+                    style="position:relative; border:none; cursor:pointer; background:none; color:var(--text-muted); padding:5px 8px; font-size:1.1rem;">
+                <i class="fa-solid fa-comments"></i>
+                <span id="chatBadge" style="display:none; position:absolute; top:-5px; right:-5px;
+                      min-width:16px; height:16px; border-radius:999px; background:#ef4444;
+                      color:#fff; font-size:0.6rem; font-weight:700;
+                      align-items:center; justify-content:center; padding:0 3px;
+                      border:2px solid var(--bg-card,#fff);">0</span>
+            </button>
+
             <?php 
                 $cve_area_actual = (int)($_SESSION['user_cve_area'] ?? $_SESSION['admin_cve_area'] ?? 1);
                 // Si el cve_area no está en sesión pero es admin, intentamos inferir o permitimos el botón estándar
@@ -128,6 +139,7 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
                     <i class="fa-solid fa-shapes"></i> <?= $labelPanel ?>
                 </a>
             <?php endif; ?>
+            <?php require_once __DIR__ . '/chat_widget.php'; ?>
             <?php if (!empty($hideSidebar)): ?>
                 <div style="display: flex; gap: 8px;">
                     <a href="<?= BASE_URL ?>public/historial.php" class="btn btn-primary btn-sm">
@@ -143,4 +155,12 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
     
     <main class="content-area" <?php if (!empty($hideSidebar)) echo 'style="max-width: 1400px; margin: 0 auto; padding-top: 100px;"'; ?>>
     <!-- El script de la campana se inyecta al final para asegurar que el DOM esté listo -->
+    <script>
+        // -? Auto-abrir chat si viene de notificación ----------------
+        document.addEventListener('DOMContentLoaded', () => {
+            if (new URLSearchParams(window.location.search).get('openChat') === '1') {
+                setTimeout(() => { if (typeof toggleChat === 'function') toggleChat(); }, 500);
+            }
+        });
+    </script>
     <script src="<?= BASE_URL ?>assets/js/NotificationBell.js?v=<?= time() ?>"></script>
