@@ -174,13 +174,14 @@ if (!empty($alertas)):
     <div class="login-alerts-container">
         <div class="login-alerts-content">
             <?php foreach ($alertas as $index => $alerta): ?>
-                <div class="login-alert-item <?= $index === 0 ? 'active' : '' ?>" id="alert-<?= $alerta['id'] ?>">
-                    <div class="login-alert-header">
-                        <h2><?= esc($alerta['titulo']) ?></h2>
-                    </div>
+                <div class="login-alert-item <?= $index === 0 ? 'active' : '' ?>" id="alert-<?= $alerta['id'] ?>" data-titulo="<?= esc($alerta['titulo']) ?>">
                     <img src="<?= BASE_URL . $alerta['imagen_path'] ?>" alt="<?= esc($alerta['titulo']) ?>">
                 </div>
             <?php endforeach; ?>
+        </div>
+
+        <div class="login-alert-external-info">
+            <h2 id="activeAlertTitle"><?= esc($alertas[0]['titulo']) ?></h2>
         </div>
         
         <?php if (count($alertas) > 1): ?>
@@ -218,17 +219,18 @@ if (!empty($alertas)):
     align-items: center;
     gap: 25px;
 }
-.login-alert-header {
+.login-alert-external-info {
     width: 100%;
     text-align: center;
     color: #fff;
-    margin-bottom: 10px;
+    margin-top: 5px;
 }
-.login-alert-header h2 {
-    font-size: 2rem;
+.login-alert-external-info h2 {
+    font-size: 2.2rem;
     font-weight: 800;
     margin: 0;
-    background: linear-gradient(135deg, #fff, #94a3b8);
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    background: linear-gradient(135deg, #fff, #b19a6d);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -321,7 +323,12 @@ const counter = document.getElementById('alertCounter');
 function changeAlert(dir) {
     alerts[currentAlertIndex].classList.remove('active');
     currentAlertIndex = (currentAlertIndex + dir + alerts.length) % alerts.length;
-    alerts[currentAlertIndex].classList.add('active');
+    const nextAlert = alerts[currentAlertIndex];
+    nextAlert.classList.add('active');
+    
+    // Actualizar título externo
+    document.getElementById('activeAlertTitle').textContent = nextAlert.dataset.titulo;
+    
     if(counter) counter.textContent = `${currentAlertIndex + 1} / ${alerts.length}`;
 }
 

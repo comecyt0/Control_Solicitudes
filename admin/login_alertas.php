@@ -565,10 +565,9 @@ async function guardarAlerta(e) {
 
         if(data.ok) {
             COMECyTUI.toast('¡Publicada!', data.msg, 'success');
-            setTimeout(() => {
-                cerrarModal();
-                cargarAlertas();
-            }, 300);
+            // Cierre inmediato y recarga diferida
+            cerrarModal();
+            setTimeout(cargarAlertas, 300);
         } else {
             COMECyTUI.toast('Atención', data.msg, 'error');
         }
@@ -578,6 +577,12 @@ async function guardarAlerta(e) {
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalContent;
+        // Fallback de seguridad para cerrar modal si se quedó trabado
+        setTimeout(() => {
+            if(document.getElementById('modalAlerta').style.display === 'flex') {
+                cerrarModal();
+            }
+        }, 1500);
     }
 }
 
