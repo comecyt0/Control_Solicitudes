@@ -386,4 +386,5 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 
 ## Subagentes y Automatización
 - **Verificación**: El sistema es compatible con subagentes especializados. Se ha documentado su uso en `subagentes.md` para tareas complejas de refactorización y auditoría de código.
-- **Skills**: Se fomenta el uso de skills reutilizables para tareas repetitivas de Docker y Git (vía `system_sync`).
+- **Sistema Universal de Notificaciones (Global Bell)**: v16.1 Layout fix + v16.2 Polling (3s).
+- **Banner Intranet**: Grosor reducido (-5px) y avatar dinámico del usuario logueado.

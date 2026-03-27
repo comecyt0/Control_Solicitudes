@@ -82,7 +82,7 @@ class NotificationBell {
 
     startPolling() {
         this.fetch();
-        this.interval = setInterval(() => this.fetch(), 15000); // 15s polling
+        this.interval = setInterval(() => this.fetch(), 3000); // 3s polling (v16.2)
     }
 
     async fetch() {
