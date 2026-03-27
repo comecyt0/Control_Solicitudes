@@ -345,3 +345,10 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Galería Pública**: 
     - Ahora solo muestra archivos marcados como "Visibles".
     - El botón de descarga se oculta y reemplaza por un indicador de "Solo lectura" si los permisos están desactivados.
+
+## v13.1 - Seguridad y UX en Galería
+**Fecha**: 2026-03-27
+**Cambios**:
+- **Vista Previa Segura**: El contenido completo ya no se renderiza en el grid. Se implementó un sistema de thumbnails con un modal ("Vista Previa") que permite ver el material en pantalla completa con scroll.
+- **Protección Anti-Copia**: Se bloqueó el click derecho (context menu) en todas las imágenes y contenedores de la galería para dificultar la descarga no autorizada.
+- **Thumbnail Engine**: Los recursos se presentan recortados uniformemente en el grid, mejorando el orden visual de la mampostería (masonry).
