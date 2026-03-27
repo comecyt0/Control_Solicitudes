@@ -1,7 +1,7 @@
 <?php
 /**
- * COMECyT — Universal Chat & AI Assistant Widget (v5.2 Platinum)
- * Rediseño Profesional: Platinum Glassmorphism, Centrado de Modales y UX Mejorada
+ * COMECyT — Universal Chat & AI Assistant Widget (v5.3 Platinum)
+ * Rediseño Profesional: Platinum Glassmorphism, FIX DE CENTRADO (Teleport) y UX Elite
  */
 
 // Personalización de Chat por Área
@@ -17,65 +17,54 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
 ?>
 
 <style>
-/* ── Platinum Design System ── */
+/* ── Platinum V3 Design System ── */
 :root {
     --chat-accent: #B19A6D;
     --chat-primary: #662331;
-    --chat-primary-light: #8b2f42;
-    --chat-bg-dark: #0f172a;
-    --chat-text-main: #1e293b;
-    --chat-text-muted: #64748b;
-    --chat-glass: rgba(255, 255, 255, 0.92);
-    --chat-glass-dark: rgba(255, 255, 255, 0.98);
-    --chat-shadow-premium: 0 25px 50px -12px rgba(102, 35, 49, 0.25);
-    --chat-radius-xl: 24px;
+    --chat-primary-hover: #7d2a3c;
+    --chat-glass: rgba(255, 255, 255, 0.94);
+    --chat-shadow: 0 30px 60px -12px rgba(102, 35, 49, 0.3);
+    --chat-radius: 24px;
 }
 
-/* ── Panel Principal ── */
 #chatPanel {
     display: none;
     position: fixed;
     top: 85px; 
     right: 25px;
-    width: 680px;
-    height: 600px;
+    width: 700px;
+    height: 620px;
     z-index: 9999;
     background: var(--chat-glass);
-    backdrop-filter: blur(25px) saturate(180%);
-    -webkit-backdrop-filter: blur(25px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--chat-radius-xl);
-    box-shadow: var(--chat-shadow-premium);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: var(--chat-radius);
+    box-shadow: var(--chat-shadow);
     flex-direction: row;
     overflow: hidden;
-    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
-    animation: chatPlatinumIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: 'Outfit', 'Inter', sans-serif;
+    animation: chatEliteIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes chatPlatinumIn { 
-    from { transform: translateY(30px) scale(0.92); opacity: 0; }
+@keyframes chatEliteIn { 
+    from { transform: translateY(40px) scale(0.9); opacity: 0; }
     to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-/* ── Sidebar Estilo Dark Platinum ── */
+/* ── Sidebar: Profundidad y Contraste ── */
 #chatSidebar {
-    width: 220px;
-    background: linear-gradient(165deg, #3d1520 0%, #662331 100%);
+    width: 230px;
+    background: linear-gradient(170deg, #2d0f18 0%, #662331 100%);
     color: #fff;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid rgba(255,255,255,0.1);
+    border-right: 1px solid rgba(255,255,255,0.05);
 }
 
-.c-sidebar-header {
-    padding: 24px 20px;
+.plat-side-header {
+    padding: 26px 20px;
     border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.c-sidebar-header h4 {
-    margin: 0; font-size: 0.95rem; font-weight: 700;
-    display: flex; align-items: center; gap: 10px;
-    letter-spacing: -0.01em;
 }
 
 #chatAdminList {
@@ -84,276 +73,209 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
     overflow-y: auto;
 }
 
-.c-contact-item {
+.plat-contact {
     width: 100%; border: none; background: transparent;
-    padding: 12px 14px; border-radius: 14px;
-    color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 12px;
-    cursor: pointer; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-align: left; margin-bottom: 2px;
+    padding: 12px 14px; border-radius: 16px;
+    color: rgba(255,255,255,0.6); display: flex; align-items: center; gap: 12px;
+    cursor: pointer; transition: all 0.3s;
+    text-align: left; margin-bottom: 4px;
 }
 
-.c-contact-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.c-contact-item.active { 
+.plat-contact:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.plat-contact.active { 
     background: rgba(255,255,255,0.15); color: #fff; 
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
-.c-avatar {
-    width: 36px; height: 36px; border-radius: 12px;
-    background: rgba(255,255,255,0.15); color: #fff;
+.plat-avatar {
+    width: 38px; height: 38px; border-radius: 13px;
+    background: rgba(255,255,255,0.12); color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    font-weight: 700; font-size: 0.9rem; flex-shrink: 0;
 }
 
-/* ── Main Area ── */
-.chat-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: rgba(255,255,255,0.45);
-    min-width: 0;
-}
+/* ── Main Chat Area ── */
+.chat-main { flex: 1; display: flex; flex-direction: column; background: rgba(255,255,255,0.3); min-width: 0; }
 
-.c-header {
-    padding: 18px 24px;
-    background: rgba(255,255,255,0.9);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+.plat-header {
+    padding: 20px 25px;
+    background: rgba(255,255,255,0.95);
+    border-bottom: 1px solid rgba(0,0,0,0.04);
     display: flex; align-items: center; gap: 15px;
 }
 
 #chatMessages {
     flex: 1; padding: 25px; overflow-y: auto;
     display: flex; flex-direction: column; gap: 15px;
-    background: radial-gradient(at 0% 0%, rgba(177, 154, 109, 0.05) 0%, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(102, 35, 49, 0.05) 0%, transparent 50%);
+    background-image: radial-gradient(#66233108 1px, transparent 1px);
+    background-size: 20px 20px;
 }
 
-/* ── Burbujas Platinum ── */
-.msg-bubble {
-    max-width: 78%; padding: 12px 18px; border-radius: 20px;
-    font-size: 0.92rem; line-height: 1.55; position: relative;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-    transition: transform 0.2s ease;
+/* ── Elite Bubbles ── */
+.elite-msg {
+    max-width: 80%; padding: 14px 18px; border-radius: 22px;
+    font-size: 0.94rem; line-height: 1.5; position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.02);
 }
 
-.msg-bubble.me {
+.elite-msg.me {
     align-self: flex-end;
-    background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-primary-light) 100%);
-    color: #fff; border-bottom-right-radius: 4px;
+    background: linear-gradient(135deg, var(--chat-primary) 0%, #8b2f42 100%);
+    color: #fff; border-bottom-right-radius: 5px;
 }
 
-.msg-bubble.other {
+.elite-msg.other {
     align-self: flex-start;
-    background: #fff; color: var(--chat-text-main);
-    border-bottom-left-radius: 4px; border: 1px solid rgba(0,0,0,0.06);
+    background: #fff; color: #1e293b;
+    border: 1px solid rgba(0,0,0,0.06); border-bottom-left-radius: 5px;
 }
 
-.msg-meta {
-    font-size: 0.7rem; color: var(--chat-text-muted);
-    margin-bottom: 5px; display: block; font-weight: 600;
-}
+.elite-meta { font-size: 0.7rem; color: #94a3b8; margin-bottom: 5px; display: block; font-weight: 600; }
 
-.msg-type-card {
-    padding: 10px 14px; border-radius: 12px;
-    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
-    display: flex; align-items: center; gap: 12px; margin-top: 8px;
-}
-
-/* ── Input Bar Float View ── */
-.c-footer {
-    padding: 15px 25px 25px;
-    background: transparent;
-}
-
-.c-input-container {
-    background: #fff;
-    border-radius: 18px;
-    padding: 8px 12px;
-    display: flex; align-items: flex-end; gap: 10px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
+/* ── Platinum Input Bar ── */
+.plat-footer { padding: 15px 25px 25px; }
+.plat-input-box {
+    background: #fff; border-radius: 20px; padding: 10px 15px;
+    display: flex; align-items: flex-end; gap: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.03);
 }
 
 #chatInput {
-    flex: 1; border: none; background: transparent; padding: 10px 5px;
-    font-size: 0.95rem; max-height: 120px; resize: none; outline: none;
-    font-family: inherit; color: var(--chat-text-main);
+    flex: 1; border: none; background: transparent; padding: 10px 0;
+    font-size: 1rem; max-height: 150px; resize: none; outline: none;
+    font-family: inherit; color: #1e293b;
 }
 
-.btn-send-platinum {
-    width: 44px; height: 44px; border-radius: 14px;
+.btn-send-elite {
+    width: 48px; height: 48px; border-radius: 15px;
     background: var(--chat-primary); color: #fff;
-    border: none; cursor: pointer; transition: 0.3s;
+    border: none; cursor: pointer; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+
+.btn-send-elite:hover { transform: translateY(-4px) scale(1.05); box-shadow: 0 10px 25px rgba(102, 35, 49, 0.35); }
+
+/* ── FIXED MODAL SYSTEM (Teleport Fix) ── */
+.v-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: 100000; background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(10px);
     display: flex; align-items: center; justify-content: center;
+    visibility: hidden; opacity: 0; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.btn-send-platinum:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 8px 20px rgba(102, 35, 49, 0.3);
-    background: var(--chat-primary-light);
+.v-modal-overlay.active { visibility: visible; opacity: 1; }
+
+.v-modal-card {
+    background: #fff; width: 100%; max-width: 460px;
+    border-radius: 32px; padding: 40px;
+    box-shadow: 0 50px 100px -20px rgba(0,0,0,0.4);
+    transform: translateY(30px) scale(0.95);
+    transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* ── Modales Platinum ── */
-.platinum-overlay {
-    position: fixed; inset: 0; z-index: 10000;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center;
-    padding: 20px; opacity: 0; pointer-events: none;
-    transition: opacity 0.3s ease;
-}
+.v-modal-overlay.active .v-modal-card { transform: translateY(0) scale(1); }
 
-.platinum-overlay.open { opacity: 1; pointer-events: all; }
-
-.platinum-modal {
-    background: #fff; width: 100%; max-width: 440px;
-    border-radius: 28px; padding: 35px;
-    box-shadow: 0 40px 100px rgba(0,0,0,0.3);
-    transform: scale(0.9) translateY(20px);
-    transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.platinum-overlay.open .platinum-modal { transform: scale(1) translateY(0); }
-
-.premium-input {
-    width: 100%; padding: 12px 16px; border-radius: 14px;
+.v-input {
+    width: 100%; padding: 14px 18px; border-radius: 16px;
     border: 1px solid #e2e8f0; background: #f8fafc;
-    font-size: 0.95rem; margin-top: 6px; outline: none;
-    transition: 0.2s;
+    font-size: 1rem; margin-top: 8px; outline: none; transition: 0.3s;
 }
+.v-input:focus { border-color: var(--chat-primary); background: #fff; box-shadow: 0 0 0 5px rgba(102,35,49,0.06); }
 
-.premium-input:focus { border-color: var(--chat-primary); background: #fff; box-shadow: 0 0 0 4px rgba(102,35,49,0.05); }
-
-.btn-premium-full {
-    width: 100%; padding: 15px; border: none; border-radius: 16px;
+.v-btn-primary {
+    width: 100%; padding: 18px; border: none; border-radius: 18px;
     background: var(--chat-primary); color: #fff; font-weight: 700;
-    font-size: 1rem; cursor: pointer; transition: 0.3s; margin-top: 10px;
+    font-size: 1.1rem; cursor: pointer; transition: 0.3s; margin-top: 15px;
 }
+.v-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(102, 35, 49, 0.4); }
 
-.btn-premium-full:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 35, 49, 0.3); }
-
-/* ── Responsive ── */
+/* Responsive */
 @media (max-width: 768px) {
-    #chatPanel { top:0; right:0; left:0; bottom:0; width:100% !important; height:100% !important; border-radius:0; padding-top: 60px; }
+    #chatPanel { top:0; right:0; left:0; bottom:0; width:100% !important; height:100% !important; border-radius:0; }
     #chatSidebar { width: 100%; position: absolute; inset: 0; z-index: 100; transform: translateX(0); }
     #chatSidebar.hidden { transform: translateX(-100%); }
-    .mobile-back { display: flex !important; }
 }
 </style>
 
 <div id="chatPanel">
     <!-- Sidebar -->
     <div id="chatSidebar">
-        <div class="c-sidebar-header">
-            <h4><i class="fa-solid fa-comments"></i> <?= $chat_area_label ?></h4>
-            <span style="opacity:0.5; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 5px; display: block;">Platinum Edition v5.2</span>
+        <div class="plat-side-header">
+            <h4 style="margin:0; font-size:1rem;"><i class="fa-solid fa-comments" style="color:var(--chat-accent)"></i> <?= $chat_area_label ?></h4>
+            <span style="font-size:0.6rem; text-transform:uppercase; color:var(--chat-accent); opacity:0.8; letter-spacing:0.1em; font-weight:800; margin-top:5px; display:block;">Platinum Edition v5.3</span>
         </div>
         <div id="chatAdminList">
-            <button class="c-contact-item active" id="chatGeneralBtn" onclick="chatSeleccionarCanal(null)">
-                <div class="c-avatar" style="background:var(--chat-accent)"><i class="fa-solid fa-users"></i></div>
+            <button class="plat-contact active" id="btnGen" onclick="selChat(null)">
+                <div class="plat-avatar" style="background:#B19A6D"><i class="fa-solid fa-users"></i></div>
                 <div style="flex:1;">
-                    <div style="font-weight:700; font-size:0.85rem;">General</div>
-                    <div style="font-size:0.65rem; opacity:0.6;">Equipo Completo</div>
+                    <div style="font-weight:700; font-size:0.9rem;">Área General</div>
+                    <div style="font-size:0.65rem; opacity:0.6;">Chat Colaborativo</div>
                 </div>
             </button>
-            <div style="margin-top: 25px; padding: 0 10px;">
-                <p style="font-size: 0.6rem; opacity: 0.4; text-transform: uppercase; font-weight: 800; letter-spacing: 0.1em; padding-left: 14px; margin-bottom: 12px;">Mensajes Directos</p>
-                <div id="platDmsList" style="display: flex; flex-direction: column; gap: 4px;"></div>
+            <div style="margin-top: 30px; padding: 0 10px;">
+                <p style="font-size: 0.65rem; opacity: 0.4; text-transform: uppercase; font-weight: 800; letter-spacing: 0.1em; padding-left: 14px; margin-bottom: 15px;">Mensajes Directos</p>
+                <div id="platDms"></div>
             </div>
         </div>
-        
-        <!-- Acciones Rápidas con Nuevo Diseño -->
-        <div style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.05);">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <button onclick="abrirModPlatinum('tarea')" style="background:rgba(255,255,255,0.1); border:none; border-radius:12px; color:#fff; padding:10px; cursor:pointer; font-size:0.7rem; transition:0.2s;">
-                    <i class="fa-solid fa-list-check" style="font-size:1rem; margin-bottom:4px;"></i><br>Tarea
-                </button>
-                <button onclick="abrirModPlatinum('evento')" style="background:rgba(255,255,255,0.1); border:none; border-radius:12px; color:#fff; padding:10px; cursor:pointer; font-size:0.7rem; transition:0.2s;">
-                    <i class="fa-solid fa-calendar-plus" style="font-size:1rem; margin-bottom:4px;"></i><br>Evento
-                </button>
+        <!-- Acciones Inferiores -->
+        <div style="padding: 15px; background: rgba(0,0,0,0.1); border-top: 1px solid rgba(255,255,255,0.05);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="opModPlat('tarea')" style="background:rgba(255,255,255,0.08); border:none; border-radius:14px; color:#fff; padding:12px 5px; cursor:pointer; font-size:0.75rem;"><i class="fa-solid fa-list-check" style="font-size:1rem; margin-bottom:5px;"></i><br>Tarea</button>
+                <button onclick="opModPlat('evento')" style="background:rgba(255,255,255,0.08); border:none; border-radius:14px; color:#fff; padding:12px 5px; cursor:pointer; font-size:0.75rem;"><i class="fa-solid fa-calendar-star" style="font-size:1rem; margin-bottom:5px;"></i><br>Evento</button>
             </div>
         </div>
     </div>
 
     <!-- Main -->
     <div class="chat-main">
-        <div class="c-header">
-            <button class="mobile-back" style="display:none; background:none; border:none; font-size:1.2rem; color:var(--chat-primary); cursor:pointer;" onclick="volverALista()"><i class="fa-solid fa-chevron-left"></i></button>
-            <div id="platActiveAvatar" class="c-avatar" style="background:var(--chat-primary)"><i class="fa-solid fa-users"></i></div>
+        <div class="plat-header">
+            <button class="mobile-back" style="display:none; background:none; border:none; color:var(--chat-primary); font-size:1.3rem; margin-right:15px;" onclick="vAList()"><i class="fa-solid fa-chevron-left"></i></button>
+            <div id="hdrAvatar" class="plat-avatar" style="background:var(--chat-primary);"><i class="fa-solid fa-users"></i></div>
             <div style="flex:1; min-width:0;">
-                <strong id="platActiveName" style="font-size: 1rem; color: var(--chat-text-main); display: block; overflow: hidden; text-overflow: ellipsis;">General de Área</strong>
-                <p id="platActiveStatus" style="font-size: 0.75rem; color: var(--chat-text-muted); margin: 0;">Activo ahora</p>
+                <strong id="hdrName" style="font-size: 1.1rem; color: #1e293b; display: block;">General de Área</strong>
+                <p id="hdrStatus" style="font-size: 0.8rem; color: #94a3b8; margin: 0;">Activo ahora</p>
             </div>
-            <button onclick="toggleChat()" style="background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:1.4rem; padding: 5px;"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="toggleChat()" style="background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:1.5rem;"><i class="fa-solid fa-xmark"></i></button>
         </div>
-
         <div id="chatMessages"></div>
-
-        <div class="c-footer">
-            <div class="c-input-container">
-                <textarea id="chatInput" placeholder="Escribe tu mensaje..." onkeydown="chatKeyDown(event)" rows="1"></textarea>
-                <button class="btn-send-platinum" onclick="enviarMensaje()"><i class="fa-solid fa-paper-plane"></i></button>
+        <div class="plat-footer">
+            <div class="plat-input-box">
+                <textarea id="chatInput" placeholder="Enviar mensaje..." onkeydown="chatKeyDown(event)" rows="1"></textarea>
+                <button class="btn-send-elite" onclick="enviarMensaje()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modales Centrados y Platinum -->
-<div id="platModalOverlay" class="platinum-overlay" onclick="cerrarModPlatinum()">
-    <div class="platinum-modal" onclick="event.stopPropagation()">
-        
-        <div id="platModalTarea" style="display:none;">
-            <div style="text-align:center; margin-bottom:25px;">
-                <div style="width:50px; height:50px; background:rgba(102,35,49,0.1); color:var(--chat-primary); border-radius:16px; display:inline-flex; align-items:center; justify-content:center; font-size:1.5rem; margin-bottom:15px;">
-                    <i class="fa-solid fa-thumbtack"></i>
-                </div>
-                <h3 style="margin:0; color:var(--chat-primary); font-size:1.4rem;">Nueva Tarea Kanban</h3>
-                <p style="color:var(--chat-text-muted); font-size:0.85rem; margin-top:5px;">Añade una actividad para el equipo</p>
+<!-- Modales (Aislados para Teleport) -->
+<div id="platModalRoot" class="v-modal-overlay" onclick="clModPlat()">
+    <div class="v-modal-card" onclick="event.stopPropagation()">
+        <!-- Tarea -->
+        <div id="vModTarea" style="display:none;">
+            <div style="text-align:center; margin-bottom:30px;">
+                <div style="width:60px; height:60px; background:#66233115; color:#662331; border-radius:20px; display:inline-flex; align-items:center; justify-content:center; font-size:1.8rem; margin-bottom:15px;"><i class="fa-solid fa-layer-group"></i></div>
+                <h3 style="margin:0; font-size:1.5rem; color:#1e293b;">Crear Tarea Kanban</h3>
+                <p style="color:#94a3b8; font-size:0.9rem; margin-top:5px;">Gestiona el flujo de trabajo del equipo</p>
             </div>
-            
-            <div style="margin-bottom:15px;">
-                <label style="font-size:0.8rem; font-weight:700; color:var(--chat-text-main);">Título de la Tarea</label>
-                <input type="text" id="ptTitle" placeholder="Ej: Mantenimiento Preventivo" class="premium-input">
-            </div>
-            
-            <div style="margin-bottom:15px;">
-                <label style="font-size:0.8rem; font-weight:700; color:var(--chat-text-main);">Descripción (Opcional)</label>
-                <textarea id="ptDesc" placeholder="Detalles adicionales..." class="premium-input" style="height:80px; resize:none;"></textarea>
-            </div>
-            
-            <div style="margin-bottom:25px;">
-                <label style="font-size:0.8rem; font-weight:700; color:var(--chat-text-main);">Responsable</label>
-                <select id="ptAsignado" class="premium-input"></select>
-            </div>
-            
-            <button onclick="guardarTareaPlat()" class="btn-premium-full">Crear Tarea</button>
+            <input type="text" id="vTTitle" placeholder="Nombre de la tarea" class="v-input">
+            <textarea id="vTDesc" placeholder="Descripción breve..." class="v-input" style="height:100px; resize:none;"></textarea>
+            <select id="vTAssign" class="v-input"></select>
+            <button onclick="saveTPlat()" class="v-btn-primary">Registrar en Tablero</button>
         </div>
-
-        <div id="platModalEvento" style="display:none;">
-            <div style="text-align:center; margin-bottom:25px;">
-                <div style="width:50px; height:50px; background:rgba(177,154,109,0.1); color:var(--chat-accent); border-radius:16px; display:inline-flex; align-items:center; justify-content:center; font-size:1.5rem; margin-bottom:15px;">
-                    <i class="fa-solid fa-calendar-star"></i>
-                </div>
-                <h3 style="margin:0; color:var(--chat-accent); font-size:1.4rem;">Agendar Evento</h3>
-                <p style="color:var(--chat-text-muted); font-size:0.85rem; margin-top:5px;">Registra una reunión o fecha clave</p>
+        <!-- Evento -->
+        <div id="vModEvento" style="display:none;">
+            <div style="text-align:center; margin-bottom:30px;">
+                <div style="width:60px; height:60px; background:#B19A6D15; color:#B19A6D; border-radius:20px; display:inline-flex; align-items:center; justify-content:center; font-size:1.8rem; margin-bottom:15px;"><i class="fa-solid fa-calendar-check"></i></div>
+                <h3 style="margin:0; font-size:1.5rem; color:#1e293b;">Agendar Evento</h3>
+                <p style="color:#94a3b8; font-size:0.9rem; margin-top:5px;">Añade una fecha clave al calendario</p>
             </div>
-            
-            <div style="margin-bottom:15px;">
-                <label style="font-size:0.8rem; font-weight:700; color:var(--chat-text-main);">Título del Evento</label>
-                <input type="text" id="peTitle" placeholder="Ej: Reunión Mensual" class="premium-input">
-            </div>
-            
-            <div style="margin-bottom:25px;">
-                <label style="font-size:0.8rem; font-weight:700; color:var(--chat-text-main);">Fecha y Hora</label>
-                <input type="datetime-local" id="peStart" class="premium-input">
-            </div>
-            
-            <button onclick="guardarEventoPlat()" class="btn-premium-full" style="background:var(--chat-accent);">Agendar Evento</button>
+            <input type="text" id="vETitle" placeholder="Título del evento" class="v-input">
+            <input type="datetime-local" id="vEStart" class="v-input">
+            <button onclick="saveEPlat()" class="v-btn-primary" style="background:var(--chat-accent);">Guardar en Calendario</button>
         </div>
-
-        <button onclick="cerrarModPlatinum()" style="background:none; border:none; color:var(--chat-text-muted); width:100%; margin-top:15px; cursor:pointer; font-weight:600; font-size:0.85rem;">Cerrar sin guardar</button>
+        <button onclick="clModPlat()" style="width:100%; border:none; background:none; margin-top:20px; color:#94a3b8; font-weight:600; cursor:pointer;">Cancelar registro</button>
     </div>
 </div>
 
@@ -363,177 +285,117 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
     const ADMIN_ID = '<?= $_SESSION['admin_id'] ? "A".$_SESSION['admin_id'] : "P".($_SESSION['user_id'] ?? 0) ?>';
     let chatOpen = false, canalActual = null, ultimoId = 0, polling = null, badgeCnt = 0;
 
+    // Teleport Modals to Body to fix alignment issues
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('platModalRoot');
+        if (modal) document.body.appendChild(modal);
+    });
+
     window.toggleChat = function() {
         chatOpen = !chatOpen;
-        const panel = document.getElementById('chatPanel');
-        panel.style.display = chatOpen ? 'flex' : 'none';
-        
-        if (chatOpen) {
-            cargarAdminsPlatinum();
-            cargarMensajesPlatinum(true);
-            iniciarPollingPlat();
-            badgeCnt = 0;
-            const b = document.getElementById('chatBadge'); if(b) b.style.display = 'none';
-        } else {
-            detenerPollingPlat();
-        }
+        document.getElementById('chatPanel').style.display = chatOpen ? 'flex' : 'none';
+        if (chatOpen) { loadAdmins(); loadMsgs(true); startPoll(); badgeCnt = 0; const b = document.getElementById('chatBadge'); if(b) b.style.display = 'none'; }
+        else detenerPoll();
     };
 
-    window.chatSeleccionarCanal = function(id, nombre = 'General de Área') {
-        canalActual = id;
-        ultimoId = 0;
+    window.selChat = function(id, nombre = 'General de Área') {
+        canalActual = id; ultimoId = 0;
         document.getElementById('chatMessages').innerHTML = '';
-        document.getElementById('platActiveName').textContent = nombre;
-        document.getElementById('platActiveStatus').textContent = id ? 'Mensaje Directo' : 'Equipo Institucional';
-        
-        const avatar = document.getElementById('platActiveAvatar');
-        avatar.innerHTML = id ? `<div class="c-avatar">${nombre.charAt(0).toUpperCase()}</div>` : `<i class="fa-solid fa-users"></i>`;
-
-        document.querySelectorAll('.c-contact-item').forEach(el => el.classList.remove('active'));
-        if (!id) document.getElementById('chatGeneralBtn').classList.add('active');
-
-        cargarMensajesPlatinum(true);
+        document.getElementById('hdrName').textContent = nombre;
+        document.getElementById('hdrStatus').textContent = id ? 'Mensaje Directo' : 'Equipo Institucional';
+        const hdrAv = document.getElementById('hdrAvatar');
+        hdrAv.innerHTML = id ? `<div class="plat-avatar">${nombre.charAt(0).toUpperCase()}</div>` : `<i class="fa-solid fa-users"></i>`;
+        document.querySelectorAll('.plat-contact').forEach(el => el.classList.remove('active'));
+        if (!id) document.getElementById('btnGen').classList.add('active');
+        loadMsgs(true);
         if (window.innerWidth < 768) document.getElementById('chatSidebar').classList.add('hidden');
     };
 
-    function iniciarPollingPlat() { detenerPollingPlat(); polling = setInterval(() => cargarMensajesPlatinum(false), 5000); }
-    function detenerPollingPlat() { if (polling) clearInterval(polling); }
+    function startPoll() { stopPoll(); polling = setInterval(() => loadMsgs(false), 5000); }
+    function stopPoll() { if (polling) clearInterval(polling); }
+    window.vAList = () => document.getElementById('chatSidebar').classList.remove('hidden');
 
-    window.volverALista = () => document.getElementById('chatSidebar').classList.remove('hidden');
-
-    function cargarAdminsPlatinum() {
+    function loadAdmins() {
         fetch(`${API}?accion=admins`).then(r => r.json()).then(res => {
             if (!res.ok) return;
-            const list = document.getElementById('platDmsList');
-            const select = document.getElementById('ptAsignado');
+            const list = document.getElementById('platDms');
+            const select = document.getElementById('vTAssign');
             list.innerHTML = '';
             select.innerHTML = '<option value="">-- Cualquiera del equipo --</option>';
-
             res.admins.forEach(adm => {
                 if (adm.id === ADMIN_ID) return;
                 const btn = document.createElement('button');
-                btn.className = `c-contact-item ${canalActual === adm.id ? 'active' : ''}`;
-                btn.innerHTML = `<div class="c-avatar">${adm.inicial}</div><div style="flex:1;"><div style="font-weight:700; font-size:0.85rem;">${adm.nombre}</div><div style="font-size:0.65rem; opacity:0.6;">${adm.rol || 'Staff'}</div></div>`;
-                btn.onclick = () => chatSeleccionarCanal(adm.id, adm.nombre);
+                btn.className = `plat-contact ${canalActual === adm.id ? 'active' : ''}`;
+                btn.innerHTML = `<div class="plat-avatar">${adm.inicial}</div><div style="flex:1;"><div style="font-weight:700; font-size:0.9rem;">${adm.nombre}</div><div style="font-size:0.65rem; opacity:0.5;">${adm.rol || 'Miembro'}</div></div>`;
+                btn.onclick = () => selChat(adm.id, adm.nombre);
                 list.appendChild(btn);
-
-                const opt = document.createElement('option');
-                opt.value = adm.id.replace('A', '');
-                opt.textContent = adm.nombre;
+                const opt = document.createElement('option'); opt.value = adm.id.replace('A',''); opt.textContent = adm.nombre;
                 select.appendChild(opt);
             });
         });
     }
 
-    function cargarMensajesPlatinum(scroll = false) {
+    function loadMsgs(scroll = false) {
         let url = `${API}?accion=listar&desde=${ultimoId}`;
         if (canalActual) url += `&destinatario=${canalActual}`;
-
         fetch(url).then(r => r.json()).then(res => {
             if (!res.ok || !res.mensajes.length) return;
             const zona = document.getElementById('chatMessages');
             res.mensajes.forEach(m => {
                 const isMe = String(m.admin_id) === String(ADMIN_ID);
-                const bubble = document.createElement('div');
-                bubble.className = `msg-bubble ${isMe ? 'me' : 'other'}`;
-                
+                const bub = document.createElement('div');
+                bub.className = `elite-msg ${isMe ? 'me' : 'other'}`;
                 let content = ``;
                 if (m.tipo === 'tarea') {
-                    content = `<div class="msg-meta" style="${isMe ? 'color:rgba(255,255,255,0.7)' : ''}">${m.admin_nombre} • ${m.hora}</div>
-                               <div class="msg-type-card" style="background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.2);">
-                               <i class="fa-solid fa-thumbtack"></i> <div><strong>${m.ref_titulo}</strong><br><small>Nueva Tarea Asignada</small></div></div>`;
+                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="display:flex; gap:12px; align-items:center; background:#00000010; padding:10px; border-radius:12px;"><i class="fa-solid fa-list-check" style="font-size:1.2rem;"></i><div><strong>${m.ref_titulo}</strong><br><small>Tarea Kanban registrada</small></div></div>`;
                 } else if (m.tipo === 'evento') {
-                    content = `<div class="msg-meta" style="${isMe ? 'color:rgba(255,255,255,0.7)' : ''}">${m.admin_nombre} • ${m.hora}</div>
-                               <div class="msg-type-card" style="background:rgba(177,154,109,0.15); border-color:rgba(177,154,109,0.3);">
-                               <i class="fa-solid fa-calendar-check" style="color:var(--chat-accent)"></i> 
-                               <div><strong>${m.ref_titulo}</strong><br><small>Evento en Calendario</small></div></div>`;
+                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="display:flex; gap:12px; align-items:center; background:#ffffff15; padding:10px; border-radius:12px; border:1px solid #B19A6D33;"><i class="fa-solid fa-calendar-star" style="color:var(--chat-accent); font-size:1.2rem;"></i><div><strong>${m.ref_titulo}</strong><br><small>Evento agendado</small></div></div>`;
                 } else {
-                    content = `<span class="msg-meta" style="${isMe ? 'color:rgba(255,255,255,0.7)' : ''}">${m.admin_nombre} • ${m.hora}</span><div style="word-break:break-word;">${m.mensaje}</div>`;
+                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="word-break:break-word;">${m.mensaje}</div>`;
                 }
-                
-                bubble.innerHTML = content;
-                zona.appendChild(bubble);
+                bub.innerHTML = content;
+                zona.appendChild(bub);
                 ultimoId = Math.max(ultimoId, parseInt(m.id));
             });
             if (scroll) zona.scrollTop = zona.scrollHeight;
-
             if (!chatOpen) {
                 badgeCnt += res.mensajes.length;
-                const b = document.getElementById('chatBadge');
-                if (b) { b.textContent = badgeCnt > 99 ? '99+' : badgeCnt; b.style.display = 'flex'; }
+                const b = document.getElementById('chatBadge'); if (b) { b.textContent = badgeCnt > 99 ? '99+' : badgeCnt; b.style.display = 'flex'; }
                 if (window.COMECyTNotificationBell) window.COMECyTNotificationBell.notify();
             }
         });
     }
 
     window.enviarMensaje = function() {
-        const input = document.getElementById('chatInput');
-        const txt = input.value.trim();
-        if (!txt) return;
-
-        const fd = new FormData();
-        fd.append('accion', 'enviar');
-        fd.append('mensaje', txt);
-        fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+        const inp = document.getElementById('chatInput'); const txt = inp.value.trim(); if (!txt) return;
+        const fd = new FormData(); fd.append('accion', 'enviar'); fd.append('mensaje', txt); fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
         if (canalActual) fd.append('destinatario', canalActual);
-
-        fetch(API, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
-            if (res.ok) { input.value = ''; cargarMensajesPlatinum(true); }
-        });
+        fetch(API, { method: 'POST', body: fd }).then(r => r.json()).then(res => { if (res.ok) { inp.value = ''; loadMsgs(true); } });
     };
 
     window.chatKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje(); } };
 
-    // Modales Platinum Centrados
-    window.abrirModPlatinum = (tipo) => {
-        document.getElementById('platModalOverlay').classList.add('open');
-        document.getElementById('platModalTarea').style.display = tipo === 'tarea' ? 'block' : 'none';
-        document.getElementById('platModalEvento').style.display = tipo === 'evento' ? 'block' : 'none';
-        cargarAdminsPlatinum();
+    // Modales Platinum Elite
+    window.opModPlat = (tipo) => {
+        document.getElementById('platModalRoot').classList.add('active');
+        document.getElementById('vModTarea').style.display = tipo === 'tarea' ? 'block' : 'none';
+        document.getElementById('vModEvento').style.display = tipo === 'evento' ? 'block' : 'none';
+        loadAdmins();
     };
-    window.cerrarModPlatinum = () => document.getElementById('platModalOverlay').classList.remove('open');
+    window.clModPlat = () => document.getElementById('platModalRoot').classList.remove('active');
 
-    window.guardarTareaPlat = () => {
-        const title = document.getElementById('ptTitle').value.trim();
-        const desc = document.getElementById('ptDesc').value.trim();
-        const asig = document.getElementById('ptAsignado').value;
-        if (!title) return;
-
-        const fd = new FormData();
-        fd.append('accion', 'crear_tarea');
-        fd.append('titulo', title);
-        fd.append('descripcion', desc);
-        fd.append('asignado_a', asig);
-        fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
-
-        fetch(API, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
-            if (res.ok) { 
-                cerrarModPlatinum(); 
-                document.getElementById('ptTitle').value = '';
-                document.getElementById('ptDesc').value = '';
-                cargarMensajesPlatinum(true); 
-            }
-        });
+    window.saveTPlat = () => {
+        const tit = document.getElementById('vTTitle').value.trim(); const dsc = document.getElementById('vTDesc').value.trim(); const asg = document.getElementById('vTAssign').value;
+        if (!tit) return;
+        const fd = new FormData(); fd.append('accion', 'crear_tarea'); fd.append('titulo', tit); fd.append('descripcion', dsc); fd.append('asignado_a', asg); fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+        fetch(API, { method: 'POST', body: fd }).then(r => r.json()).then(res => { if (res.ok) { clModPlat(); document.getElementById('vTTitle').value=''; loadMsgs(true); } });
     };
 
-    window.guardarEventoPlat = () => {
-        const title = document.getElementById('peTitle').value.trim();
-        const start = document.getElementById('peStart').value;
-        if (!title || !start) return;
-
-        const fd = new FormData();
-        fd.append('accion', 'crear_evento');
-        fd.append('titulo', title);
-        fd.append('fecha_inicio', start);
-        fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
-
-        fetch(API, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
-            if (res.ok) { 
-                cerrarModPlatinum(); 
-                document.getElementById('peTitle').value = '';
-                cargarMensajesPlatinum(true); 
-            }
-        });
+    window.saveEPlat = () => {
+        const tit = document.getElementById('vETitle').value.trim(); const st = document.getElementById('vEStart').value;
+        if (!tit || !st) return;
+        const fd = new FormData(); fd.append('accion', 'crear_evento'); fd.append('titulo', tit); fd.append('fecha_inicio', st); fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+        fetch(API, { method: 'POST', body: fd }).then(r => r.json()).then(res => { if (res.ok) { clModPlat(); document.getElementById('vETitle').value=''; loadMsgs(true); } });
     };
 
 })();
