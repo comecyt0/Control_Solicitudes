@@ -48,12 +48,14 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 
 ### 🔐 Seguridad y Sesiones
 - **Loop de Redirección (Auth)**: Causado por headers HTTP 302 conflictivos. **Solución**: Redirección por Meta-Refresh en HTML.
-- **CSRF en APIs JSON**: `validarCsrfPost()` emite HTML y rompe el JSON. **Solución**: Validación inline (`$_POST['csrf_token'] === $_SESSION['csrf_token']`).
+- **🚫 CSRF void-vs-bool en APIs JSON (`api/perfil.php`)**: La función `validarCsrfPost()` en `helpers.php` es de tipo `:void` y llama `mostrarError()` (que emite HTML). Si una API JSON la llama como `if (!validarCsrfPost())`, PHP no puede negar un valor void, y el HTML de error rompe el `JSON.parse()` cliente. **Solución**: Validar CSRF inline dentro de las APIs JSON comparando `$_POST['csrf_token']` con `$_SESSION['csrf_token']` directamente. Además, las APIs AJAX que leen `$_SESSION` deben llamar `inicializarSesion()` explícitamente al inicio, antes de leer cualquier dato de sesión.
+- **🚨 Notificaciones Silenciadas (Type Mismatch) 🚨**: Las APIs de notificación comparaban IDs con prefijo ('A1', 'P2') contra columnas INTEGER (`destinatario_id`), resultando siempre en 0 pendientes. **Solución**: Refactorizar la query para usar IDs numéricos y separar la lógica de destinatario por columnas de rol (`destinatario_id` vs `destinatario_usuario_id`).
 - **PHP Tag Missing**: Omitir `<?php` al inicio tras una edición automática. **Solución**: Verificar siempre la etiqueta de apertura en reemplazos de bloque.
 
 ### 🖼️ UI/UX y Layout
 - **Desfasado de Títulos en Alertas**: Títulos absolutos tapan la imagen. **Solución**: Mover títulos a contenedores externos (footer/header) fuera del frame de la imagen.
 - **Avatares Gigantes**: Para el diseño "Wow" de 300px, usar `margin` correctivo para no romper el grid de 3 columnas del Hero.
+- **📅 Calendario — Desbordamiento de Celdas**: El `<div class="calendar-cell">` es un contenedor `display:flex` dentro de un `display:grid`. Sin `overflow:hidden` y `width:100%` en la celda, los hijos flex se expanden al ancho del texto o la columna colapsa. La combinación `width:100% + min-width:0 + overflow:hidden` en `.calendar-cell` fuerza al grid a repartir el espacio correctamente y constriñe el contenido (ellipsis). El fix global está en `assets/css/admin_extra.css`.
 - **Truncado de Calendario**: Flex-items no se limitan solos. **Solución**: Usar `min-width: 0` + `overflow: hidden` en celdas de calendario.
 
 ---

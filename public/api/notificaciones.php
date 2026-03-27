@@ -42,22 +42,32 @@ try {
     $stmtChat = $pdo->prepare("
         SELECT COUNT(*) 
         FROM sb_chat_mensajes 
-        WHERE (destinatario_id = :uid OR destinatario_usuario_id = :userid)
+        WHERE (
+            (destinatario_id = :adminid AND :adminid IS NOT NULL)
+            OR (destinatario_usuario_id = :userid AND :userid IS NOT NULL)
+            OR (destinatario_id IS NULL AND destinatario_usuario_id IS NULL AND cve_area = :area)
+        )
         AND id > (
             SELECT COALESCE(MAX(ultimo_id_leido), 0) 
             FROM sb_chat_lectura 
-            WHERE (admin_id = :adminid OR usuario_id = :userid2)
+            WHERE (admin_id = :adminid2 OR usuario_id = :userid2)
         )
-        AND (admin_id <> :adminid2 OR admin_id IS NULL)
+        AND (admin_id <> :adminid3 OR admin_id IS NULL)
         AND (usuario_id <> :userid3 OR usuario_id IS NULL)
     ");
+    
+    $adminId = $_SESSION['admin_id'] ?? null;
+    $userId  = $_SESSION['user_id'] ?? null;
+    $cveArea = $_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0;
+
     $stmtChat->execute([
-        ':uid'      => $uid,
-        ':userid'   => $_SESSION['user_id'] ?? null,
-        ':adminid'  => $_SESSION['admin_id'] ?? null,
-        ':userid2'  => $_SESSION['user_id'] ?? null,
-        ':adminid2' => $_SESSION['admin_id'] ?? null,
-        ':userid3'  => $_SESSION['user_id'] ?? null
+        ':adminid'  => $adminId,
+        ':userid'   => $userId,
+        ':area'     => $cveArea,
+        ':adminid2' => $adminId,
+        ':userid2'  => $userId,
+        ':adminid3' => $adminId,
+        ':userid3'  => $userId
     ]);
     $resultado['pendientes']['chat'] = (int)$stmtChat->fetchColumn();
 

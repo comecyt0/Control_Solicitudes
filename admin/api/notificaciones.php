@@ -51,25 +51,25 @@ try {
         SELECT COUNT(*) 
         FROM sb_chat_mensajes 
         WHERE (
-            destinatario_id = :uid 
-            OR destinatario_usuario_id = :userid 
+            (destinatario_id = :adminid AND :adminid IS NOT NULL)
+            OR (destinatario_usuario_id = :userid AND :userid IS NOT NULL)
             OR (destinatario_id IS NULL AND destinatario_usuario_id IS NULL AND cve_area = :area)
         )
         AND id > (
             SELECT COALESCE(MAX(ultimo_id_leido), 0) 
             FROM sb_chat_lectura 
-            WHERE (admin_id = :adminid OR usuario_id = :userid2)
+            WHERE (admin_id = :adminid2 OR usuario_id = :userid2)
         )
-        AND (admin_id <> :adminid2 OR admin_id IS NULL)
+        AND (admin_id <> :adminid3 OR admin_id IS NULL)
         AND (usuario_id <> :userid3 OR usuario_id IS NULL)
     ");
     $stmtChat->execute([
-        ':uid'      => $uid,
+        ':adminid'  => $adminId,
         ':userid'   => $userId,
         ':area'     => $cveArea,
-        ':adminid'  => $adminId,
-        ':userid2'  => $userId,
         ':adminid2' => $adminId,
+        ':userid2'  => $userId,
+        ':adminid3' => $adminId,
         ':userid3'  => $userId
     ]);
     $resultado['pendientes']['chat'] = (int)$stmtChat->fetchColumn();
