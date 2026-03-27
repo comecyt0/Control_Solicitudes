@@ -164,6 +164,174 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
     </div>
 </div>
+
+<!-- Sistema de Alertas de Login (Fase 7) -->
+<?php
+$alertas = [];
+try {
+    $stmtA = $pdo->query("SELECT * FROM login_alertas WHERE activo = TRUE ORDER BY orden ASC");
+    $alertas = $stmtA->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {}
+
+if (!empty($alertas)):
+?>
+<div id="loginAlertsOverlay" class="login-alerts-overlay">
+    <div class="login-alerts-container">
+        <div class="login-alerts-content">
+            <?php foreach ($alertas as $index => $alerta): ?>
+                <div class="login-alert-item <?= $index === 0 ? 'active' : '' ?>" id="alert-<?= $alerta['id'] ?>">
+                    <img src="<?= BASE_URL . $alerta['imagen_path'] ?>" alt="<?= esc($alerta['titulo']) ?>">
+                    <div class="login-alert-caption">
+                        <h3><?= esc($alerta['titulo']) ?></h3>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+        
+        <?php if (count($alertas) > 1): ?>
+            <div class="login-alerts-nav">
+                <button onclick="changeAlert(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="alertCounter">1 / <?= count($alertas) ?></span>
+                <button onclick="changeAlert(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        <?php endif; ?>
+
+        <button class="btn-close-alerts" onclick="closeLoginAlerts()">
+            <i class="fa-solid fa-xmark"></i> Entrar al Login
+        </button>
+    </div>
+</div>
+
+<style>
+.login-alerts-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.4s ease-out;
+}
+.login-alerts-container {
+    width: 100%;
+    max-width: 900px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.login-alerts-content {
+    width: 100%;
+    background: #000;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    aspect-ratio: 16 / 9;
+}
+.login-alert-item {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    display: flex;
+    flex-direction: column;
+}
+.login-alert-item.active {
+    opacity: 1;
+    position: relative;
+}
+.login-alert-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.login-alert-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 30px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.9));
+    color: #fff;
+    text-align: center;
+}
+.login-alert-caption h3 { margin: 0; font-size: 1.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+.login-alerts-nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+    padding: 8px 15px;
+    border-radius: 30px;
+    backdrop-filter: blur(5px);
+}
+.login-alerts-nav button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.login-alerts-nav button:hover { transform: scale(1.2); }
+
+.btn-close-alerts {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(102,35,49,0.3);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.btn-close-alerts:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(102,35,49,0.5);
+    background: var(--primary-light);
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 768px) {
+    .login-alerts-content { aspect-ratio: 4 / 5; }
+    .login-alert-caption h3 { font-size: 1.1rem; }
+}
+</style>
+
+<script>
+let currentAlertIndex = 0;
+const alerts = document.querySelectorAll('.login-alert-item');
+const counter = document.getElementById('alertCounter');
+
+function changeAlert(dir) {
+    alerts[currentAlertIndex].classList.remove('active');
+    currentAlertIndex = (currentAlertIndex + dir + alerts.length) % alerts.length;
+    alerts[currentAlertIndex].classList.add('active');
+    if(counter) counter.textContent = `${currentAlertIndex + 1} / ${alerts.length}`;
+}
+
+function closeLoginAlerts() {
+    const overlay = document.getElementById('loginAlertsOverlay');
+    overlay.style.transition = 'opacity 0.4s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 400);
+}
+</script>
+<?php endif; ?>
 </body>
 </html>
 

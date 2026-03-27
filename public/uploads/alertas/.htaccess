@@ -1,0 +1,6 @@
+# Desactivar ejecución de PHP en esta carpeta
+php_flag engine off
+<Files *.php>
+    Order Allow,Deny
+    Deny from all
+</Files>

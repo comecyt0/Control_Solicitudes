@@ -317,70 +317,18 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - Remoción total de la visualización de "años cumplidos" en todos los calendarios (Público, Admin y 19 Áreas).
 - **Frontend**: Se ocultó el campo de edad en `modal_cumple.php`.
 - **Backend**: Se eliminó la lógica de cálculo `$edadAnios` y se limpiaron las descripciones de los eventos de cumpleaños.
-- **Alcance**: Aplicado masivamente en `public/calendario.php`, `admin/calendario.php` y los 19 directorios de `/areas/`.
+- **Alcance**: Aplicado masivamente en `public/calendario.php`, `admin/calend    - *Tip:* Si un cambio de navegación no se refleja, reiniciar Docker y forzar refresco de caché (Ctrl+F5) en el navegador.
+- **PowerShell vs Shell**: En entornos Windows con PowerShell, el operador `&&` no es válido para concatenar comandos. Se debe usar `;` o ejecutar comandos por separado. **Error recurrente**: `git add . && git commit` falla en PowerShell.
+- **Rutas de Upload**: Usar siempre la constante `ROOT` (definida en `config/database.php`) para evitar errores de profundidad de directorio en `move_uploaded_file()`.
 
-## v12.0 - UI/UX Refinado: Modales y Bienvenida
+## v17.0 - Sistema de Alertas de Login (Fase 7)
 **Fecha**: 2026-03-27
 **Cambios**:
-- **Modales Premium**: Rediseño completo de los "frames" (modales) en el calendario de Dirección General con bordes redondeados (24px), gradientes suaves y sombras profundas.
-- **Botonera**: Se añadió un botón de cierre ("X") interactivo con FontAwesome y efecto de rotación.
-- **Icons**: Use FontAwesome 6 solid (`fa-solid`).
-- **Navegación Unificada (Single-Tab Experience)**: **NUNCA** usar `target="_blank"` en enlaces internos o de descarga. Toda la navegación debe ocurrir en la misma pestaña para mantener la coherencia y seguridad del sistema. 
-    - *Tip:* Si un cambio de navegación no se refleja, reiniciar Docker y forzar refresco de caché (Ctrl+F5) en el navegador.
-- **Inclusividad**: Se actualizó el saludo principal en `public/index.php` a "¡Bienvenid@ a la Intranet".
-- **Limpieza**: Remoción de lógica heredada de etiquetas de edad en el JS del calendario.
-
-## v12.1 - Bugfix: Restauración de "Nuevo Evento"
-**Fecha**: 2026-03-27
-**Cambios**:
-- **JS**: Se restauró la función `abrirModalCrear()` que fue removida accidentalmente durante el rediseño v12.0.
-- **Verificación**: Se confirmó que todos los botones de acción del calendario institucional en Dirección General estén operativos.
-
-## v13.0 - Control Maestro de Repositorio
-**Fecha**: 2026-03-27
-**Cambios**:
-- **Unificación de Navegación**: Se eliminaron todos los atributos `target="_blank"` para forzar que el sistema trabaje siempre en la misma pestaña.
-- **Limpieza de Repositorio**: Se eliminaron archivos temporales, de prueba y debug (`test.php`, `tmp_*`, etc.).
-- **Blindaje Anti-Descarga**: Miniaturas como `background-image` y capas de protección transparentes.
-- **Base de Datos**: Se añadieron columnas `visible_publico` y `permite_descarga` a `df_multimedia`.
-- **API**: Nueva acción `editar` para modificar metadatos y controles de archivos existentes.
-- **Repositorio (Difusión)**:
-    - Botón "Editar" en cada recurso.
-    - Nuevo modal de edición con controles granulares de visibilidad y descarga.
-    - Actualización del flujo de carga para incluir preferencias iniciales.
-- **Galería Pública**: 
-    - Ahora solo muestra archivos marcados como "Visibles".
-    - El botón de descarga se oculta y reemplaza por un indicador de "Solo lectura" si los permisos están desactivados.
-
-## v13.1 - Seguridad y UX en Galería
-**Fecha**: 2026-03-27
-**Cambios**:
-- **Vista Previa Segura**: El contenido completo ya no se renderiza en el grid. Se implementó un sistema de thumbnails con un modal ("Vista Previa") que permite ver el material en pantalla completa con scroll.
-- **Protección Anti-Copia**: Se bloqueó el click derecho (context menu) en todas las imágenes y contenedores de la galería para dificultar la descarga no autorizada.
-- **Thumbnail Engine**: Los recursos se presentan recortados uniformemente en el grid, mejorando el orden visual de la mampostería (masonry).
-
-## v13.2 - Blindaje Avanzado de Activos
-**Fecha**: 2026-03-27
-**Cambios**:
-- **Background Engine**: Las miniaturas ahora utilizan `background-image` en lugar de etiquetas `<img>`, lo que impide que el navegador las identifique como imágenes guardables individualmente.
-- **Protection Shield**: Se implementó una capa transparente (overlay) sobre todo el contenido multimedia que intercepta cualquier interacción física con el archivo real.
-- **Anti-Drag**: Se desactivó la capacidad de arrastrar imágenes hacia el escritorio o carpetas externas.
-- **Context Lock**: Bloqueo total del menú contextual en el grid y el visualizador para prevenir "Guardar página como" con recursos vinculados.
-## v15.0 - Sistema de Vista Previa en Administración
-**Fecha**: 2026-03-27
-**Cambios**:
-- **Vista Previa (Preview)**: Implementación de sistema de visualización modal en `admin/detalle.php`.
-- **Multiformato**: Soporte automático para imágenes (`.jpg`, `.png`, etc.), videos (`.mp4`) y documentos (`.pdf` via iframe).
-- **Seguridad**: Integración de `protection-shield` sobre el contenido previsualizado para evitar interacciones no deseadas.
-- **UI Premium**: Uso de `backdrop-filter: blur`, animaciones suave de entrada (`previewFadeIn`) y iconografía de FontAwesome 6.
-- **UX**: Los botones de descarga se mantienen como acción secundaria, priorizando el botón "Ver" con color de acento.
-
-## v16.0 - Sistema Universal de Notificaciones (Global Bell)
-**Fecha**: 2026-03-27
-**Cambios**:
-- **Backend API**: Endpoints polimórficos `admin/api/notificaciones.php` y `public/api/notificaciones.php` para conteo universal de pendientes.
-- **Componente JS/CSS**: `NotificationBell.js` y `NotificationBell.css` inyectados en headers de Admin y Público.
-- **Seguimiento Solicitantes**: Integración de notificaciones para cambios de estatus en solicitudes y respuestas de calendario.
+- **Base de Datos**: Creación de la tabla `login_alertas` para gestionar imágenes informativas en la pantalla de acceso.
+- **API CRUD**: Implementación de `admin/api/login_alertas.php` para gestión centralizada.
+- **Interfaz Administrativa**: Nuevos módulos en Sistemas y Difusión para el control de alertas.
+- **Login Modal**: Integración de overlay dinámico en `admin/login.php` que muestra alertas activas antes de permitir el ingreso de credenciales.
+uimiento Solicitantes**: Integración de notificaciones para cambios de estatus en solicitudes y respuestas de calendario.
 - **Unificación Sonora**: Alertas audibles unificadas ("TIENES UN MENSAJE!!!") para cualquier incremento en los contadores globales.
 - **Polling**: Frecuencia de 15 segundos balanceada para tiempo real sin saturar el servidor.
 

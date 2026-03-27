@@ -159,6 +159,9 @@ if (isset($_SESSION['user_area'])) {
             <a href="<?= BASE_URL ?>admin/calendario.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
                 <i class="fa-solid fa-calendar-days nav-icon"></i><span>Calendario Global</span>
             </a>
+            <a href="<?= BASE_URL ?>admin/login_alertas.php" class="nav-link <?= $activeMenu === 'login_alertas' ? 'active' : '' ?>">
+                <i class="fa-solid fa-triangle-exclamation nav-icon"></i><span>Alertas de Login</span>
+            </a>
         </div>
         <div class="nav-group">
             <span class="nav-group-label">Gestión ERP</span>
@@ -188,6 +191,9 @@ if (isset($_SESSION['user_area'])) {
             </a>
             <a href="<?= BASE_URL ?>areas/difusion/calendario_editorial.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
                 <i class="fa-solid fa-calendar-week nav-icon"></i><span>Calendario Editorial</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/difusion/login_alertas.php" class="nav-link <?= $activeMenu === 'login_alertas' ? 'active' : '' ?>">
+                <i class="fa-solid fa-triangle-exclamation nav-icon"></i><span>Alertas de Login</span>
             </a>
         </div>
 
