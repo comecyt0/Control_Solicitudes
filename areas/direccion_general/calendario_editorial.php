@@ -1,8 +1,8 @@
 <?php
 /**
- * COMECyT — Calendario Editorial (Dirección General) v10.7
+ * COMECyT — Calendario Editorial (Dirección General) v10.8
+ * Contexto corregido a Area 2 (Dirección General).
  * Diseño Sticky Notes (Post-it), Sin Alertas de Navegador (Uso de Frames/Modales).
- * Permisos sincronizados para Sistemas (1), Dirección (4) y Testers (2).
  */
 
 require_once __DIR__ . '/../../config/database.php';
@@ -15,11 +15,12 @@ $pdo = getConnection();
 $mensajeFlash = '';
 $tipoFlash = '';
 $cveAreaUsuario  = (int) ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0);
-$cveAreaContexto = 4; // Dirección General
+$cveAreaContexto = 2; // Dirección General (Corregido de 4 a 2)
 $adminId         = (int) ($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
 
-// Definición de personal autorizado para este módulo (Sistemas, DG, y Juan Perez/Area 2 para pruebas)
-$esPersonalAutorizado = ($cveAreaUsuario === 1 || $cveAreaUsuario === 4 || $cveAreaUsuario === 2);
+// Definición de personal autorizado para este módulo (Sistemas, DG)
+// Con Contexto 2, Juan Perez ya entra naturalmente en la regla de AreaUsuario === AreaContexto
+$esPersonalAutorizado = ($cveAreaUsuario === 1 || $cveAreaUsuario === $cveAreaContexto);
 
 if ($cveAreaUsuario === 0) redirigir('public/hub.php');
 
@@ -80,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         } elseif ($accion === 'eliminar_evento') {
             $id = (int) postParam('evento_id');
             $esInstitucionalManual = (int) postParam('es_institucional');
-            
             if ($id > 0) {
                 if ($esInstitucionalManual === 0) {
                     $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ? AND cve_area = ?");
@@ -199,7 +199,7 @@ if ($mes > 0 && $mes <= 12) {
     }
 }
 
-// Kanban y Personal
+// Kanban y Personal (Filtrado por Area Contexto 2)
 $listaTareas = ['pendiente'=>[],'en_proceso'=>[],'completada'=>[]];
 $stmtT = $pdo->prepare("SELECT t.*, COALESCE(a.nombre, p.nombre) AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id LEFT JOIN cat_personal p ON t.asignado_a = p.cve_personal WHERE t.cve_area = ? ORDER BY t.estatus DESC, t.id DESC");
 $stmtT->execute([$cveAreaContexto]);
@@ -300,6 +300,28 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     </div>
 </div>
 
+<div id="kanban" style="margin-top: 50px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="font-weight: 800; color: #1e293b; margin:0;"><i class="fa-solid fa-list-check" style="color:#3b82f6;"></i> Compromisos Dirección</h3>
+        <button class="btn btn-primary" onclick="abrirModalCrearTarea()" style="background:#3b82f6; border:none;"><i class="fa-solid fa-plus"></i> Nueva Tarea</button>
+    </div>
+    <div class="kanban-board">
+        <?php foreach (['pendiente' => 'Pendiente', 'en_proceso' => 'En Proceso', 'completada' => 'Completada'] as $idCol => $lblCol): ?>
+            <div class="kanban-col" ondragover="allowDrop(event)" ondrop="drop(event, '<?= $idCol ?>')">
+                <div class="kanban-col-header bg-<?= str_replace('_','-',$idCol) ?>"><span><?= strtoupper($lblCol) ?></span><span class="kanban-badge"><?= count($listaTareas[$idCol]) ?></span></div>
+                <div class="kanban-col-body">
+                    <?php foreach ($listaTareas[$idCol] as $t): ?>
+                        <div class="tarea-card" draggable="true" ondragstart="drag(event, <?= $t['id'] ?>)" onclick="abrirModalEditarTarea(<?= $t['id'] ?>, '<?= esc($t['titulo']) ?>', '<?= esc($t['descripcion']) ?>', '<?= $t['color'] ?>', <?= (int)$t['asignado_a'] ?>)">
+                            <h4 style="margin:0 0 5px; font-size:1rem;"><?= esc($t['titulo']) ?></h4><p style="font-size:0.8rem; color:#64748b;"><?= esc(mb_strimwidth($t['descripcion'], 0, 80, '...')) ?></p>
+                            <div style="margin-top:10px; font-size:0.7rem; color:#94a3b8; display:flex; justify-content:space-between; align-items:center;"><span><i class="fa-solid fa-user-tag"></i> <?= esc($t['asignado_nombre'] ?: 'Sin asignar') ?></span><i class="fa-solid fa-grip-lines" style="opacity:0.3;"></i></div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+
 <!-- Modales -->
 <div class="modal-backdrop" id="modalCrearEvento">
     <div class="modal"><div class="modal-header"><h3>Agendar Evento</h3><button type="button" onclick="cerrarModal('modalCrearEvento')" class="btn-close btn-close-white"></button></div>
@@ -316,6 +338,37 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     </div>
 </div>
 
+<!-- Modales Kanban -->
+<div class="modal-backdrop" id="modalCrearTarea">
+    <div class="modal"><div class="modal-header" style="background:#3b82f6;"><h3>Nueva Tarea</h3><button type="button" onclick="cerrarModal('modalCrearTarea')" class="btn-close btn-close-white"></button></div>
+        <form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="crear_tarea">
+            <div class="modal-body">
+                <div class="form-group mb-3"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div>
+                <div class="form-group mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="3"></textarea></div>
+                <div class="form-group mb-3"><label class="form-label">Asignado a</label><select name="asignado_a" class="form-control"><option value="">-- Sin Asignar --</option><?php foreach ($adminsDisponibles as $adm): ?><option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option><?php endforeach; ?></select></div>
+                <div class="form-group"><label class="form-label">Color</label><input type="color" name="color" value="#3b82f6" class="form-control" style="height:40px;"></div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary" style="background:#3b82f6; border:none;">Crear Tarea</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="modalEditarTarea">
+    <div class="modal"><div class="modal-header" style="background:#3b82f6;"><h3>Editar Tarea</h3><button type="button" onclick="cerrarModal('modalEditarTarea')" class="btn-close btn-close-white"></button></div>
+        <form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="editar_tarea"><input type="hidden" name="tarea_id" id="et_id">
+            <div class="modal-body">
+                <div class="form-group mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="et_titulo" class="form-control" required></div>
+                <div class="form-group mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="et_descripcion" class="form-control" rows="3"></textarea></div>
+                <div class="form-group mb-3"><label class="form-label">Asignado a</label><select name="asignado_a" id="et_asignado_a" class="form-control"><option value="">-- Sin Asignar --</option><?php foreach ($adminsDisponibles as $adm): ?><option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option><?php endforeach; ?></select></div>
+                <div class="form-group"><label class="form-label">Color</label><input type="color" name="color" id="et_color" class="form-control" style="height:40px;"></div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between"><button type="button" class="btn btn-danger" onclick="eliminarTareaDesdeModal()">Eliminar</button><button type="submit" class="btn btn-primary" style="background:#3b82f6; border:none;">Actualizar</button></div>
+        </form>
+    </div>
+</div>
+
+<form id="formAccionTarea" method="POST" style="display:none;"><?= csrfField() ?><input type="hidden" name="_accion" id="t_accion"><input type="hidden" name="tarea_id" id="t_tarea_id"><input type="hidden" name="nuevo_estatus" id="t_nuevo_estatus"></form>
+
 <!-- Frame de Confirmación Personalizado -->
 <div class="modal-backdrop" id="modalConfirmar" style="z-index: 3000;">
     <div class="modal" style="max-width:350px;"><div class="modal-body text-center p-4">
@@ -328,9 +381,12 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     </div></div>
 </div>
 
+<?php require_once __DIR__ . '/../../admin/modales/modal_cumple.php'; ?>
+
 <script>
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
+function abrirModalCrear() { abrirModal('modalCrearEvento'); }
 function abrirModalCrearDesdeCelda(f) { document.getElementById('c_fecha_inicio').value = f+'T09:00'; document.getElementById('c_fecha_fin').value = f+'T10:00'; abrirModal('modalCrearEvento'); }
 function abrirModalVer(t,d,h) { document.getElementById('v_horario').textContent = h; document.getElementById('v_descripcion').textContent = d||'Sin descripción.'; abrirModal('modalVerEvento'); }
 function abrirModalEditar(id,t,d,i,f,c,p,inst) {
@@ -341,6 +397,33 @@ function confirmarEliminar() {
     document.getElementById('btnConfirmarAccion').onclick = function() {
         document.getElementById('e_accion').value = 'eliminar_evento';
         document.getElementById('formEditarEvento').submit();
+    };
+    abrirModal('modalConfirmar');
+}
+function allowDrop(ev) { ev.preventDefault(); }
+function drag(ev, id) { ev.dataTransfer.setData("text", id); }
+function drop(ev, nuevo) {
+    ev.preventDefault();
+    const id = ev.dataTransfer.getData("text");
+    document.getElementById('t_accion').value = 'mover_tarea';
+    document.getElementById('t_tarea_id').value = id;
+    document.getElementById('t_nuevo_estatus').value = nuevo;
+    document.getElementById('formAccionTarea').submit();
+}
+function abrirModalCrearTarea() { abrirModal('modalCrearTarea'); }
+function abrirModalEditarTarea(id, t, d, c, a) {
+    document.getElementById('et_id').value = id;
+    document.getElementById('et_titulo').value = t;
+    document.getElementById('et_descripcion').value = d;
+    document.getElementById('et_color').value = c;
+    document.getElementById('et_asignado_a').value = a || '';
+    abrirModal('modalEditarTarea');
+}
+function eliminarTareaDesdeModal() {
+    document.getElementById('btnConfirmarAccion').onclick = function() {
+        document.getElementById('t_accion').value = 'eliminar_tarea';
+        document.getElementById('t_tarea_id').value = document.getElementById('et_id').value;
+        document.getElementById('formAccionTarea').submit();
     };
     abrirModal('modalConfirmar');
 }
