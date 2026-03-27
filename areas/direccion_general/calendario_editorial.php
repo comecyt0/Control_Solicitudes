@@ -474,6 +474,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 <script>
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
+function abrirModalCrear() { abrirModal('modalCrearEvento'); }
 function abrirModalCrearDesdeCelda(f) { document.getElementById('c_fecha_inicio').value = f+'T09:00'; document.getElementById('c_fecha_fin').value = f+'T10:00'; abrirModal('modalCrearEvento'); }
 function abrirModalVer(t,d,h) { document.getElementById('v_horario').textContent = h; document.getElementById('v_descripcion').textContent = d||'Sin descripción.'; abrirModal('modalVerEvento'); }
 function abrirModalEditar(id,t,d,i,f,c,p,inst) {

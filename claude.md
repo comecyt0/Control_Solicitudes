@@ -326,3 +326,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Botonera**: Se añadió un botón de cierre ("X") interactivo con FontAwesome y efecto de rotación.
 - **Inclusividad**: Se actualizó el saludo principal en `public/index.php` a "¡Bienvenid@ a la Intranet".
 - **Limpieza**: Remoción de lógica heredada de etiquetas de edad en el JS del calendario.
+
+## v12.1 - Bugfix: Restauración de "Nuevo Evento"
+**Fecha**: 2026-03-27
+**Cambios**:
+- **JS**: Se restauró la función `abrirModalCrear()` que fue removida accidentalmente durante el rediseño v12.0.
+- **Verificación**: Se confirmó que todos los botones de acción del calendario institucional en Dirección General estén operativos.
