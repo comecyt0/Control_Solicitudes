@@ -272,11 +272,8 @@ if (!empty($_SESSION['user_id'])) {
     $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM cat_personal WHERE id = ?");
     $stmtFoto->execute([$_SESSION['user_id']]);
     $fotoPerfil = $stmtFoto->fetchColumn();
-} elseif (!empty($_SESSION['admin_id'])) {
-    $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM administradores WHERE id = ?");
-    $stmtFoto->execute([$_SESSION['admin_id']]);
-    $fotoPerfil = $stmtFoto->fetchColumn();
 }
+// Administradores no tienen foto_perfil en su tabla nativa, usamos inicial por ahora
 ?>
 
 <div class="intranet-hero reveal-up">
