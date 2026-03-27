@@ -224,14 +224,22 @@ $extraHead = '
 .bg-pendiente { background-color: #3b82f6; } .bg-en-proceso { background-color: #f59e0b; } .bg-completada { background-color: #10b981; }
 .tarea-card { background: #fff; border-radius: 10px; padding: 1.25rem; margin: 10px; border: 1px solid #e2e8f0; border-top: 5px solid var(--color-primary); cursor: grab; }
 
-.modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 2000; align-items: center; justify-content: center; }
+.modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
 .modal-backdrop.active { display: flex; }
-.modal { background: #fff; width: 100%; max-width: 550px; border-radius: 20px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); overflow: hidden; animation: zoomIn 0.3s ease; }
-@keyframes zoomIn { from { transform: scale(0.9); opacity:0; } to { transform: scale(1); opacity:1; } }
-.modal-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: white; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.modal { background: #fff; width: 100%; max-width: 550px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05); overflow: hidden; animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; border: none; }
+@keyframes modalPop { from { transform: scale(0.95); opacity:0; } to { transform: scale(1); opacity:1; } }
+.modal-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; position: relative; border: none; }
+.modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+.modal-close { position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.15); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(4px); }
+.modal-close:hover { background: rgba(255,255,255,0.25); transform: rotate(90deg); }
+.modal-body { padding: 1.5rem; }
+.modal-footer { padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 0.75rem; }
 .nota-dorado { background: #fef08a !important; border-top-color: #ca8a04 !important; }
 .cumple-mini-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ca8a04; }
 .cumple-mini-placeholder { background: #fef08a; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #ca8a04; border: 1.5px solid #ca8a04; }
+.modal .form-label { font-weight: 700; color: #334155; font-size: 0.85rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.025em; }
+.modal .form-control { border-radius: 12px; border: 1px solid #e2e8f0; padding: 0.75rem; font-size: 0.95rem; transition: all 0.2s; background: #f8fafc; }
+.modal .form-control:focus { background: #fff; border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(102, 35, 49, 0.1); outline: none; }
 </style>';
 
 require_once __DIR__ . '/../../includes/header_admin.php';
@@ -318,29 +326,147 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 
 <!-- Modales -->
 <div class="modal-backdrop" id="modalCrearEvento">
-    <div class="modal"><div class="modal-header"><h3>Agendar Evento</h3><button type="button" onclick="cerrarModal('modalCrearEvento')" class="btn-close btn-close-white"></button></div>
-        <form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="crear_evento"><div class="modal-body"><div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div><div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="2"></textarea></div><div class="row mb-3"><div class="col"><label class="form-label">Desde</label><input type="datetime-local" name="fecha_inicio" id="c_fecha_inicio" class="form-control" required></div><div class="col"><label class="form-label">Hasta</label><input type="datetime-local" name="fecha_fin" id="c_fecha_fin" class="form-control" required></div></div><div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" value="#662331" class="form-control" style="height:40px;"></div><div class="form-check"><input type="checkbox" name="publico" value="1" id="c_pub" class="form-check-input"><label for="c_pub">Hacer público</label></div></div><div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Guardar</button></div></form></div></div>
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Agendar Evento</h3>
+            <button type="button" onclick="cerrarModal('modalCrearEvento')" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form method="POST"><?= csrfField() ?>
+            <input type="hidden" name="_accion" value="crear_evento">
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="2"></textarea></div>
+                <div class="row mb-3">
+                    <div class="col"><label class="form-label">Desde</label><input type="datetime-local" name="fecha_inicio" id="c_fecha_inicio" class="form-control" required></div>
+                    <div class="col"><label class="form-label">Hasta</label><input type="datetime-local" name="fecha_fin" id="c_fecha_fin" class="form-control" required></div>
+                </div>
+                <div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" value="#662331" class="form-control" style="height:40px;"></div>
+                <div class="form-check"><input type="checkbox" name="publico" value="1" id="c_pub" class="form-check-input"><label for="c_pub">Hacer público</label></div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary w-100">Guardar Evento</button></div>
+        </form>
+    </div>
+</div>
 
-<div class="modal-backdrop" id="modalVerEvento"><div class="modal"><div class="modal-header"><h3>Detalle</h3><button type="button" onclick="cerrarModal('modalVerEvento')" class="btn-close btn-close-white"></button></div><div class="modal-body"><p><strong>Horario:</strong> <span id="v_horario"></span></p><hr><div id="v_descripcion"></div></div></div></div>
+<div class="modal-backdrop" id="modalVerEvento">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Detalle del Evento</h3>
+            <button type="button" onclick="cerrarModal('modalVerEvento')" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 0.5rem; color: #64748b; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Horario</p>
+            <p id="v_horario" style="font-weight: 600; color: #1e293b; margin-bottom: 1.5rem;"></p>
+            <p style="margin-bottom: 0.5rem; color: #64748b; font-size: 0.85rem; font-weight: 700; text-transform: uppercase;">Descripción</p>
+            <div id="v_descripcion" style="color: #475569; line-height: 1.6;"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline w-100" onclick="cerrarModal('modalVerEvento')">Cerrar</button>
+        </div>
+    </div>
+</div>
 
 <div class="modal-backdrop" id="modalEditarEvento">
-    <div class="modal"><div class="modal-header"><h3>Editar Evento</h3><button type="button" onclick="cerrarModal('modalEditarEvento')" class="btn-close btn-close-white"></button></div>
-        <form method="POST" id="formEditarEvento"><?= csrfField() ?><input type="hidden" name="_accion" value="editar_evento" id="e_accion"><input type="hidden" name="evento_id" id="e_id"><input type="hidden" name="es_institucional" id="e_es_inst">
-            <div class="modal-body"><div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="e_titulo" class="form-control" required></div><div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="e_descripcion" class="form-control" rows="2"></textarea></div><div class="row mb-3"><div class="col"><label class="form-label">Desde</label><input type="datetime-local" name="fecha_inicio" id="e_inicio" class="form-control" required></div><div class="col"><label class="form-label">Hasta</label><input type="datetime-local" name="fecha_fin" id="e_fin" class="form-control" required></div></div><div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" id="e_color" class="form-control" style="height:40px;"></div><div class="form-check"><input type="checkbox" name="publico" value="1" id="e_pub" class="form-check-input"><label for="e_pub">Hacer público</label></div></div>
-            <div class="modal-footer d-flex justify-content-between"><button type="button" class="btn btn-danger" onclick="confirmarEliminar()">Eliminar</button><button type="submit" class="btn btn-primary">Actualizar</button></div>
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Editar Evento</h3>
+            <button type="button" onclick="cerrarModal('modalEditarEvento')" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form method="POST" id="formEditarEvento"><?= csrfField() ?>
+            <input type="hidden" name="_accion" value="editar_evento" id="e_accion">
+            <input type="hidden" name="evento_id" id="e_id">
+            <input type="hidden" name="es_institucional" id="e_es_inst">
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="e_titulo" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="e_descripcion" class="form-control" rows="2"></textarea></div>
+                <div class="row mb-3">
+                    <div class="col"><label class="form-label">Desde</label><input type="datetime-local" name="fecha_inicio" id="e_inicio" class="form-control" required></div>
+                    <div class="col"><label class="form-label">Hasta</label><input type="datetime-local" name="fecha_fin" id="e_fin" class="form-control" required></div>
+                </div>
+                <div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" id="e_color" class="form-control" style="height:40px;"></div>
+                <div class="form-check"><input type="checkbox" name="publico" value="1" id="e_pub" class="form-check-input"><label for="e_pub">Hacer público</label></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="confirmarEliminar()">Eliminar</button>
+                <button type="submit" class="btn btn-primary" style="flex:1;">Guardar Cambios</button>
+            </div>
         </form>
     </div>
 </div>
 
 <!-- Modales Kanban -->
-<div class="modal-backdrop" id="modalCrearTarea"><div class="modal"><div class="modal-header" style="background:#3b82f6;"><h3>Nueva Tarea</h3><button type="button" onclick="cerrarModal('modalCrearTarea')" class="btn-close btn-close-white"></button></div><form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="crear_tarea"><div class="modal-body"><div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div><div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="3"></textarea></div><div class="mb-3"><label class="form-label">Asignado a</label><select name="asignado_a" class="form-control"><option value="">-- Sin Asignar --</option><?php foreach ($adminsDisponibles as $adm): ?><option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option><?php endforeach; ?></select></div><div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" value="#3b82f6" class="form-control" style="height:40px;"></div></div><div class="modal-footer"><button type="submit" class="btn btn-primary" style="background:#3b82f6; border:none;">Crear Tarea</button></div></form></div></div>
+<div class="modal-backdrop" id="modalCrearTarea">
+    <div class="modal">
+        <div class="modal-header" style="background:#3b82f6;">
+            <h3>Nueva Tarea</h3>
+            <button type="button" onclick="cerrarModal('modalCrearTarea')" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form method="POST"><?= csrfField() ?>
+            <input type="hidden" name="_accion" value="crear_tarea">
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" class="form-control" rows="3"></textarea></div>
+                <div class="mb-3"><label class="form-label">Asignado a</label>
+                    <select name="asignado_a" class="form-control">
+                        <option value="">-- Sin Asignar --</option>
+                        <?php foreach ($adminsDisponibles as $adm): ?>
+                            <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" value="#3b82f6" class="form-control" style="height:40px;"></div>
+            </div>
+            <div class="modal-footer"><button type="submit" class="btn btn-primary w-100" style="background:#3b82f6; border:none;">Crear Tarea</button></div>
+        </form>
+    </div>
+</div>
 
-<div class="modal-backdrop" id="modalEditarTarea"><div class="modal"><div class="modal-header" style="background:#3b82f6;"><h3>Editar Tarea</h3><button type="button" onclick="cerrarModal('modalEditarTarea')" class="btn-close btn-close-white"></button></div><form method="POST"><?= csrfField() ?><input type="hidden" name="_accion" value="editar_tarea"><input type="hidden" name="tarea_id" id="et_id"><div class="modal-body"><div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="et_titulo" class="form-control" required></div><div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="et_descripcion" class="form-control" rows="3"></textarea></div><div class="mb-3"><label class="form-label">Asignado a</label><select name="asignado_a" id="et_asignado_a" class="form-control"><option value="">-- Sin Asignar --</option><?php foreach ($adminsDisponibles as $adm): ?><option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option><?php endforeach; ?></select></div><div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" id="et_color" class="form-control" style="height:40px;"></div></div><div class="modal-footer d-flex justify-content-between"><button type="button" class="btn btn-danger" onclick="eliminarTareaDesdeModal()">Eliminar</button><button type="submit" class="btn btn-primary" style="background:#3b82f6; border:none;">Actualizar</button></div></form></div></div>
+<div class="modal-backdrop" id="modalEditarTarea">
+    <div class="modal">
+        <div class="modal-header" style="background:#3b82f6;">
+            <h3>Editar Tarea</h3>
+            <button type="button" onclick="cerrarModal('modalEditarTarea')" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <form method="POST"><?= csrfField() ?>
+            <input type="hidden" name="_accion" value="editar_tarea">
+            <input type="hidden" name="tarea_id" id="et_id">
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="et_titulo" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="et_descripcion" class="form-control" rows="3"></textarea></div>
+                <div class="mb-3"><label class="form-label">Asignado a</label>
+                    <select name="asignado_a" id="et_asignado_a" class="form-control">
+                        <option value="">-- Sin Asignar --</option>
+                        <?php foreach ($adminsDisponibles as $adm): ?>
+                            <option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3"><label class="form-label">Color</label><input type="color" name="color" id="et_color" class="form-control" style="height:40px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="eliminarTareaDesdeModal()">Eliminar</button>
+                <button type="submit" class="btn btn-primary" style="background:#3b82f6; border:none; flex:1;">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <form id="formAccionTarea" method="POST" style="display:none;"><?= csrfField() ?><input type="hidden" name="_accion" id="t_accion"><input type="hidden" name="tarea_id" id="t_tarea_id"><input type="hidden" name="nuevo_estatus" id="t_nuevo_estatus"></form>
 
 <div class="modal-backdrop" id="modalConfirmar" style="z-index: 3000;">
-    <div class="modal" style="max-width:350px;"><div class="modal-body text-center p-4"><i class="fa-solid fa-triangle-exclamation text-warning mb-3" style="font-size:3rem;"></i><h4>¿Estás seguro?</h4><p>Esta acción no se puede deshacer.</p><div class="d-flex gap-2 justify-content-center mt-4"><button class="btn btn-outline" onclick="cerrarModal('modalConfirmar')">Cancelar</button><button class="btn btn-danger" id="btnConfirmarAccion">Sí, Eliminar</button></div></div></div>
+    <div class="modal" style="max-width:380px;">
+        <div class="modal-body text-center p-5">
+            <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                <i class="fa-solid fa-trash-can text-danger" style="font-size:2.5rem;"></i>
+            </div>
+            <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 0.5rem;">¿Estás seguro?</h3>
+            <p style="color: #64748b; line-height: 1.5;">Esta acción eliminará el registro de forma permanente. No podrás deshacer este cambio.</p>
+            <div class="d-flex gap-2 justify-content-center mt-4">
+                <button class="btn btn-outline" style="flex:1; border-radius: 12px;" onclick="cerrarModal('modalConfirmar')">Cancelar</button>
+                <button class="btn btn-danger" id="btnConfirmarAccion" style="flex:1; border-radius: 12px; font-weight: 700;">Sí, Eliminar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <?php require_once __DIR__ . '/../../admin/modales/modal_cumple.php'; ?>
@@ -357,7 +483,6 @@ function abrirModalEditar(id,t,d,i,f,c,p,inst) {
 function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
     document.getElementById('mc_nombre').textContent = nombre;
     document.getElementById('mc_nombre_grande').textContent = nombre;
-    document.getElementById('mc_edad_label').textContent = '¡Celebra sus ' + edad + ' años!';
     document.getElementById('mc_fecha').textContent = fecha;
     const imgEl = document.getElementById('mc_foto');
     const phEl = document.getElementById('mc_foto_placeholder');

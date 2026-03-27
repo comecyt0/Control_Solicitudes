@@ -255,7 +255,7 @@ require_once __DIR__ . '/../includes/header_user.php';
 
 <div class="intranet-hero reveal-up">
     <div class="intranet-hero-content">
-        <h1>¡Bienvenido/a a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
+        <h1>¡Bienvenid@ a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
         <p>Dashboard central de servicios e información institucional del COMECyT. Gestiona tus requerimientos técnicos, explora galerías multimedia y mantente enterado de los últimos comunicados oficiales.</p>
         
         <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">

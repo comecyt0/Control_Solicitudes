@@ -318,3 +318,11 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Frontend**: Se ocultó el campo de edad en `modal_cumple.php`.
 - **Backend**: Se eliminó la lógica de cálculo `$edadAnios` y se limpiaron las descripciones de los eventos de cumpleaños.
 - **Alcance**: Aplicado masivamente en `public/calendario.php`, `admin/calendario.php` y los 19 directorios de `/areas/`.
+
+## v12.0 - UI/UX Refinado: Modales y Bienvenida
+**Fecha**: 2026-03-27
+**Cambios**:
+- **Modales Premium**: Rediseño completo de los "frames" (modales) en el calendario de Dirección General con bordes redondeados (24px), gradientes suaves y sombras profundas.
+- **Botonera**: Se añadió un botón de cierre ("X") interactivo con FontAwesome y efecto de rotación.
+- **Inclusividad**: Se actualizó el saludo principal en `public/index.php` a "¡Bienvenid@ a la Intranet".
+- **Limpieza**: Remoción de lógica heredada de etiquetas de edad en el JS del calendario.
