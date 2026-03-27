@@ -1,8 +1,8 @@
 # Proyecto: COMECyT — Control de Solicitudes
 
 ## Visión General
-Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite a usuarios externos solicitar espacios de calendario y a administradores gestionar dichas solicitudes.
-- **Chat de Solicitudes (Retroalimentación)**: Sistema de comunicación bidireccional entre ciudadanos (público) y personal (admin) dentro de cada solicitud, con soporte para carga de documentos.
+Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite a usuarios externos solicitar espacios de calendario y a administradores gestionar dichas solicitudes5. - **Chat de Solicitudes (Retroalimentación)**: Sistema de comunicación bidireccional entre ciudadanos (público) y personal (admin) dentro de cada solicitud, con soporte para carga de documentos.
+6. - **Motor de Vista Previa (v15.0)**: Visualización premium de archivos en el panel administrativo sin descarga obligatoria.
 
 ## Credenciales de Acceso Actuales
 - **Administrador principal**: `desarrollo.comecyt@edomex.gob.mx` / `F3rn4nd0`
@@ -324,6 +324,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 **Cambios**:
 - **Modales Premium**: Rediseño completo de los "frames" (modales) en el calendario de Dirección General con bordes redondeados (24px), gradientes suaves y sombras profundas.
 - **Botonera**: Se añadió un botón de cierre ("X") interactivo con FontAwesome y efecto de rotación.
+- **Icons**: Use FontAwesome 6 solid (`fa-solid`).
+- **Navegación Unificada (Single-Tab Experience)**: **NUNCA** usar `target="_blank"` en enlaces internos o de descarga. Toda la navegación debe ocurrir en la misma pestaña para mantener la coherencia y seguridad del sistema. 
+    - *Tip:* Si un cambio de navegación no se refleja, reiniciar Docker y forzar refresco de caché (Ctrl+F5) en el navegador.
 - **Inclusividad**: Se actualizó el saludo principal en `public/index.php` a "¡Bienvenid@ a la Intranet".
 - **Limpieza**: Remoción de lógica heredada de etiquetas de edad en el JS del calendario.
 
@@ -336,6 +339,9 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 ## v13.0 - Control Maestro de Repositorio
 **Fecha**: 2026-03-27
 **Cambios**:
+- **Unificación de Navegación**: Se eliminaron todos los atributos `target="_blank"` para forzar que el sistema trabaje siempre en la misma pestaña.
+- **Limpieza de Repositorio**: Se eliminaron archivos temporales, de prueba y debug (`test.php`, `tmp_*`, etc.).
+- **Blindaje Anti-Descarga**: Miniaturas como `background-image` y capas de protección transparentes.
 - **Base de Datos**: Se añadieron columnas `visible_publico` y `permite_descarga` a `df_multimedia`.
 - **API**: Nueva acción `editar` para modificar metadatos y controles de archivos existentes.
 - **Repositorio (Difusión)**:
@@ -360,3 +366,15 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Protection Shield**: Se implementó una capa transparente (overlay) sobre todo el contenido multimedia que intercepta cualquier interacción física con el archivo real.
 - **Anti-Drag**: Se desactivó la capacidad de arrastrar imágenes hacia el escritorio o carpetas externas.
 - **Context Lock**: Bloqueo total del menú contextual en el grid y el visualizador para prevenir "Guardar página como" con recursos vinculados.
+## v15.0 - Sistema de Vista Previa en Administración
+**Fecha**: 2026-03-27
+**Cambios**:
+- **Vista Previa (Preview)**: Implementación de sistema de visualización modal en `admin/detalle.php`.
+- **Multiformato**: Soporte automático para imágenes (`.jpg`, `.png`, etc.), videos (`.mp4`) y documentos (`.pdf` via iframe).
+- **Seguridad**: Integración de `protection-shield` sobre el contenido previsualizado para evitar interacciones no deseadas.
+- **UI Premium**: Uso de `backdrop-filter: blur`, animaciones suave de entrada (`previewFadeIn`) y iconografía de FontAwesome 6.
+- **UX**: Los botones de descarga se mantienen como acción secundaria, priorizando el botón "Ver" con color de acento.
+
+## Subagentes y Automatización
+- **Verificación**: El sistema es compatible con subagentes especializados. Se ha documentado su uso en `subagentes.md` para tareas complejas de refactorización y auditoría de código.
+- **Skills**: Se fomenta el uso de skills reutilizables para tareas repetitivas de Docker y Git (vía `system_sync`).

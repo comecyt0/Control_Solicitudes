@@ -294,13 +294,22 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         // Extraer nombre original quitando el prefijo interno req_sys_xxxxxxxxxxxxx_
                         $nombreRef = preg_replace('/^req_sys_[^_]+_/', '', $archivo);
                     ?>
-                    <a href="<?= BASE_URL ?>public/uploads/solicitudes/<?= esc($archivo) ?>"
-                       class="btn btn-sm btn-outline"
-                       style="border-color: #8b5cf6; color: #8b5cf6;"
-                       download="<?= esc($nombreRef) ?>">
-                        <i class="fa-solid fa-download"></i>
-                        <?= esc($nombreRef) ?>
-                    </a>
+                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(139, 92, 246, 0.05); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.1);">
+                        <span style="font-size: 0.8rem; font-weight: 500; color: #6d28d9; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= esc($nombreRef) ?>">
+                            <?= esc($nombreRef) ?>
+                        </span>
+                        <a href="<?= BASE_URL ?>public/uploads/solicitudes/<?= esc($archivo) ?>"
+                           class="btn btn-sm btn-outline"
+                           style="border-color: #8b5cf6; color: #8b5cf6; padding: 4px 8px;"
+                           download="<?= esc($nombreRef) ?>" title="Descargar">
+                            <i class="fa-solid fa-download"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-primary" 
+                                style="background: #8b5cf6; border-color: #8b5cf6; padding: 4px 12px; font-size: 0.75rem;"
+                                onclick="abrirPreview('<?= BASE_URL ?>public/uploads/solicitudes/<?= esc($archivo) ?>', 'documento', '<?= esc($nombreRef) ?>')">
+                            <i class="fa-solid fa-eye"></i> Ver
+                        </button>
+                    </div>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -567,6 +576,45 @@ require_once __DIR__ . '/../includes/header_admin.php';
 </div>
 <?php endif; ?>
 
+<!-- Modal Preview Universal (Vista Previa Segura) -->
+<div class="modal-preview" id="modalPreview">
+    <button class="modal-preview-close" onclick="cerrarPreview()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-preview-content" id="previewContent">
+        <div class="protection-shield"></div>
+        <!-- Contenido dinámico inyectado por JS -->
+    </div>
+    <div class="modal-preview-info">
+        <h3 id="previewTitle" style="margin:0; font-size:1.2rem;"></h3>
+        <p id="previewDesc" style="margin:5px 0 0; opacity:0.7; font-size:0.9rem;">Vista previa del documento</p>
+    </div>
+</div>
+
+<style>
+/* Estilos para Vista Previa Premium */
+.modal-preview {
+    position: fixed; inset:0; background: rgba(15, 23, 42, 0.9); 
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 12000; padding: 20px; backdrop-filter: blur(8px);
+    animation: previewFadeIn 0.3s ease;
+}
+.modal-preview.active { display: flex; }
+.modal-preview-close {
+    position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.15);
+    border: none; color: white; width: 40px; height: 40px; border-radius: 50%;
+    cursor: pointer; font-size: 1.2rem; transition: all 0.2s; z-index: 12005;
+}
+.modal-preview-close:hover { background: #ef4444; transform: scale(1.1) rotate(90deg); }
+.modal-preview-content { 
+    position: relative; max-width: 95vw; max-height: 80vh; 
+    background: #000; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+}
+.modal-preview-content iframe { border: none; background: white; width: 85vw; height: 75vh; }
+.modal-preview-content img, .modal-preview-content video { display: block; max-width: 100%; max-height: 75vh; }
+.modal-preview-info { margin-top: 15px; text-align: center; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+@keyframes previewFadeIn { from { opacity:0; transform: scale(0.98); } to { opacity:1; transform: scale(1); } }
+</style>
+
 <script>
 // --- CONFIGURACIÓN GLOBAL ---
 const SOLICITUD_ID_COMENTARIOS = <?= (int)$sol['id'] ?>;
@@ -579,6 +627,47 @@ function escapeHtml(t) {
     const d = document.createElement('div');
     d.textContent = t;
     return d.innerHTML;
+}
+
+// --- MANEJO DE VISTA PREVIA ---
+function abrirPreview(url, tipo, titulo) {
+    const container = document.getElementById('previewContent');
+    const titleEl = document.getElementById('previewTitle');
+    const modal = document.getElementById('modalPreview');
+    
+    titleEl.textContent = titulo;
+    
+    const ext = url.split('.').pop().toLowerCase();
+    const isImg = ['jpg','jpeg','png','webp','gif'].includes(ext);
+    const isVideo = ['mp4','webm'].includes(ext);
+    const isPdf = ['pdf'].includes(ext);
+
+    let content = '';
+    const shield = '<div class="protection-shield"></div>';
+
+    if (isVideo) {
+        content = `<video controls autoplay style="width:100\%; max-height:75vh;"><source src="${url}" type="video/mp4"></video>`;
+    } else if (isPdf || tipo === 'documento') {
+        // Forzamos iframe para documentos/PDF
+        content = `<iframe src="${url}" style="width:80vw; height:75vh;"></iframe>`;
+    } else if (isImg) {
+        content = `<img src="${url}" style="max-width:100\%; max-height:75vh; display:block;">`;
+    } else {
+        // Fallback genérico
+        content = `<iframe src="${url}" style="width:80vw; height:75vh;"></iframe>`;
+    }
+
+    container.innerHTML = shield + content;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarPreview() {
+    const modal = document.getElementById('modalPreview');
+    const container = document.getElementById('previewContent');
+    modal.classList.remove('active');
+    container.innerHTML = '';
+    document.body.style.overflow = '';
 }
 
 // --- MANEJO DE ARCHIVOS ---
@@ -789,7 +878,12 @@ function cargarEvidencias() {
                     </div>
                     ${e.comentario ? `<p style="font-size: 0.75rem; color: #64748b; margin: 8px 0; line-height: 1.3;">${escapeHtml(e.comentario)}</p>` : ''}
                     <div style="display: flex; gap: 6px; margin-top: 10px;">
-                        <a href="${e.url}" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.7rem; justify-content: center;">Ver</a>
+                        <button onclick="abrirPreview('${e.url}', 'documento', '${e.archivo_nombre}')" class="btn btn-sm btn-primary" style="flex: 1; font-size: 0.7rem; justify-content: center;">
+                            <i class="fa-solid fa-eye"></i> Ver
+                        </button>
+                        <a href="${e.url}" download="${e.archivo_nombre}" class="btn btn-sm btn-outline" title="Descargar">
+                            <i class="fa-solid fa-download"></i>
+                        </a>
                         <button onclick="eliminarEvidencia(${e.id})" class="btn btn-sm btn-outline" style="padding: 5px 8px; font-size: 0.7rem; color: #ef4444; border-color: #fca5a5; background: #fef2f2;">
                              <i class="fa-solid fa-trash-can"></i>
                         </button>
