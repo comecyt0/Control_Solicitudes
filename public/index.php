@@ -40,7 +40,7 @@ $extraHead  = '
 .intranet-hero {
     background: linear-gradient(135deg, rgba(102, 35, 49, 0.03) 0%, rgba(139, 47, 66, 0.08) 100%);
     border-radius: 20px;
-    padding: 40px;
+    padding: 35px 40px;
     margin-bottom: 40px;
     display: flex;
     align-items: center;
@@ -48,11 +48,25 @@ $extraHead  = '
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(102, 35, 49, 0.05);
 }
+.welcome-container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.user-welcome-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 .intranet-hero-content h1 {
     font-size: 2.2rem;
     font-weight: 700;
     color: var(--color-primary);
-    margin-bottom: 12px;
+    margin: 0;
     line-height: 1.2;
 }
 .intranet-hero-content p {
@@ -251,11 +265,32 @@ $extraHead  = '
 ';
 
 require_once __DIR__ . '/../includes/header_user.php';
+
+// Obtener foto de perfil
+$fotoPerfil = null;
+if (!empty($_SESSION['user_id'])) {
+    $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM cat_personal WHERE id = ?");
+    $stmtFoto->execute([$_SESSION['user_id']]);
+    $fotoPerfil = $stmtFoto->fetchColumn();
+} elseif (!empty($_SESSION['admin_id'])) {
+    $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM administradores WHERE id = ?");
+    $stmtFoto->execute([$_SESSION['admin_id']]);
+    $fotoPerfil = $stmtFoto->fetchColumn();
+}
 ?>
 
 <div class="intranet-hero reveal-up">
     <div class="intranet-hero-content">
-        <h1>¡Bienvenid@ a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
+        <div class="welcome-container">
+            <?php if (!empty($fotoPerfil)): ?>
+                <img src="<?= BASE_URL ?>public/uploads/avatares/<?= esc($fotoPerfil) ?>" alt="Foto Perfil" class="user-welcome-avatar">
+            <?php else: ?>
+                <div class="user-welcome-avatar" style="background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800;">
+                    <?= substr(esc($usuarioNombre), 0, 1) ?>
+                </div>
+            <?php endif; ?>
+            <h1>¡Bienvenid@ a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
+        </div>
         <p>Dashboard central de servicios e información institucional del COMECyT. Gestiona tus requerimientos técnicos, explora galerías multimedia y mantente enterado de los últimos comunicados oficiales.</p>
         
         <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">

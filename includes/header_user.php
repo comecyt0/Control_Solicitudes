@@ -28,6 +28,7 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/NotificationBell.css">
+    <script>window.BASE_URL = "<?= BASE_URL ?>";</script>
     <script src="<?= BASE_URL ?>assets/js/ui-frames.js"></script>
     <?php if (isset($extraHead)) echo $extraHead; ?>
 </head>
@@ -139,6 +140,6 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
         </div>
     </header>
     
-    </main>
-</div>
-<script src="<?= BASE_URL ?>assets/js/NotificationBell.js?v=<?= time() ?>"></script>
+    <main class="content-area" <?php if (!empty($hideSidebar)) echo 'style="max-width: 1400px; margin: 0 auto; padding-top: 100px;"'; ?>>
+    <!-- El script de la campana se inyecta al final para asegurar que el DOM esté listo -->
+    <script src="<?= BASE_URL ?>assets/js/NotificationBell.js?v=<?= time() ?>"></script>

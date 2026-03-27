@@ -375,6 +375,15 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **UI Premium**: Uso de `backdrop-filter: blur`, animaciones suave de entrada (`previewFadeIn`) y iconografía de FontAwesome 6.
 - **UX**: Los botones de descarga se mantienen como acción secundaria, priorizando el botón "Ver" con color de acento.
 
+## v16.0 - Sistema Universal de Notificaciones (Global Bell)
+**Fecha**: 2026-03-27
+**Cambios**:
+- **Backend API**: Endpoints polimórficos `admin/api/notificaciones.php` y `public/api/notificaciones.php` para conteo universal de pendientes.
+- **Componente JS/CSS**: `NotificationBell.js` y `NotificationBell.css` inyectados en headers de Admin y Público.
+- **Seguimiento Solicitantes**: Integración de notificaciones para cambios de estatus en solicitudes y respuestas de calendario.
+- **Unificación Sonora**: Alertas audibles unificadas ("TIENES UN MENSAJE!!!") para cualquier incremento en los contadores globales.
+- **Polling**: Frecuencia de 15 segundos balanceada para tiempo real sin saturar el servidor.
+
 ## Subagentes y Automatización
 - **Verificación**: El sistema es compatible con subagentes especializados. Se ha documentado su uso en `subagentes.md` para tareas complejas de refactorización y auditoría de código.
 - **Skills**: Se fomenta el uso de skills reutilizables para tareas repetitivas de Docker y Git (vía `system_sync`).

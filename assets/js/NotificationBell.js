@@ -17,16 +17,31 @@ class NotificationBell {
     }
 
     init() {
-        document.addEventListener('DOMContentLoaded', () => {
+        console.log('[Bell] Initializing...');
+        const ready = () => {
             this.render();
             this.startPolling();
             this.setupAudioUnlock();
-        });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', ready);
+        } else {
+            ready();
+        }
     }
 
     render() {
-        const header = document.querySelector('.header-actions') || document.querySelector('.top-bar-actions');
-        if (!header) return;
+        // Soporte para múltiples layouts del sistema
+        const header = document.querySelector('.topbar-actions') || 
+                       document.querySelector('.header-actions') || 
+                       document.querySelector('.top-bar-actions') ||
+                       document.querySelector('.navbar-nav'); // Fallback para admin legacy
+        
+        if (!header) {
+            console.warn('[Bell] No injection point found');
+            return;
+        }
 
         // Si ya existe, no duplicar
         if (document.getElementById('universal-bell-container')) return;
@@ -35,7 +50,7 @@ class NotificationBell {
         container.id = 'universal-bell-container';
         container.className = 'bell-container';
         container.innerHTML = `
-            <button class="bell-button" id="bell-trigger">
+            <button class="bell-button" id="bell-trigger" type="button">
                 <i class="fa-solid fa-bell"></i>
                 <span class="bell-badge" id="bell-badge" style="display:none;">0</span>
             </button>
@@ -45,7 +60,7 @@ class NotificationBell {
                     <div class="bell-empty">No hay pendientes</div>
                 </div>
                 <div class="bell-footer">
-                    <a href="#" id="view-all-notifications">Ver todo el panel</a>
+                    <a href="${window.BASE_URL || '/'}public/router.php" id="view-all-notifications">Ver todo el panel</a>
                 </div>
             </div>
         `;
@@ -62,6 +77,7 @@ class NotificationBell {
         });
 
         document.addEventListener('click', () => dropdown.classList.remove('active'));
+        console.log('[Bell] Rendered successfully');
     }
 
     startPolling() {
@@ -71,18 +87,18 @@ class NotificationBell {
 
     async fetch() {
         try {
-            // Determinar API endpoint
+            const baseUrl = window.BASE_URL || '/';
             const isPublic = window.location.pathname.includes('/public/') || !window.location.pathname.includes('/admin/');
             const apiPath = isPublic ? 'public/api/notificaciones.php' : 'admin/api/notificaciones.php';
             
-            const resp = await fetch(`${window.BASE_URL || '/'}${apiPath}`);
+            const resp = await fetch(`${baseUrl}${apiPath}`);
             const data = await resp.json();
 
             if (data.ok) {
                 this.update(data, isPublic);
             }
         } catch (err) {
-            console.error('[Bell] Poll error:', err);
+            // Silencioso en producción si no hay datos
         }
     }
 
@@ -111,10 +127,11 @@ class NotificationBell {
         if (!list) return;
 
         let html = '';
+        const baseUrl = window.BASE_URL || '/';
         const adminLabels = {
-            chat: { label: 'Mensajes nuevos', icon: 'fa-comments', color: '#3B82F6', url: '#' },
+            chat: { label: 'Mensajes nuevos', icon: 'fa-comments', color: '#3B82F6', url: 'admin/chat.php' },
             solicitudes: { label: 'Solicitudes nuevas', icon: 'fa-file-invoice', color: '#10B981', url: 'admin/solicitudes.php' },
-            personal: { label: 'Cambios de personal', icon: 'fa-user-clock', color: '#F59E0B', url: 'admin/personal.php' },
+            personal: { label: 'Cambios de personal', icon: 'fa-user-clock', color: '#F59E0B', url: 'admin/personal_actualizacion.php' },
             equipos: { label: 'Equipos pendientes', icon: 'fa-laptop-medical', color: '#6366F1', url: 'admin/equipos.php' },
             calendario: { label: 'Agenda / Espacios', icon: 'fa-calendar-day', color: '#EC4899', url: 'admin/calendario.php' }
         };
@@ -133,7 +150,7 @@ class NotificationBell {
                 hasItems = true;
                 const config = configSet[key];
                 html += `
-                    <a href="${(window.BASE_URL || '/') + config.url}" class="bell-item">
+                    <a href="${baseUrl}${config.url}" class="bell-item">
                         <div class="bell-item-icon" style="background: ${config.color}20; color: ${config.color}">
                             <i class="fa-solid ${config.icon}"></i>
                         </div>
@@ -150,26 +167,32 @@ class NotificationBell {
     }
 
     notify() {
+        console.log('[Bell] New notification detected');
         if (typeof window.sonido === 'function') {
             window.sonido('chat'); 
         } else {
-            // Fallback si notificaciones.js no está cargado o es una vista pública
             this.playAlert();
         }
     }
 
     playAlert() {
-        const audio = new Audio(`${window.BASE_URL}assets/audio/TIENES UN MENSAJE!!! letra.mp3`);
-        audio.play().catch(e => console.log('Audio blocked by browser'));
+        if (!this.audioEnabled) {
+            console.log('[Bell] Audio not unlocked yet');
+            return;
+        }
+        const baseUrl = window.BASE_URL || '/';
+        const audio = new Audio(`${baseUrl}assets/TIENES UN MENSAJE!!!  letra.mp3`);
+        audio.play().catch(e => console.log('Audio playback failed', e));
     }
 
     setupAudioUnlock() {
-        // En v16.0 reforzamos el desbloqueo al primer clic en cualquier parte
         const unlock = () => {
-            const audio = new Audio(`${window.BASE_URL}assets/audio/TIENES UN MENSAJE!!! letra.mp3`);
+            const baseUrl = window.BASE_URL || '/';
+            const audio = new Audio(`${baseUrl}assets/TIENES UN MENSAJE!!!  letra.mp3`);
             audio.volume = 0;
             audio.play().then(() => {
                 console.log('[Bell] Audio context unlocked');
+                this.audioEnabled = true;
                 document.removeEventListener('click', unlock);
             }).catch(() => {});
         };
@@ -178,4 +201,6 @@ class NotificationBell {
 }
 
 // Iniciar instancia global
-window.COMECyTNotificationBell = new NotificationBell();
+if (!window.COMECyTNotificationBell) {
+    window.COMECyTNotificationBell = new NotificationBell();
+}

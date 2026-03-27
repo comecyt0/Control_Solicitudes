@@ -98,8 +98,9 @@ if (isset($_SESSION['user_area'])) {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
-    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin_extra.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/NotificationBell.css">
+    <script>window.BASE_URL = "<?= BASE_URL ?>";</script>
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin_extra.css">
     <script src="<?= BASE_URL ?>assets/js/ui-frames.js?v=<?= time() ?>"></script>
     <?php if (isset($extraHead)) echo $extraHead; ?>
 </head>
