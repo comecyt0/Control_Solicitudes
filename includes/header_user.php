@@ -27,6 +27,7 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/NotificationBell.css">
     <script src="<?= BASE_URL ?>assets/js/ui-frames.js"></script>
     <?php if (isset($extraHead)) echo $extraHead; ?>
 </head>
@@ -113,6 +114,7 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
             <h1 <?php if (!empty($hideSidebar)) echo 'style="margin:0; font-size:1.1rem;"'; ?>><?= esc($pageTitle) ?></h1>
         </div>
         <div class="topbar-actions">
+            <!-- El componente Universal Notification Bell se inyectará aquí automáticamente -->
             <?php 
                 $cve_area_actual = (int)($_SESSION['user_cve_area'] ?? $_SESSION['admin_cve_area'] ?? 1);
                 // Si el cve_area no está en sesión pero es admin, intentamos inferir o permitimos el botón estándar
@@ -137,4 +139,6 @@ $userArea   = $_SESSION['user_area'] ?? $_SESSION['admin_area'] ?? 'General';
         </div>
     </header>
     
-    <main class="content-area" <?php if (!empty($hideSidebar)) echo 'style="max-width: 1400px; margin: 0 auto; padding-top: 100px;"'; ?>>
+    </main>
+</div>
+<script src="<?= BASE_URL ?>assets/js/NotificationBell.js?v=<?= time() ?>"></script>

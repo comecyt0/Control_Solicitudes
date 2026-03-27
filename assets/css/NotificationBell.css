@@ -1,0 +1,161 @@
+/* NotificationBell.css - v16.0 Premium Design */
+
+.bell-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+}
+
+.bell-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    font-size: 1.1rem;
+}
+
+.bell-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bell-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #EF4444;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #1a1c23;
+    animation: bell-pulse 2s infinite;
+}
+
+@keyframes bell-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.bell-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 320px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.bell-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.bell-header {
+    padding: 16px;
+    font-weight: 700;
+    color: #1a1c23;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bell-items {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.bell-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.bell-item:last-child {
+    border-bottom: none;
+}
+
+.bell-item:hover {
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.bell-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.bell-item-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+.bell-item-count {
+    font-size: 0.75rem;
+    color: #6B7280;
+}
+
+.bell-empty {
+    padding: 30px 20px;
+    text-align: center;
+    color: #9CA3AF;
+    font-size: 0.9rem;
+}
+
+.bell-footer {
+    padding: 12px;
+    background: #F9FAFB;
+    text-align: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.bell-footer a {
+    font-size: 0.8rem;
+    color: #3B82F6;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.bell-footer a:hover {
+    text-decoration: underline;
+}

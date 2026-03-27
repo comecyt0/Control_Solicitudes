@@ -99,6 +99,7 @@ if (isset($_SESSION['user_area'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/main.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin_extra.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/NotificationBell.css">
     <script src="<?= BASE_URL ?>assets/js/ui-frames.js?v=<?= time() ?>"></script>
     <?php if (isset($extraHead)) echo $extraHead; ?>
 </head>
@@ -1475,11 +1476,7 @@ if (isset($_SESSION['user_area'])) {
                     onclick="toggleDarkMode()" style="flex-shrink:0;">
                 <i class="fa-solid <?= $darkMode ? 'fa-sun' : 'fa-moon' ?>"></i>
             </button>
-            <?php if (($_SESSION['area_slug_activa'] ?? 'sistemas') === 'sistemas'): ?>
-            <a href="<?= BASE_URL ?>admin/solicitudes.php?estatus=pendiente" class="topbar-btn" title="Solicitudes pendientes">
-                <i class="fa-solid fa-bell"></i>
-            </a>
-            <?php endif; ?>
+            <!-- El componente Universal Notification Bell se inyectará aquí automáticamente -->
             <!-- Botón Chat Equipo TI -->
             <button class="topbar-btn" id="chatToggleBtn" onclick="toggleChat()" title="Chat del equipo"
                     style="position:relative; border:none; cursor:pointer;">
@@ -1599,4 +1596,5 @@ function buscarGlobal(q) {
 
 
 </script>
+<script src="<?= BASE_URL ?>assets/js/NotificationBell.js?v=<?= time() ?>"></script>
 
