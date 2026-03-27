@@ -306,7 +306,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <div class="kanban-col-header bg-<?= str_replace('_','-',$idCol) ?>"><span><?= strtoupper($lblCol) ?></span><span class="kanban-badge"><?= count($listaTareas[$idCol]) ?></span></div>
                 <div class="kanban-col-body">
                     <?php foreach ($listaTareas[$idCol] as $t): ?>
-                        <div class="tarea-card" draggable="true" ondragstart="drag(event, <?= $t['id'] ?>)" onclick="abrirModalEditarTarea(<?= $t['id'] ?>, '<?= esc(addslashes($t['titulo'])) ?>', '<?= esc(addslashes($t['descripcion'])) ?>', '<?= $t['color'] ?>', <?= (int)$t['asignado_a'] ?>)">
+                        <div class="tarea-card" draggable="true" ondragstart="drag(event, <?= $t['id'] ?>)" style="border-top-color: <?= $t['color'] ?>;" onclick="abrirModalEditarTarea(<?= $t['id'] ?>, '<?= esc(addslashes($t['titulo'])) ?>', '<?= esc(addslashes($t['descripcion'])) ?>', '<?= $t['color'] ?>', <?= (int)$t['asignado_a'] ?>)">
                             <h4 style="margin:0 0 5px; font-size:1rem;"><?= esc($t['titulo']) ?></h4><p style="font-size:0.8rem; color:#64748b;"><?= esc(mb_strimwidth($t['descripcion'], 0, 80, '...')) ?></p>
                             <div style="margin-top:10px; font-size:0.7rem; color:#94a3b8; display:flex; justify-content:space-between; align-items:center;"><span><i class="fa-solid fa-user-tag"></i> <?= esc($t['asignado_nombre'] ?: 'Sin asignar') ?></span><i class="fa-solid fa-grip-lines" style="opacity:0.3;"></i></div>
                         </div>
