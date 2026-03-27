@@ -309,7 +309,7 @@
 
     // ─── Elemento de audio para el MP3 del chat ─────────────────────────────
     // Se precarga al iniciar para evitar delay en la primera notificación
-    const audioChat = new Audio(BASE + 'assets/TIENES UN MENSAJE!!!  letra.mp3');
+    const audioChat = new Audio(BASE + 'assets/notification.mp3');
     audioChat.preload = 'auto';
     audioChat.volume = 0.7;
 

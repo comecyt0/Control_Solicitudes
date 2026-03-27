@@ -207,10 +207,10 @@ if ($accion === 'registrar_asistencia') {
         ssJson(false, error: 'No tienes una entrada activa hoy.');
     }
 
-    $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+    $ip  = $_SERVER['REMOTE_ADDR'] ?? null;
     $ins = $pdo->prepare(
-        "INSERT INTO ss_asistencia (usuario_id, tipo, ip)
-         VALUES (:uid, :tipo, :ip)"
+        "INSERT INTO ss_asistencia (usuario_id, tipo, ip, fecha_hora)
+         VALUES (:uid, :tipo, :ip, NOW())"
     );
     $ins->execute([':uid' => $ssId, ':tipo' => $tipo, ':ip' => $ip]);
 

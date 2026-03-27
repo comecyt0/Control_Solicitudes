@@ -159,12 +159,33 @@ if ($accion === 'listar') {
 if ($accion === 'marcar_leido' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $ultimoId = (int) ($_POST['ultimo_id'] ?? 0);
     if ($ultimoId > 0) {
-        $sql = "INSERT INTO sb_chat_lectura (admin_id, ultimo_id_leido, fecha_actualizacion)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT (admin_id) DO UPDATE 
+        $sql = "INSERT INTO sb_chat_lectura (admin_id, usuario_id, ultimo_id_leido, fecha_actualizacion)
+                VALUES (:aid, :uid, :last, CURRENT_TIMESTAMP)
+                ON CONFLICT (admin_id) WHERE admin_id IS NOT NULL DO UPDATE 
                 SET ultimo_id_leido = EXCLUDED.ultimo_id_leido, 
-                    fecha_actualizacion = CURRENT_TIMESTAMP";
-        $pdo->prepare($sql)->execute([$adminId, $ultimoId]);
+                    fecha_actualizacion = CURRENT_TIMESTAMP;
+                
+                -- También intentar para usuario_id si admin_id es nulo (o viceversa)
+                -- Nota: El ON CONFLICT anterior solo cubre un índice. 
+                -- Para Postgres, es mejor usar dos sentencias o una lógica que detecte el tipo.
+                ";
+        
+        // Refactor para ser más robusto con los dos tipos de usuario
+        if ($adminId) {
+            $sql = "INSERT INTO sb_chat_lectura (admin_id, ultimo_id_leido, fecha_actualizacion)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT (admin_id) WHERE admin_id IS NOT NULL DO UPDATE 
+                    SET ultimo_id_leido = EXCLUDED.ultimo_id_leido, 
+                        fecha_actualizacion = CURRENT_TIMESTAMP";
+            $pdo->prepare($sql)->execute([$adminId, $ultimoId]);
+        } elseif ($personalId) {
+            $sql = "INSERT INTO sb_chat_lectura (usuario_id, ultimo_id_leido, fecha_actualizacion)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT (usuario_id) WHERE usuario_id IS NOT NULL DO UPDATE 
+                    SET ultimo_id_leido = EXCLUDED.ultimo_id_leido, 
+                        fecha_actualizacion = CURRENT_TIMESTAMP";
+            $pdo->prepare($sql)->execute([$personalId, $ultimoId]);
+        }
     }
     echo json_encode(['ok' => true]);
     exit;

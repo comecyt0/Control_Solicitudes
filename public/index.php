@@ -40,59 +40,82 @@ $extraHead  = '
 .intranet-hero {
     background: linear-gradient(135deg, rgba(102, 35, 49, 0.03) 0%, rgba(139, 47, 66, 0.08) 100%);
     border-radius: 20px;
-    padding: 35px 40px;
+    padding: 45px 50px;
     margin-bottom: 40px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(102, 35, 49, 0.05);
+    position: relative;
+    overflow: hidden;
+    gap: 30px;
 }
-.welcome-container {
+.intranet-hero-content {
+    flex: 1.5;
+    z-index: 2;
+}
+.intranet-hero-avatar-center {
+    flex: 1;
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 20px;
-    margin-bottom: 24px;
+    z-index: 2;
 }
 .user-welcome-avatar {
-    width: 64px;
-    height: 64px;
+    width: 300px;
+    height: 300px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #fff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border: 8px solid #fff;
+    box-shadow: 0 15px 45px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+    margin-left: 10px;
+}
+.user-welcome-avatar:hover {
+    transform: scale(1.03);
 }
 .intranet-hero-content h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
+    font-size: 2.5rem;
+    font-weight: 800;
     color: var(--color-primary);
     margin: 0;
-    line-height: 1.2;
+    line-height: 1.1;
+    letter-spacing: -1px;
 }
 .intranet-hero-content p {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     color: #475569;
-    max-width: 550px;
+    max-width: 600px;
+    margin-top: 15px;
+    line-height: 1.6;
 }
 .intranet-hero-icon {
-    font-size: 5.5rem;
-    color: rgba(102, 35, 49, 0.1);
+    flex: 0.5;
+    display: flex;
+    justify-content: flex-end;
+    font-size: 7rem;
+    color: rgba(102, 35, 49, 0.04);
+    z-index: 1;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
+    .intranet-hero { padding: 35px; }
+    .intranet-hero-content h1 { font-size: 2rem; }
+    .user-welcome-avatar { width: 220px; height: 220px; }
+}
+
+@media (max-width: 900px) {
     .intranet-hero {
-        flex-direction: column-reverse;
+        flex-direction: column;
         text-align: center;
-        padding: 24px;
-        gap: 20px;
+        gap: 30px;
     }
-    .intranet-hero-content h1 {
-        font-size: 1.6rem;
-    }
-    .intranet-hero-icon {
-        font-size: 4rem;
-        margin-bottom: 10px;
-    }
+    .intranet-hero-content p { margin-left: auto; margin-right: auto; }
+    .intranet-hero-icon { display: none; }
+    .intranet-hero-content { order: 2; }
+    .intranet-hero-avatar-center { order: 1; }
+    .user-welcome-avatar { margin-left: 0; }
 }
 
 .intranet-grid {
@@ -274,7 +297,7 @@ if (!empty($_SESSION['user_id'])) {
     $fotoPerfil = $stmtFoto->fetchColumn();
 } elseif (!empty($_SESSION['admin_email'])) {
     // Intentar obtener foto del administrador por correo institucional
-    $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM cat_personal WHERE email = ?");
+    $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM cat_personal WHERE correo_institucional = ?");
     $stmtFoto->execute([$_SESSION['admin_email']]);
     $fotoPerfil = $stmtFoto->fetchColumn();
 }
@@ -282,31 +305,31 @@ if (!empty($_SESSION['user_id'])) {
 
 <div class="intranet-hero reveal-up">
     <div class="intranet-hero-content">
-        <div class="welcome-container" style="flex-direction: row-reverse; justify-content: flex-end; gap: 25px;">
-            <?php if (!empty($fotoPerfil)): ?>
-                <img src="<?= BASE_URL ?>public/uploads/avatares/<?= esc($fotoPerfil) ?>" alt="Foto Perfil" class="user-welcome-avatar" style="width: 85px; height: 85px; min-width: 85px;">
-            <?php else: ?>
-                <div class="user-welcome-avatar" style="width: 85px; height: 85px; min-width: 85px; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800;">
-                    <?= substr(esc($usuarioNombre), 0, 1) ?>
-                </div>
-            <?php endif; ?>
-            <div style="flex: 1;">
-                <h1>¡Bienvenid@ a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
-                <p style="margin-top: 10px;">Dashboard central de servicios e información institucional del COMECyT. Gestiona tus requerimientos técnicos, explora galerías multimedia y mantente enterado de los últimos comunicados oficiales.</p>
-            </div>
-        </div>
+        <h1>¡Bienvenid@ a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
+        <p>Dashboard central de servicios e información institucional del COMECyT. Gestiona tus requerimientos técnicos, explora galerías multimedia y mantente enterado de los últimos comunicados oficiales.</p>
         
-        <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+        <div style="margin-top: 30px; display: flex; gap: 15px; flex-wrap: wrap;">
             <?php if (!empty($_SESSION['admin_id']) || !empty($_SESSION['ss_id'])): ?>
             <a href="<?= BASE_URL ?>public/router.php" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 15px rgba(102, 35, 49, 0.25); border-radius: 12px; padding: 14px 28px; font-weight: 700;">
                 <i class="fa-solid fa-rocket" style="margin-right: 8px;"></i> Mi Panel Administrativo
             </a>
             <?php endif; ?>
-            <a href="<?= BASE_URL ?>public/calendario.php?solicitar=1" class="btn btn-outline btn-lg" style="border-radius: 12px; padding: 14px 28px; font-weight: 700; background: #fff;">
+            <a href="<?= BASE_URL ?>public/calendario.php?solicitar=1" class="btn btn-outline btn-lg" style="border-radius: 12px; padding: 14px 28px; font-weight: 700; background: #fff; border: 1px solid #e2e8f0;">
                 <i class="fa-solid fa-calendar-plus" style="margin-right: 8px; color: #b45309;"></i> Agendar Espacio
             </a>
         </div>
     </div>
+    
+    <div class="intranet-hero-avatar-center">
+        <?php if (!empty($fotoPerfil)): ?>
+            <img src="<?= BASE_URL ?>public/uploads/avatares/<?= esc($fotoPerfil) ?>" alt="Foto Perfil" class="user-welcome-avatar">
+        <?php else: ?>
+            <div class="user-welcome-avatar" style="width: 300px; height: 300px; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 8rem; font-weight: 800; border: 8px solid #fff; border-radius: 50%; box-shadow: 0 15px 45px rgba(0,0,0,0.15); margin-left: 10px;">
+                <?= substr(esc($usuarioNombre), 0, 1) ?>
+            </div>
+        <?php endif; ?>
+    </div>
+    
     <div class="intranet-hero-icon">
         <i class="fa-solid fa-shapes"></i>
     </div>

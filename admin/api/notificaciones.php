@@ -27,7 +27,7 @@ if (empty($_SESSION['admin_id']) && empty($_SESSION['user_id'])) {
 $pdo = getConnection();
 $adminId = $_SESSION['admin_id'] ?? null;
 $userId  = $_SESSION['user_id'] ?? null;
-$cveArea = $_SESSION['cve_area'] ?? 0;
+$cveArea = $_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0;
 
 // Identificador único de usuario (A for Admin, P for Personal)
 $uid = $adminId ? 'A'.$adminId : ($userId ? 'P'.$userId : null);
@@ -46,15 +46,32 @@ $resultado = [
 
 try {
     // 1. Mensajes de Chat (DMs dirigidos a mi O canal grupal de mi área)
+    // Se cuentan mensajes con ID mayor al último leído registrado en sb_chat_lectura
     $stmtChat = $pdo->prepare("
         SELECT COUNT(*) 
         FROM sb_chat_mensajes 
-        WHERE (destinatario_id = ? OR (destinatario_id IS NULL AND cve_area = ?)) 
-        AND leido = false
-        AND (admin_id <> ? OR admin_id IS NULL)
-        AND (usuario_id <> ? OR usuario_id IS NULL)
+        WHERE (
+            destinatario_id = :uid 
+            OR destinatario_usuario_id = :userid 
+            OR (destinatario_id IS NULL AND destinatario_usuario_id IS NULL AND cve_area = :area)
+        )
+        AND id > (
+            SELECT COALESCE(MAX(ultimo_id_leido), 0) 
+            FROM sb_chat_lectura 
+            WHERE (admin_id = :adminid OR usuario_id = :userid2)
+        )
+        AND (admin_id <> :adminid2 OR admin_id IS NULL)
+        AND (usuario_id <> :userid3 OR usuario_id IS NULL)
     ");
-    $stmtChat->execute([$uid, $cveArea, $adminId, $userId]);
+    $stmtChat->execute([
+        ':uid'      => $uid,
+        ':userid'   => $userId,
+        ':area'     => $cveArea,
+        ':adminid'  => $adminId,
+        ':userid2'  => $userId,
+        ':adminid2' => $adminId,
+        ':userid3'  => $userId
+    ]);
     $resultado['pendientes']['chat'] = (int)$stmtChat->fetchColumn();
 
     // 2. Solicitudes Nuevas (Solo Sistemas o si tiene permisos)

@@ -181,14 +181,14 @@ class NotificationBell {
             return;
         }
         const baseUrl = window.BASE_URL || '/';
-        const audio = new Audio(`${baseUrl}assets/TIENES UN MENSAJE!!!  letra.mp3`);
+        const audio = new Audio(`${baseUrl}assets/notification.mp3`);
         audio.play().catch(e => console.log('Audio playback failed', e));
     }
 
     setupAudioUnlock() {
         const unlock = () => {
             const baseUrl = window.BASE_URL || '/';
-            const audio = new Audio(`${baseUrl}assets/TIENES UN MENSAJE!!!  letra.mp3`);
+            const audio = new Audio(`${baseUrl}assets/notification.mp3`);
             audio.volume = 0;
             audio.play().then(() => {
                 console.log('[Bell] Audio context unlocked');

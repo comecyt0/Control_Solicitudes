@@ -2,10 +2,10 @@
 /**
  * COMECyT Control de Solicitudes
  * Funciones utilitarias compartidas
- *
- * Responsabilidad: Proporcionar helpers de presentacion reutilizables
- * en todas las vistas PHP del sistema.
  */
+
+// Establecer Zona Horaria Global
+date_default_timezone_set('America/Mexico_City');
 
 // -----------------------------------------------------------------------
 // URL base del sistema — ajustar si se instala en subdirectorio

@@ -38,13 +38,27 @@ $resultado = [
 
 try {
     // 1. Mensajes de Chat no leídos (DMs dirigidos a mi)
+    // Usamos sb_chat_lectura para el solicitante (usuario_id)
     $stmtChat = $pdo->prepare("
         SELECT COUNT(*) 
         FROM sb_chat_mensajes 
-        WHERE destinatario_id = ? 
-        AND leido = false
+        WHERE (destinatario_id = :uid OR destinatario_usuario_id = :userid)
+        AND id > (
+            SELECT COALESCE(MAX(ultimo_id_leido), 0) 
+            FROM sb_chat_lectura 
+            WHERE (admin_id = :adminid OR usuario_id = :userid2)
+        )
+        AND (admin_id <> :adminid2 OR admin_id IS NULL)
+        AND (usuario_id <> :userid3 OR usuario_id IS NULL)
     ");
-    $stmtChat->execute([$uid]);
+    $stmtChat->execute([
+        ':uid'      => $uid,
+        ':userid'   => $_SESSION['user_id'] ?? null,
+        ':adminid'  => $_SESSION['admin_id'] ?? null,
+        ':userid2'  => $_SESSION['user_id'] ?? null,
+        ':adminid2' => $_SESSION['admin_id'] ?? null,
+        ':userid3'  => $_SESSION['user_id'] ?? null
+    ]);
     $resultado['pendientes']['chat'] = (int)$stmtChat->fetchColumn();
 
     // 2. Respuestas de Calendario (Buzón)

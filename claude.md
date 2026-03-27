@@ -329,10 +329,19 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Interfaz Administrativa**: Nuevos módulos en Sistemas y Difusión para el control de alertas.
 - **Login Modal**: Integración de overlay dinámico en `admin/login.php` que muestra alertas activas antes de permitir el ingreso de credenciales.
 uimiento Solicitantes**: Integración de notificaciones para cambios de estatus en solicitudes y respuestas de calendario.
-- **Unificación Sonora**: Alertas audibles unificadas ("TIENES UN MENSAJE!!!") para cualquier incremento en los contadores globales.
-- **Polling**: Frecuencia de 15 segundos balanceada para tiempo real sin saturar el servidor.
+## v18.0 - Correcciones de Notificaciones y Asistencia (Marzo 2026)
+**Cambios**:
+- **Timezone Sync**: Se añadió `date_default_timezone_set('America/Mexico_City')` en `helpers.php`. Esto soluciona bugs donde las asistencias de noche se registraban con la fecha de "mañana" (UTC) rompiendo la lógica de botones "Entrada/Salida".
+- **Notificaciones Universales**: 
+    - Se mapearon correctamente los `cve_area` en las APIs de notificaciones para soportar sesiones híbridas (Admin/Personal).
+    - Se renombró el audio a `notification.mp3` para evitar fallos de carga por espacios/caracteres especiales.
+- **Asistencia Servicio Social**: Se forzó el uso de `NOW()` en el `INSERT` de `ss_asistencia` para garantizar consistencia horaria del servidor.
 
-## Subagentes y Automatización
-- **Verificación**: El sistema es compatible con subagentes especializados. Se ha documentado su uso en `subagentes.md` para tareas complejas de refactorización y auditoría de código.
-- **Sistema Universal de Notificaciones (Global Bell)**: v16.1 Layout fix + v16.2 Polling (3s).
-- **Banner Intranet**: Grosor reducido (-5px) y avatar dinámico del usuario logueado.
+## Troubleshooting y Quirks del Entorno (Actualizado)
+- **Timezone PHP vs DB**: PostgreSQL está en `America/Mexico_City`. PHP por defecto en Docker suele estar en `UTC`. **Regla**: Siempre sincronizar PHP con `date_default_timezone_set` al mismo valor que el `SET TIMEZONE` de la DB para evitar desfases en filtros de fecha `DATE(col) = today`.
+- **Audio Cross-Browser**: Safari y Chrome (mobile) pueden bloquear archivos con nombres complejos o espacios. Usar siempre `notification.mp3` o similar, sin caracteres especiales.
+- **IDs de Notificación**: Al consultar notificaciones para administradores, verificar siempre `$_SESSION['admin_cve_area']` y como fallback `$_SESSION['user_cve_area']`.
+- **🚨 Error Crítico: PHP Tag Missing (`<?php`) 🚨**: Al usar herramientas de edición automática (reemplazo de bloques), es vital NO omitir la etiqueta de apertura `<?php` en archivos que inician con ella. Si se omite, el servidor servirá el código como texto plano o fallará al definir constantes críticas como `BASE_URL`, provocando errores fatal en todo el sistema.
+- **💬 Notificaciones de Chat (v18.1, 2026-03-27)**: No usar la columna `leido` en `sb_chat_mensajes`. El sistema usa la tabla `sb_chat_lectura` para persistir el `ultimo_id_leido` por cada usuario (`admin_id` o `usuario_id` de personal). Las consultas de conteo deben comparar `m.id > last_read_id` filtrando por destinatario o área.
+- **🕒 Sincronización de Horarios (v18.0)**: Se detectó un error donde los botones de asistencia solo permitían "Entrada" aunque ya se hubiera registrado. **Causa**: PHP estaba en UTC (+6h) y la DB en Mexico_City. El sistema creía que la entrada era de "mañana". **Solución**: Usar `date_default_timezone_set('America/Mexico_City')` globalmente y forzar `NOW()` en queries SQL para consistencia absoluta.
+- **🖼️ Avatares Gigantes (v18.2)**: El usuario solicitó un diseño de impacto con avatares de **300px** en el dashboard público. Se ajustó el layout a 3 columnas con `margin-left: 10px` para desplazarlo ligeramente a la derecha según la visual deseada.
