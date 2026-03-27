@@ -352,3 +352,11 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 - **Vista Previa Segura**: El contenido completo ya no se renderiza en el grid. Se implementó un sistema de thumbnails con un modal ("Vista Previa") que permite ver el material en pantalla completa con scroll.
 - **Protección Anti-Copia**: Se bloqueó el click derecho (context menu) en todas las imágenes y contenedores de la galería para dificultar la descarga no autorizada.
 - **Thumbnail Engine**: Los recursos se presentan recortados uniformemente en el grid, mejorando el orden visual de la mampostería (masonry).
+
+## v13.2 - Blindaje Avanzado de Activos
+**Fecha**: 2026-03-27
+**Cambios**:
+- **Background Engine**: Las miniaturas ahora utilizan `background-image` en lugar de etiquetas `<img>`, lo que impide que el navegador las identifique como imágenes guardables individualmente.
+- **Protection Shield**: Se implementó una capa transparente (overlay) sobre todo el contenido multimedia que intercepta cualquier interacción física con el archivo real.
+- **Anti-Drag**: Se desactivó la capacidad de arrastrar imágenes hacia el escritorio o carpetas externas.
+- **Context Lock**: Bloqueo total del menú contextual en el grid y el visualizador para prevenir "Guardar página como" con recursos vinculados.

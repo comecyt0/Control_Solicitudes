@@ -73,16 +73,25 @@ $extraHead = '<style>
     background: #f1f5f9;
     cursor: zoom-in;
 }
-.masonry-img { 
+.masonry-bg-img { 
     width: 100%; 
     height: 100%; 
-    display: block; 
-    object-fit: cover; 
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
     transition: transform 0.5s;
     user-select: none;
-    pointer-events: none;
+    -webkit-user-drag: none;
 }
-.masonry-item:hover .masonry-img { transform: scale(1.05); }
+.masonry-item:hover .masonry-bg-img { transform: scale(1.05); }
+
+/* Transparent shield to block right-clicks and dragging */
+.protection-shield {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background: transparent;
+}
 
 .preview-overlay-btn {
     position: absolute;
@@ -98,6 +107,7 @@ $extraHead = '<style>
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
+    z-index: 6;
 }
 .masonry-preview-container:hover .preview-overlay-btn { opacity: 1; }
 
@@ -128,6 +138,7 @@ $extraHead = '<style>
     border-radius: 50%; cursor: pointer; font-size: 1.5rem;
     display: flex; align-items: center; justify-content: center;
     transition: background 0.2s;
+    z-index: 10001;
 }
 .modal-preview-close:hover { background: rgba(255,255,255,0.25); }
 
@@ -136,11 +147,12 @@ $extraHead = '<style>
     overflow: auto; background: #000;
     border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     position: relative;
+    user-select: none;
 }
 .modal-preview-content img, .modal-preview-content video { 
     display: block; max-width: 100%; height: auto; 
     margin: 0 auto;
-    oncontextmenu: return false;
+    -webkit-user-drag: none;
 }
 
 .modal-preview-info {
@@ -167,7 +179,7 @@ require_once __DIR__ . '/../includes/header_user.php';
 </div>
 
 <?php if (!empty($archivos)): ?>
-<div class="masonry-grid reveal-up" style="transition-delay:0.2s;">
+<div class="masonry-grid reveal-up" id="galeriaGrid" style="transition-delay:0.2s;">
     <?php foreach ($archivos as $file): 
         $ruta = BASE_URL . 'public/uploads/multimedia/' . esc($file['archivo_ruta']);
         $ext = strtolower(pathinfo($file['archivo_ruta'], PATHINFO_EXTENSION));
@@ -175,8 +187,9 @@ require_once __DIR__ . '/../includes/header_user.php';
     ?>
     <div class="masonry-item">
         <div class="masonry-preview-container" onclick="abrirPreview('<?= $ruta ?>', '<?= $file['tipo'] ?>', '<?= esc(addslashes($file['titulo'])) ?>', '<?= esc(addslashes($file['descripcion'])) ?>')">
+            <div class="protection-shield"></div>
             <?php if ($esImg): ?>
-                <img src="<?= $ruta ?>" class="masonry-img" alt="Vista previa" oncontextmenu="return false;">
+                <div class="masonry-bg-img" style="background-image: url('<?= $ruta ?>');"></div>
             <?php elseif ($ext === 'mp4'): ?>
                 <div style="background:#000; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:3rem;"><i class="fa-solid fa-play"></i></div>
             <?php else: ?>
@@ -209,9 +222,10 @@ require_once __DIR__ . '/../includes/header_user.php';
 <?php endif; ?>
 
 <!-- Modal Preview Universal -->
-<div class="modal-preview" id="modalPreview" oncontextmenu="return false;">
+<div class="modal-preview" id="modalPreview">
     <button class="modal-preview-close" onclick="cerrarPreview()"><i class="fa-solid fa-xmark"></i></button>
-    <div class="modal-preview-content" id="previewContent">
+    <div class="modal-preview-content" id="previewContent" style="position:relative;">
+        <div class="protection-shield" style="z-index:10000;"></div>
         <!-- El contenido se inyecta por JS -->
     </div>
     <div class="modal-preview-info">
@@ -228,33 +242,45 @@ function abrirPreview(url, tipo, titulo, desc) {
     
     titleEl.textContent = titulo;
     descEl.textContent = desc || 'Sin descripción adicional.';
-    container.innerHTML = '';
+    
+    // Mantener el shield y añadir contenido
+    const shield = '<div class="protection-shield" style="z-index:10000;"></div>';
+    let content = '';
     
     if (tipo === 'video') {
-        container.innerHTML = `<video controls autoplay style="width:100%; max-height:80vh;"><source src="${url}" type="video/mp4"></video>`;
+        content = `<video controls autoplay style="width:100%; max-height:80vh;"><source src="${url}" type="video/mp4"></video>`;
     } else if (tipo === 'documento') {
-        container.innerHTML = `<iframe src="${url}" style="width:80vw; height:80vh; border:none; background:white;"></iframe>`;
+        content = `<iframe src="${url}" style="width:80vw; height:80vh; border:none; background:white;"></iframe>`;
     } else {
-        container.innerHTML = `<img src="${url}" style="width:auto; max-width:100%; max-height:80vh; border-radius:4px;" oncontextmenu="return false;">`;
+        content = `<img src="${url}" style="width:auto; max-width:100%; max-height:80vh; border-radius:4px;" draggable="false" oncontextmenu="return false;">`;
     }
     
+    container.innerHTML = shield + content;
     document.getElementById('modalPreview').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
 function cerrarPreview() {
     document.getElementById('modalPreview').classList.remove('active');
-    document.getElementById('previewContent').innerHTML = ''; // Limpiar para detener videos
+    document.getElementById('previewContent').innerHTML = ''; 
     document.body.style.overflow = 'auto';
 }
 
-// Bloqueo de click derecho nativo para toda la aplicación si se desea un nivel más alto, 
-// o solo para la galería (como está ahora inyectado en el modal y previews).
-document.addEventListener('contextmenu', function(e) {
-    if (e.target.tagName === 'IMG' || e.target.classList.contains('masonry-preview-container')) {
+// Bloqueo total de click derecho en galeria y modal
+const blockContextMenu = (e) => {
+    e.preventDefault();
+    return false;
+};
+
+document.getElementById('galeriaGrid').addEventListener('contextmenu', blockContextMenu);
+document.getElementById('modalPreview').addEventListener('contextmenu', blockContextMenu);
+
+// Deterrente para "Guardar como" y arrastrar
+document.addEventListener('dragstart', (e) => {
+    if (e.target.tagName === 'IMG' || e.target.classList.contains('masonry-bg-img')) {
         e.preventDefault();
     }
-}, false);
+});
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
