@@ -83,13 +83,37 @@ if ($accion === 'crear') {
     }
     
     try {
-        $stmt = $pdo->prepare("INSERT INTO df_multimedia (titulo, descripcion, tipo, archivo_ruta, creado_por) VALUES (?, ?, ?, ?, ?)");
+        $visible = postParam('visible_publico') === '1' ? 'true' : 'false';
+        $descarga = postParam('permite_descarga') === '1' ? 'true' : 'false';
+        
+        $stmt = $pdo->prepare("INSERT INTO df_multimedia (titulo, descripcion, tipo, archivo_ruta, creado_por, visible_publico, permite_descarga) VALUES (?, ?, ?, ?, ?, $visible, $descarga)");
         $stmt->execute([$titulo, $desc, $tipo, $nombreGuardado, $id_admin]);
         echo json_encode(['ok' => true]);
     } catch (PDOException $e) {
         // Borrar el archivo si la BD falla para no dejar basura
         if (file_exists($rutaFinal)) @unlink($rutaFinal);
         echo json_encode(['ok' => false, 'error' => 'Error de Base de Datos: ' . $e->getMessage()]);
+    }
+}
+elseif ($accion === 'editar') {
+    $id = (int)postParam('id');
+    $titulo = trim(postParam('titulo'));
+    $desc = trim(postParam('descripcion'));
+    $tipo = postParam('tipo');
+    $visible = postParam('visible_publico') === '1' ? 'true' : 'false';
+    $descarga = postParam('permite_descarga') === '1' ? 'true' : 'false';
+
+    if (!$id || !$titulo || !$tipo) {
+        echo json_encode(['ok' => false, 'error' => 'Faltan campos obligatorios para la edición.']);
+        exit;
+    }
+
+    try {
+        $stmt = $pdo->prepare("UPDATE df_multimedia SET titulo = ?, descripcion = ?, tipo = ?, visible_publico = $visible, permite_descarga = $descarga WHERE id = ?");
+        $stmt->execute([$titulo, $desc, $tipo, $id]);
+        echo json_encode(['ok' => true]);
+    } catch (PDOException $e) {
+        echo json_encode(['ok' => false, 'error' => 'Error de Base de Datos al editar: ' . $e->getMessage()]);
     }
 }
 elseif ($accion === 'eliminar') {

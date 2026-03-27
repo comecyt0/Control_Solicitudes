@@ -412,6 +412,9 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                            target="_blank" class="btn-icon" title="Ver / Descargar">
                             <i class="fa-solid fa-eye"></i>
                         </a>
+                        <button class="btn-icon" title="Editar" onclick="abrirModalEditar(<?= $a['id'] ?>, '<?= esc(addslashes($a['titulo'])) ?>', '<?= esc(addslashes($a['descripcion'])) ?>', '<?= esc($a['tipo']) ?>', <?= $a['visible_publico'] ? 'true' : 'false' ?>, <?= $a['permite_descarga'] ? 'true' : 'false' ?>)">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
                         <button class="btn-icon btn-delete" title="Eliminar" onclick="eliminarArchivo(<?= $a['id'] ?>)">
                             <i class="fa-solid fa-trash"></i>
                         </button>
@@ -467,11 +470,73 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                                onchange="document.getElementById('uploadLabel').textContent = this.files[0]?.name ?? 'Selecciona un archivo'">
                     </div>
                 </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #475569; cursor: pointer;">
+                        <input type="checkbox" name="visible_publico" value="1" checked style="width: 18px; height: 18px; accent-color: var(--dif-secondary);">
+                        Visible en Galería Pública
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #475569; cursor: pointer;">
+                        <input type="checkbox" name="permite_descarga" value="1" checked style="width: 18px; height: 18px; accent-color: var(--dif-secondary);">
+                        Permitir Descarga
+                    </label>
+                </div>
             </div>
             <div class="modal-box-footer">
                 <button type="button" class="btn-cancel" onclick="document.getElementById('modalSubir').classList.remove('open')">Cancelar</button>
                 <button type="submit" class="btn-submit" id="btnSubir">
                     <i class="fa-solid fa-cloud-arrow-up"></i> Subir Material
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ══ MODAL — EDITAR ARCHIVO ════════════════════════════════ -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal-box">
+        <div class="modal-box-header" style="background: linear-gradient(135deg, #0f172a 0%, #334155 100%);">
+            <h3><i class="fa-solid fa-pen-to-square" style="margin-right:10px;"></i>Editar información</h3>
+            <button class="modal-close-btn" onclick="document.getElementById('modalEditar').classList.remove('open')">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <form id="formEditar" action="<?= BASE_URL ?>areas/difusion/api/repositorio.php" method="POST">
+            <input type="hidden" name="accion" value="editar">
+            <input type="hidden" name="id" id="edit_id">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <div class="modal-box-body">
+                <div class="form-group-premium">
+                    <label>Título / Nombre Público</label>
+                    <input type="text" name="titulo" id="edit_titulo" required>
+                </div>
+                <div class="form-group-premium">
+                    <label>Descripción corta</label>
+                    <input type="text" name="descripcion" id="edit_descripcion">
+                </div>
+                <div class="form-group-premium">
+                    <label>Formato / Tipo</label>
+                    <select name="tipo" id="edit_tipo" required>
+                        <option value="sketch">Sketch Institucional (Infografía / PNG)</option>
+                        <option value="logo">Logotipo Oficial</option>
+                        <option value="video">Clip de Video / Audio</option>
+                        <option value="documento">Documento (PDF / Word)</option>
+                    </select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #475569; cursor: pointer;">
+                        <input type="checkbox" name="visible_publico" id="edit_visible" value="1" style="width: 18px; height: 18px; accent-color: #0f172a;">
+                        Visible en Galería
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: #475569; cursor: pointer;">
+                        <input type="checkbox" name="permite_descarga" id="edit_descarga" value="1" style="width: 18px; height: 18px; accent-color: #0f172a;">
+                        Permitir Descarga
+                    </label>
+                </div>
+            </div>
+            <div class="modal-box-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('modalEditar').classList.remove('open')">Cancelar</button>
+                <button type="submit" class="btn-submit" id="btnEditar" style="background: #0f172a;">
+                    <i class="fa-solid fa-floppy-disk"></i> Guardar Cambios
                 </button>
             </div>
         </form>
@@ -509,10 +574,7 @@ document.getElementById('formSubir').addEventListener('submit', function(e) {
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo...';
     btn.disabled = true;
     fetch(this.action, { method: 'POST', body: new FormData(this) })
-        .then(r => {
-            if (!r.ok) throw new Error('Error de red o servidor (HTTP ' + r.status + ')');
-            return r.json();
-        })
+        .then(r => r.json())
         .then(res => {
             if (res.ok) location.reload();
             else { 
@@ -523,10 +585,35 @@ document.getElementById('formSubir').addEventListener('submit', function(e) {
         })
         .catch(err => {
             console.error(err);
-            alert('Error crítico: ' + err.message + '. Intenta de nuevo o contacta a soporte.');
+            alert('Error crítico: ' + err.message);
             btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Subir Material'; 
             btn.disabled = false;
         });
+});
+
+// — Editar archivo
+function abrirModalEditar(id, titulo, desc, tipo, visible, descarga) {
+    document.getElementById('edit_id').value = id;
+    document.getElementById('edit_titulo').value = titulo;
+    document.getElementById('edit_descripcion').value = desc;
+    document.getElementById('edit_tipo').value = tipo;
+    document.getElementById('edit_visible').checked = visible;
+    document.getElementById('edit_descarga').checked = descarga;
+    document.getElementById('modalEditar').classList.add('open');
+}
+
+document.getElementById('formEditar').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnEditar');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+    btn.disabled = true;
+    fetch(this.action, { method: 'POST', body: new FormData(this) })
+        .then(r => r.json())
+        .then(res => {
+            if (res.ok) location.reload();
+            else { alert(res.error || 'Error al guardar cambios.'); btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios'; btn.disabled = false; }
+        })
+        .catch(err => { console.error(err); alert('Error: ' + err.message); btn.disabled = false; });
 });
 
 // — Eliminar archivo

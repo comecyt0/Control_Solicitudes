@@ -14,12 +14,13 @@ $pdo = getConnection();
 
 // Obtener elementos filtrados
 $filtroTipo = $_GET['tipo'] ?? '';
-$where = "";
+$where = "WHERE visible_publico = true";
+
 if ($filtroTipo) {
     if ($filtroTipo === 'multimedia') {
-        $where = "WHERE tipo = 'video'";
+        $where .= " AND tipo = 'video'";
     } elseif ($filtroTipo === 'imagen') {
-        $where = "WHERE tipo IN ('sketch', 'logo', 'banner')";
+        $where .= " AND tipo IN ('sketch', 'logo', 'banner')";
     }
 }
 $stmt = $pdo->query("SELECT * FROM df_multimedia $where ORDER BY fecha_creacion DESC");
@@ -106,7 +107,11 @@ require_once __DIR__ . '/../includes/header_user.php';
             <div class="masonry-desc"><?= esc($file['descripcion']) ?></div>
             <div class="masonry-meta">
                 <span class="badge-tipo"><?= strtoupper($file['tipo']) ?></span>
-                <a href="<?= $ruta ?>" download class="btn btn-outline btn-sm" style="color:#0ea5e9; border-color:#bae6fd;"><i class="fa-solid fa-download"></i> Bajar</a>
+                <?php if ($file['permite_descarga']): ?>
+                    <a href="<?= $ruta ?>" download class="btn btn-outline btn-sm" style="color:#0ea5e9; border-color:#bae6fd;"><i class="fa-solid fa-download"></i> Bajar</a>
+                <?php else: ?>
+                    <span style="font-size: 0.75rem; color: #94a3b8;"><i class="fa-solid fa-lock"></i> Solo lectura</span>
+                <?php endif; ?>
             </div>
         </div>
     </div>

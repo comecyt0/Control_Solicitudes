@@ -332,3 +332,16 @@ Sistema de gestión de solicitudes y agenda institucional para COMECyT. Permite 
 **Cambios**:
 - **JS**: Se restauró la función `abrirModalCrear()` que fue removida accidentalmente durante el rediseño v12.0.
 - **Verificación**: Se confirmó que todos los botones de acción del calendario institucional en Dirección General estén operativos.
+
+## v13.0 - Control Maestro de Repositorio
+**Fecha**: 2026-03-27
+**Cambios**:
+- **Base de Datos**: Se añadieron columnas `visible_publico` y `permite_descarga` a `df_multimedia`.
+- **API**: Nueva acción `editar` para modificar metadatos y controles de archivos existentes.
+- **Repositorio (Difusión)**:
+    - Botón "Editar" en cada recurso.
+    - Nuevo modal de edición con controles granulares de visibilidad y descarga.
+    - Actualización del flujo de carga para incluir preferencias iniciales.
+- **Galería Pública**: 
+    - Ahora solo muestra archivos marcados como "Visibles".
+    - El botón de descarga se oculta y reemplaza por un indicador de "Solo lectura" si los permisos están desactivados.
