@@ -36,8 +36,14 @@ $diaSemanaInicio = (int)$dtMes->format('N');
 $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
-$stmt = $pdo->prepare("SELECT * FROM eventos WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
-$stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
+$sqlEventos = "
+    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, TRUE as es_institucional FROM eventos WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
+    UNION ALL
+    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, FALSE as es_institucional FROM df_eventos_editoriales WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
+    ORDER BY fecha_inicio ASC
+";
+$stmt = $pdo->prepare($sqlEventos);
+$stmt->execute([$finMesBusqueda, $inicioMesBusqueda, $finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // 2. Consultar cumpleaños activos institucionales del mes
