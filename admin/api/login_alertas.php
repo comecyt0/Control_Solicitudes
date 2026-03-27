@@ -37,7 +37,7 @@ try {
             break;
 
         case 'crear':
-            validarCsrfPost(); // Solo para POST que modifican datos
+            validarCsrfApi(); // Solo para POST que modifican datos
             $titulo = postParam('titulo');
             
             if (empty($titulo) || empty($_FILES['imagen'])) {
@@ -56,19 +56,26 @@ try {
             }
 
             $nombreFile = 'alerta_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-            $destPath = ROOT . '/public/uploads/alertas/' . $nombreFile;
+            $uploadDir = ROOT . '/public/uploads/alertas/';
+            $destPath = $uploadDir . $nombreFile;
+
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0777, true);
+            }
 
             if (move_uploaded_file($file['tmp_name'], $destPath)) {
                 $stmt = $pdo->prepare("INSERT INTO login_alertas (titulo, imagen_path, creado_por) VALUES (?, ?, ?)");
                 $stmt->execute([$titulo, 'public/uploads/alertas/' . $nombreFile, $_SESSION['admin_id'] ?? $_SESSION['user_id']]);
-                echo json_encode(['ok' => true, 'msg' => 'Alerta creada correctamente']);
+                echo json_encode(['ok' => true, 'msg' => 'Alerta publicada y activa correctamente']);
             } else {
-                echo json_encode(['ok' => false, 'msg' => 'Error al subir la imagen']);
+                $error = error_get_last();
+                error_log("Fallo upload alerta: " . ($error['message'] ?? 'Error desconocido') . " en " . $destPath);
+                echo json_encode(['ok' => false, 'msg' => 'No se pudo guardar el archivo en el servidor. Verifique permisos.']);
             }
             break;
 
         case 'toggle':
-            validarCsrfPost();
+            validarCsrfApi();
             $id = (int) postParam('id');
             $activo = postParam('activo') === 'true' || postParam('activo') == 1;
             
@@ -78,7 +85,7 @@ try {
             break;
 
         case 'eliminar':
-            validarCsrfPost();
+            validarCsrfApi();
             $id = (int) postParam('id');
             
             // Obtener ruta para borrar archivo
@@ -106,7 +113,7 @@ try {
 /**
  * Validación CSRF Inline para APIs JSON
  */
-function validarCsrfPost() {
+function validarCsrfApi() {
     $tokenPost = $_POST['csrf_token'] ?? '';
     $tokenSess = $_SESSION['csrf_token'] ?? '';
     if (empty($tokenPost) || $tokenPost !== $tokenSess) {
