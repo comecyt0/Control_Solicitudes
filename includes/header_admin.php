@@ -281,6 +281,7 @@ if (isset($_SESSION['user_area'])) {
                             background:var(--bg-card);border:1px solid var(--border-color);
                             border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);z-index:9998;
                             max-height:400px;overflow-y:auto;">
+                </div>
             </div>
 
             <!-- Dark Mode Toggle -->
