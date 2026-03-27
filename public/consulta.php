@@ -278,7 +278,6 @@ if ($usuariologueado) {
                         $nombreRef = preg_replace('/^req_sys_[^_]+_/', '', $archivo);
                     ?>
                     <a href="<?= BASE_URL ?>public/uploads/solicitudes/<?= esc($archivo) ?>"
-                       target="_blank"
                        class="btn btn-outline btn-sm"
                        style="border-color: #8b5cf6; color: #8b5cf6;"
                        download="<?= esc($nombreRef) ?>">
@@ -359,7 +358,6 @@ if ($usuariologueado) {
                             <p style="font-size: 0.75rem; color: #64748b; line-height: 1.3; margin: 0; min-height: 20px;"><?= nl2br(esc($ev['comentario'])) ?></p>
                         <?php endif; ?>
                         <a href="<?= BASE_URL ?>public/uploads/evidencias/<?= esc($ev['archivo_nombre']) ?>" 
-                           target="_blank" 
                            class="btn btn-outline btn-sm" 
                            style="width: 100%; justify-content: center; font-size: 0.75rem; padding: 5px;">
                             <i class="fa-solid fa-eye"></i> Visualizar Adjunto
@@ -498,7 +496,7 @@ if ($usuariologueado) {
                         const isImg = ['jpg','jpeg','png'].includes(ext);
                         adjuntoHtml = `
                             <div style="margin-top:8px; border-top:1px solid ${esAdmin ? '#e5e7eb' : 'rgba(255,255,255,0.2)'}; padding-top:8px;">
-                                <a href="${c.archivo_url}" target="_blank" style="color:${esAdmin ? 'var(--color-primary)' : '#fff'}; text-decoration:none; font-size:0.75rem; display:flex; align-items:center; gap:6px;">
+                                <a href="${c.archivo_url}" style="color:${esAdmin ? 'var(--color-primary)' : '#fff'}; text-decoration:none; font-size:0.75rem; display:flex; align-items:center; gap:6px;">
                                     <i class="fa-solid ${isImg ? 'fa-image' : 'fa-file-pdf'}"></i>
                                     ${c.archivo_nombre.substring(0, 20)}...
                                 </a>

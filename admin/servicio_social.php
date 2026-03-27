@@ -856,7 +856,7 @@ function abrirEvidenciasAdmin(tareaId, titulo) {
                     html += `<div style="font-size:0.85rem; margin-bottom:6px;">${ev.descripcion}</div>`;
                 }
                 if (ev.archivo_path) {
-                    html += `<a href="${BASE_URL_JS}${ev.archivo_path}" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.7rem;">
+                    html += `<a href="${BASE_URL_JS}${ev.archivo_path}" class="btn btn-outline btn-sm" style="font-size:0.7rem;">
                                 <i class="fa-solid fa-download"></i> Ver Archivo
                              </a>`;
                 }

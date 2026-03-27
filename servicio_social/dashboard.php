@@ -516,8 +516,8 @@ function cargarEvidencias() {
                         <div style="font-size:.75rem;color:var(--text-muted);">${escHtml(e.descripcion||'')}</div>
                         <div style="font-size:.7rem;color:var(--text-muted);">Por ${escHtml(e.usuario_nombre)} · ${escHtml(e.created_at)}</div>
                     </div>
-                    ${e.archivo ? `<a href="<?= BASE_URL ?>public/uploads/ss/${escHtml(e.archivo)}" target="_blank"
-                        class="btn btn-outline btn-icon btn-sm"><i class="fa-solid fa-download"></i></a>` : ''}
+                    ${e.archivo ? `<a href="<?= BASE_URL ?>public/uploads/ss/${escHtml(e.archivo)}"` : ''}
+                      class="btn btn-outline btn-icon btn-sm"><i class="fa-solid fa-download"></i></a>` : ''}
                 </div>
             `).join('');
         });

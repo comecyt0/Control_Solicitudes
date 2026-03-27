@@ -167,7 +167,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
             </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="<?= BASE_URL ?>admin/api/exportar_pdf.php?id=<?= $sol['id'] ?>" target="_blank"
+            <a href="<?= BASE_URL ?>admin/api/exportar_pdf.php?id=<?= $sol['id'] ?>"
                class="btn btn-outline btn-sm" title="Exportar / Imprimir" id="btn-export-pdf">
                 <i class="fa-solid fa-file-pdf"></i> PDF
             </a>
@@ -279,7 +279,6 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         $nombreRef = preg_replace('/^req_sys_[^_]+_/', '', $archivo);
                     ?>
                     <a href="<?= BASE_URL ?>public/uploads/solicitudes/<?= esc($archivo) ?>"
-                       target="_blank"
                        class="btn btn-sm btn-outline"
                        style="border-color: #8b5cf6; color: #8b5cf6;"
                        download="<?= esc($nombreRef) ?>">

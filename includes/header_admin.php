@@ -214,7 +214,7 @@ if (isset($_SESSION['user_area'])) {
         <?php if (!($slug_menu === 'difusion' && $activeMenu === 'calendario')): ?>
         <div class="nav-group">
             <span class="nav-group-label">Acceso Publico</span>
-            <a href="<?= BASE_URL ?>public/index.php" target="_blank" class="nav-link">
+            <a href="<?= BASE_URL ?>public/index.php" class="nav-link">
                 <i class="fa-solid fa-arrow-up-right-from-square nav-icon"></i>
                 <span>Vista Intranet</span>
             </a>

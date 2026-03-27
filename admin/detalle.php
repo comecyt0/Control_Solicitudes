@@ -183,7 +183,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
             </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <a href="<?= BASE_URL ?>admin/api/exportar_pdf.php?id=<?= $sol['id'] ?>" target="_blank"
+            <a href="<?= BASE_URL ?>admin/api/exportar_pdf.php?id=<?= $sol['id'] ?>"
                class="btn btn-outline btn-sm" title="Exportar / Imprimir" id="btn-export-pdf">
                 <i class="fa-solid fa-file-pdf"></i> PDF
             </a>
@@ -295,7 +295,6 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         $nombreRef = preg_replace('/^req_sys_[^_]+_/', '', $archivo);
                     ?>
                     <a href="<?= BASE_URL ?>public/uploads/solicitudes/<?= esc($archivo) ?>"
-                       target="_blank"
                        class="btn btn-sm btn-outline"
                        style="border-color: #8b5cf6; color: #8b5cf6;"
                        download="<?= esc($nombreRef) ?>">
@@ -624,7 +623,7 @@ function cargarRetroalimentacion() {
                     const isImg = ['jpg','jpeg','png'].includes(ext);
                     adjuntoHtml = `
                         <div style="margin-top:10px; border-top:1px solid ${esAdmin ? 'rgba(255,255,255,0.2)' : '#f1f5f9'}; padding-top:8px;">
-                            <a href="${c.archivo_url}" target="_blank" style="color:${esAdmin ? '#fff' : 'var(--color-primary)'}; text-decoration:none; font-size:0.8rem; display:flex; align-items:center; gap:8px; font-weight: 500;">
+                            <a href="${c.archivo_url}" style="color:${esAdmin ? '#fff' : 'var(--color-primary)'}; text-decoration:none; font-size:0.8rem; display:flex; align-items:center; gap:8px; font-weight: 500;">
                                 <i class="fa-solid ${isImg ? 'fa-image' : 'fa-file-pdf'}"></i>
                                 <span style="text-decoration: underline;">${c.archivo_nombre.substring(0, 25)}...</span>
                             </a>
@@ -790,7 +789,7 @@ function cargarEvidencias() {
                     </div>
                     ${e.comentario ? `<p style="font-size: 0.75rem; color: #64748b; margin: 8px 0; line-height: 1.3;">${escapeHtml(e.comentario)}</p>` : ''}
                     <div style="display: flex; gap: 6px; margin-top: 10px;">
-                        <a href="${e.url}" target="_blank" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.7rem; justify-content: center;">Ver</a>
+                        <a href="${e.url}" class="btn btn-sm btn-outline" style="flex: 1; font-size: 0.7rem; justify-content: center;">Ver</a>
                         <button onclick="eliminarEvidencia(${e.id})" class="btn btn-sm btn-outline" style="padding: 5px 8px; font-size: 0.7rem; color: #ef4444; border-color: #fca5a5; background: #fef2f2;">
                              <i class="fa-solid fa-trash-can"></i>
                         </button>

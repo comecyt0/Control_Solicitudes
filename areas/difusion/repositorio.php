@@ -409,7 +409,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     </span>
                     <div class="media-card-actions">
                         <a href="<?= BASE_URL ?>public/uploads/multimedia/<?= esc($a['archivo_ruta']) ?>"
-                           target="_blank" class="btn-icon" title="Ver / Descargar">
+                           class="btn-icon" title="Ver / Descargar">
                             <i class="fa-solid fa-eye"></i>
                         </a>
                         <button class="btn-icon" title="Editar" onclick="abrirModalEditar(<?= $a['id'] ?>, '<?= esc(addslashes($a['titulo'])) ?>', '<?= esc(addslashes($a['descripcion'])) ?>', '<?= esc($a['tipo']) ?>', <?= $a['visible_publico'] ? 'true' : 'false' ?>, <?= $a['permite_descarga'] ? 'true' : 'false' ?>)">
