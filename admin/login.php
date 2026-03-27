@@ -175,10 +175,10 @@ if (!empty($alertas)):
         <div class="login-alerts-content">
             <?php foreach ($alertas as $index => $alerta): ?>
                 <div class="login-alert-item <?= $index === 0 ? 'active' : '' ?>" id="alert-<?= $alerta['id'] ?>">
-                    <img src="<?= BASE_URL . $alerta['imagen_path'] ?>" alt="<?= esc($alerta['titulo']) ?>">
-                    <div class="login-alert-caption">
-                        <h3><?= esc($alerta['titulo']) ?></h3>
+                    <div class="login-alert-header">
+                        <h2><?= esc($alerta['titulo']) ?></h2>
                     </div>
+                    <img src="<?= BASE_URL . $alerta['imagen_path'] ?>" alt="<?= esc($alerta['titulo']) ?>">
                 </div>
             <?php endforeach; ?>
         </div>
@@ -201,105 +201,111 @@ if (!empty($alertas)):
 .login-alerts-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
     z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    animation: fadeIn 0.4s ease-out;
+    animation: fadeIn 0.5s ease;
 }
 .login-alerts-container {
     width: 100%;
-    max-width: 900px;
-    position: relative;
+    max-width: 1100px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 25px;
+}
+.login-alert-header {
+    width: 100%;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 10px;
+}
+.login-alert-header h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 .login-alerts-content {
     width: 100%;
     background: #000;
-    border-radius: 24px;
+    border-radius: 30px;
     overflow: hidden;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    box-shadow: 0 40px 100px rgba(0,0,0,0.8);
     border: 1px solid rgba(255,255,255,0.1);
     position: relative;
-    aspect-ratio: 16 / 9;
+    max-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .login-alert-item {
     position: absolute;
     inset: 0;
     opacity: 0;
-    transition: opacity 0.5s ease;
-    display: flex;
-    flex-direction: column;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    display: none;
 }
 .login-alert-item.active {
     opacity: 1;
+    display: flex;
     position: relative;
+    width: 100%;
 }
 .login-alert-item img {
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: 70vh;
     object-fit: contain;
 }
-.login-alert-caption {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 30px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.9));
-    color: #fff;
-    text-align: center;
-}
-.login-alert-caption h3 { margin: 0; font-size: 1.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-
 .login-alerts-nav {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
     color: #fff;
-    background: rgba(255,255,255,0.1);
-    padding: 8px 15px;
-    border-radius: 30px;
-    backdrop-filter: blur(5px);
+    background: rgba(255,255,255,0.05);
+    padding: 10px 25px;
+    border-radius: 40px;
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
 }
 .login-alerts-nav button {
     background: none;
     border: none;
     color: #fff;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: 0.2s;
 }
-.login-alerts-nav button:hover { transform: scale(1.2); }
+.login-alerts-nav button:hover { color: #B19A6D; transform: scale(1.1); }
 
 .btn-close-alerts {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary), #8a1d31);
     color: #fff;
     border: none;
-    padding: 15px 40px;
-    border-radius: 50px;
+    padding: 18px 50px;
+    border-radius: 20px;
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 10px 20px rgba(102,35,49,0.3);
-    transition: all 0.3s;
+    box-shadow: 0 15px 35px rgba(102,35,49,0.4);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 .btn-close-alerts:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(102,35,49,0.5);
-    background: var(--primary-light);
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 20px 45px rgba(102,35,49,0.6);
 }
 
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; backdrop-filter: blur(0); } to { opacity: 1; backdrop-filter: blur(12px); } }
 
 @media (max-width: 768px) {
     .login-alerts-content { aspect-ratio: 4 / 5; }

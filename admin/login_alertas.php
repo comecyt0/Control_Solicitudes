@@ -509,6 +509,13 @@ function cerrarModal() {
 
 function handleImageSelect(input) {
     if (input.files && input.files[0]) {
+        // Validar tamaño (2MB)
+        if(input.files[0].size > 2 * 1024 * 1024) {
+            COMECyTUI.toast('Archivo muy grande', 'La imagen no debe superar los 2MB', 'error');
+            input.value = '';
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
             document.getElementById('imagePreview').src = e.target.result;
@@ -521,6 +528,16 @@ function handleImageSelect(input) {
 
 async function guardarAlerta(e) {
     e.preventDefault();
+    
+    // Validación básica cliente
+    const titulo = document.getElementById('titulo').value.trim();
+    const imagen = document.getElementById('imagen').files.length;
+    
+    if(!titulo || imagen === 0) {
+        COMECyTUI.toast('Campos requeridos', 'Debes ingresar un título y seleccionar una imagen', 'warning');
+        return;
+    }
+
     const btn = document.getElementById('btnGuardar');
     const originalContent = btn.innerHTML;
     
@@ -537,7 +554,6 @@ async function guardarAlerta(e) {
             body: formData 
         });
         
-        // Intentar leer texto primero para depurar si no es JSON
         const textResponse = await r.text();
         let data;
         try {
@@ -549,8 +565,10 @@ async function guardarAlerta(e) {
 
         if(data.ok) {
             COMECyTUI.toast('¡Publicada!', data.msg, 'success');
-            cerrarModal();
-            cargarAlertas();
+            setTimeout(() => {
+                cerrarModal();
+                cargarAlertas();
+            }, 300);
         } else {
             COMECyTUI.toast('Atención', data.msg, 'error');
         }
