@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="login-logo">
             <img src="<?= BASE_URL ?>assets/MARCA.png" alt="Logo COMECyT">
         </div>
-        <p>Control de Solicitudes Internas</p>
+        <p>COMECyT Intranet</p>
     </div>
 
     <!-- Card de login -->
@@ -157,18 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 
-    <div class="login-footer">
-        <a href="<?= BASE_URL ?>public/index.php">
-            <i class="fa-solid fa-arrow-left"></i>
-            Volver a la vista de solicitudes
-        </a>
-    </div>
 </div>
 
 <!-- Sistema de Alertas de Login (Fase 7) -->
 <?php
 $alertas = [];
 try {
+    $pdo = getConnection();
     $stmtA = $pdo->query("SELECT * FROM login_alertas WHERE activo = TRUE ORDER BY orden ASC");
     $alertas = $stmtA->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {}

@@ -8,9 +8,9 @@
 }
 
 .bell-button {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
     width: 40px;
     height: 40px;
     border-radius: 12px;
@@ -24,9 +24,11 @@
 }
 
 .bell-button:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: #f1f5f9;
+    color: #475569;
+    border-color: #cbd5e1;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .bell-badge {

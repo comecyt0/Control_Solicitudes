@@ -272,23 +272,29 @@ if (!empty($_SESSION['user_id'])) {
     $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM cat_personal WHERE id = ?");
     $stmtFoto->execute([$_SESSION['user_id']]);
     $fotoPerfil = $stmtFoto->fetchColumn();
+} elseif (!empty($_SESSION['admin_email'])) {
+    // Intentar obtener foto del administrador por correo institucional
+    $stmtFoto = $pdo->prepare("SELECT foto_perfil FROM cat_personal WHERE email = ?");
+    $stmtFoto->execute([$_SESSION['admin_email']]);
+    $fotoPerfil = $stmtFoto->fetchColumn();
 }
-// Administradores no tienen foto_perfil en su tabla nativa, usamos inicial por ahora
 ?>
 
 <div class="intranet-hero reveal-up">
     <div class="intranet-hero-content">
-        <div class="welcome-container">
+        <div class="welcome-container" style="flex-direction: row-reverse; justify-content: flex-end; gap: 25px;">
             <?php if (!empty($fotoPerfil)): ?>
-                <img src="<?= BASE_URL ?>public/uploads/avatares/<?= esc($fotoPerfil) ?>" alt="Foto Perfil" class="user-welcome-avatar">
+                <img src="<?= BASE_URL ?>public/uploads/avatares/<?= esc($fotoPerfil) ?>" alt="Foto Perfil" class="user-welcome-avatar" style="width: 85px; height: 85px; min-width: 85px;">
             <?php else: ?>
-                <div class="user-welcome-avatar" style="background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800;">
+                <div class="user-welcome-avatar" style="width: 85px; height: 85px; min-width: 85px; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800;">
                     <?= substr(esc($usuarioNombre), 0, 1) ?>
                 </div>
             <?php endif; ?>
-            <h1>¡Bienvenid@ a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
+            <div style="flex: 1;">
+                <h1>¡Bienvenid@ a la Intranet, <?= esc($usuarioNombre) ?>!</h1>
+                <p style="margin-top: 10px;">Dashboard central de servicios e información institucional del COMECyT. Gestiona tus requerimientos técnicos, explora galerías multimedia y mantente enterado de los últimos comunicados oficiales.</p>
+            </div>
         </div>
-        <p>Dashboard central de servicios e información institucional del COMECyT. Gestiona tus requerimientos técnicos, explora galerías multimedia y mantente enterado de los últimos comunicados oficiales.</p>
         
         <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
             <?php if (!empty($_SESSION['admin_id']) || !empty($_SESSION['ss_id'])): ?>
