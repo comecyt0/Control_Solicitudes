@@ -36,7 +36,6 @@ docker compose up --build -d
 > ⚠️ **Cambiar todas las contraseñas en el primer inicio de sesión en producción.**
 
 ---
-
 ## 🗂️ Estructura del Proyecto
 
 ```
@@ -223,4 +222,4 @@ git status               # Estado del repositorio
 ## 📞 Soporte
 
 **Área de TI — COMECyT Estado de México**
-soporte.ti@comecyt.edomex.gob.mx | Ext. 201
+desarrollo.comecyt@edomex.gob.mx | Ext. 114
