@@ -71,6 +71,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $accion === 'listar_evidencias') {
 // ──────────────────────────────────────────────────────────────
 // POST: Validar CSRF para todas las siguientes acciones
 // ──────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
+// POST: Logger de errores JS
+// ──────────────────────────────────────────────────────────────
+if (($accion === 'log_js_error' || ($_POST['accion'] ?? '') === 'log_js_error')) {
+    $msg   = $_POST['msg'] ?? 'Desconocido';
+    $url   = $_POST['url'] ?? '?';
+    $line  = $_POST['line'] ?? '?';
+    $stack = $_POST['stack'] ?? '';
+    $log = date('[Y-m-d H:i:s]') . " JS_ERROR: $msg | File: $url:$line\nStack: $stack\n\n";
+    file_put_contents(__DIR__ . '/../../js_errors.txt', $log, FILE_APPEND);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') ssJson(false, error: 'Método no permitido');
 
 $csrfPost = $_POST['csrf_token'] ?? '';
@@ -190,6 +203,7 @@ if ($accion === 'registrar_asistencia') {
     $tipo = trim($_POST['tipo'] ?? '');
     $debugFile = __DIR__ . '/../../debug_asistencia.txt';
     $logMsg = date('[Y-m-d H:i:s]') . " User=$ssId, Tipo=$tipo, IP=" . ($_SERVER['REMOTE_ADDR'] ?? '?') . "\n";
+    file_put_contents($debugFile, $logMsg . "API HIT: Iniciando validación...\n", FILE_APPEND);
 
     if (!in_array($tipo, ['entrada', 'salida'], true)) {
         file_put_contents($debugFile, $logMsg . "Error: Tipo inválido ($tipo)\n", FILE_APPEND);

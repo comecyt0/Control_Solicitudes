@@ -448,6 +448,17 @@ const SS_API = '<?= BASE_URL ?>servicio_social/api/accion.php';
 const CSRF   = '<?= $_SESSION['csrf_token'] ?? '' ?>';
 let tareaActualId = null;
 
+// ── Registro de Errores Client-side ────────────────────────────
+window.onerror = function(msg, url, line, col, error) {
+    const fd = new FormData();
+    fd.append('accion', 'log_js_error');
+    fd.append('msg', msg);
+    fd.append('url', url);
+    fd.append('line', line);
+    fd.append('stack', error ? error.stack : '');
+    fetch(SS_API, { method: 'POST', body: fd }).catch(() => {});
+};
+
 // ── Asistencia ─────────────────────────────────────────────────
 function registrarAsistencia(tipo) {
     const btn = document.getElementById(tipo === 'entrada' ? 'btnEntrada' : 'btnSalida');
