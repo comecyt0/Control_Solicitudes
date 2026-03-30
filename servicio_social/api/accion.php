@@ -188,34 +188,50 @@ if ($accion === 'subir_evidencia') {
 // ──────────────────────────────────────────────────────────────
 if ($accion === 'registrar_asistencia') {
     $tipo = trim($_POST['tipo'] ?? '');
-    if (!in_array($tipo, ['entrada', 'salida'], true)) ssJson(false, error: 'Tipo inválido');
+    $debugFile = __DIR__ . '/../../debug_asistencia.txt';
+    $logMsg = date('[Y-m-d H:i:s]') . " User=$ssId, Tipo=$tipo, IP=" . ($_SERVER['REMOTE_ADDR'] ?? '?') . "\n";
 
-    // Verificar el último registro de hoy
-    $hoy = date('Y-m-d');
-    $stmtUlt = $pdo->prepare(
-        "SELECT tipo FROM ss_asistencia
-         WHERE usuario_id = :uid AND DATE(fecha_hora) = :hoy
-         ORDER BY fecha_hora DESC LIMIT 1"
-    );
-    $stmtUlt->execute([':uid' => $ssId, ':hoy' => $hoy]);
-    $ultimoTipo = $stmtUlt->fetchColumn() ?: null;
-
-    if ($tipo === 'entrada' && $ultimoTipo === 'entrada') {
-        ssJson(false, error: 'Ya registraste entrada. Primero registra tu salida.');
-    }
-    if ($tipo === 'salida' && ($ultimoTipo === null || $ultimoTipo === 'salida')) {
-        ssJson(false, error: 'No tienes una entrada activa hoy.');
+    if (!in_array($tipo, ['entrada', 'salida'], true)) {
+        file_put_contents($debugFile, $logMsg . "Error: Tipo inválido ($tipo)\n", FILE_APPEND);
+        ssJson(false, error: 'Tipo inválido');
     }
 
-    $ip  = $_SERVER['REMOTE_ADDR'] ?? null;
-    $ins = $pdo->prepare(
-        "INSERT INTO ss_asistencia (usuario_id, tipo, ip, fecha_hora)
-         VALUES (:uid, :tipo, :ip, NOW())"
-    );
-    $ins->execute([':uid' => $ssId, ':tipo' => $tipo, ':ip' => $ip]);
+    try {
+        // Verificar el último registro (sin restringir a hoy para permitir cerrar sesiones pendientes)
+        $stmtUlt = $pdo->prepare(
+            "SELECT tipo FROM ss_asistencia
+             WHERE usuario_id = :uid
+             ORDER BY fecha_hora DESC LIMIT 1"
+        );
+        $stmtUlt->execute([':uid' => $ssId]);
+        $ultimoTipo = $stmtUlt->fetchColumn() ?: null;
+        $puedeEntrada = ($ultimoTipo === null || $ultimoTipo === 'salida');
+        $puedeSalida  = ($ultimoTipo === 'entrada');
+        
+        file_put_contents($debugFile, $logMsg . "UltimoTipo (global): " . ($ultimoTipo ?? 'null') . "\n", FILE_APPEND);
 
-    $hora = (new DateTime('now', new DateTimeZone('America/Mexico_City')))->format('H:i:s');
-    ssJson(true, ['mensaje' => ucfirst($tipo) . ' registrada a las ' . $hora]);
+        if ($tipo === 'entrada' && $ultimoTipo === 'entrada') {
+            ssJson(false, error: 'Ya registraste entrada. Primero registra tu salida.');
+        }
+        if ($tipo === 'salida' && ($ultimoTipo === null || $ultimoTipo === 'salida')) {
+            ssJson(false, error: 'No tienes una entrada activa (debes registrar entrada primero).');
+        }
+
+        $ip  = $_SERVER['REMOTE_ADDR'] ?? null;
+        $ins = $pdo->prepare(
+            "INSERT INTO ss_asistencia (usuario_id, tipo, ip, fecha_hora)
+             VALUES (:uid, :tipo, :ip, NOW())"
+        );
+        $ins->execute([':uid' => $ssId, ':tipo' => $tipo, ':ip' => $ip]);
+
+        $hora = (new DateTime('now', new DateTimeZone('America/Mexico_City')))->format('H:i:s');
+        file_put_contents($debugFile, $logMsg . "ÉXITO: Registrada $tipo a las $hora\n", FILE_APPEND);
+        ssJson(true, ['mensaje' => ucfirst($tipo) . ' registrada a las ' . $hora]);
+
+    } catch (Exception $e) {
+        file_put_contents($debugFile, $logMsg . "EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
+        ssJson(false, error: 'Error de base de datos: ' . $e->getMessage());
+    }
 }
 
 ssJson(false, error: 'Acción no reconocida');

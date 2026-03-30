@@ -50,10 +50,10 @@ $asistencia = $stmtAsist->fetchAll();
 $hoy    = date('Y-m-d');
 $stmtUlt = $pdo->prepare(
     "SELECT tipo FROM ss_asistencia
-     WHERE usuario_id = :uid AND DATE(fecha_hora) = :hoy
+     WHERE usuario_id = :uid
      ORDER BY fecha_hora DESC LIMIT 1"
 );
-$stmtUlt->execute([':uid' => $ssId, ':hoy' => $hoy]);
+$stmtUlt->execute([':uid' => $ssId]);
 $ultimoTipo = $stmtUlt->fetchColumn() ?: null;
 $puedeEntrada = ($ultimoTipo === null || $ultimoTipo === 'salida');
 $puedeSalida  = ($ultimoTipo === 'entrada');
@@ -451,23 +451,45 @@ let tareaActualId = null;
 // ── Asistencia ─────────────────────────────────────────────────
 function registrarAsistencia(tipo) {
     const btn = document.getElementById(tipo === 'entrada' ? 'btnEntrada' : 'btnSalida');
+    const msg = document.getElementById('asistMsg');
+    
+    if (!btn) {
+        console.error('Botón no encontrado:', tipo);
+        return;
+    }
+
     btn.disabled = true;
+    msg.innerHTML = '<span style="color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Procesando...</span>';
+
     const fd = new FormData();
     fd.append('csrf_token', CSRF);
     fd.append('accion', 'registrar_asistencia');
     fd.append('tipo', tipo);
+
     fetch(SS_API, { method: 'POST', body: fd })
-        .then(r => r.json())
+        .then(async r => {
+            const text = await r.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Error parseando JSON. Respuesta del servidor:', text);
+                throw new Error('La respuesta del servidor no es válida (posible error PHP).');
+            }
+        })
         .then(d => {
-            const msg = document.getElementById('asistMsg');
             if (d.ok) {
                 msg.innerHTML = '<span style="color:#22c55e;"><i class="fa-solid fa-check"></i> ' + d.mensaje + '</span>';
                 setTimeout(() => location.reload(), 1200);
             } else {
-                msg.innerHTML = '<span style="color:#ef4444;">Error: ' + d.error + '</span>';
+                msg.innerHTML = '<span style="color:#ef4444;"><i class="fa-solid fa-circle-exclamation"></i> Error: ' + (d.error || 'Desconocido') + '</span>';
                 btn.disabled = false;
             }
-        }).catch(() => { btn.disabled = false; });
+        })
+        .catch(err => {
+            console.error('[Asistencia] Error:', err);
+            msg.innerHTML = '<span style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Error de conexión o servidor. Revisa la consola.</span>';
+            btn.disabled = false;
+        });
 }
 
 // ── Kanban — mover tarea ───────────────────────────────────────
