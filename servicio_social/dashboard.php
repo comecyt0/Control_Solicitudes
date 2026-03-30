@@ -265,15 +265,6 @@ require_once __DIR__ . '/../includes/header_ss.php';
         </button>
     </div>
     <div id="asistMsg" style="margin-top:14px; font-size:0.88rem;"></div>
-    
-    <!-- Info Depuración (Solo visible en desarrollo o para reporte) -->
-    <div style="margin-top:30px; padding:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; font-size:0.75rem; color:var(--text-muted); font-family:monospace; text-align:left;">
-        <strong>Debug Info:</strong><br>
-        SS_ID: <?= $ssId ?><br>
-        UltimoTipo: <?= var_export($ultimoTipo, true) ?><br>
-        Botones: E:<?= $puedeEntrada?'ON':'OFF' ?> / S:<?= $puedeSalida?'ON':'OFF' ?><br>
-        Hoy: <?= $hoy ?>
-    </div>
 </div>
 
 <!-- Gráfica de asistencia últimos 30 días -->
@@ -478,7 +469,6 @@ window.onerror = function(msg, url, line, col, error) {
 
 // ── Asistencia ─────────────────────────────────────────────────
 function registrarAsistencia(tipo) {
-    alert('DEBUG: Click pulsado en ' + tipo); // <--- DEBUG
     const btn = document.getElementById(tipo === 'entrada' ? 'btnEntrada' : 'btnSalida');
     const msg = document.getElementById('asistMsg');
     

@@ -219,11 +219,7 @@ if ($accion === 'registrar_asistencia') {
         );
         $stmtUlt->execute([':uid' => $ssId]);
         $ultimoTipo = $stmtUlt->fetchColumn() ?: null;
-        $puedeEntrada = ($ultimoTipo === null || $ultimoTipo === 'salida');
-        $puedeSalida  = ($ultimoTipo === 'entrada');
         
-        file_put_contents($debugFile, $logMsg . "UltimoTipo (global): " . ($ultimoTipo ?? 'null') . "\n", FILE_APPEND);
-
         if ($tipo === 'entrada' && $ultimoTipo === 'entrada') {
             ssJson(false, error: 'Ya registraste entrada. Primero registra tu salida.');
         }
@@ -239,11 +235,9 @@ if ($accion === 'registrar_asistencia') {
         $ins->execute([':uid' => $ssId, ':tipo' => $tipo, ':ip' => $ip]);
 
         $hora = (new DateTime('now', new DateTimeZone('America/Mexico_City')))->format('H:i:s');
-        file_put_contents($debugFile, $logMsg . "ÉXITO: Registrada $tipo a las $hora\n", FILE_APPEND);
         ssJson(true, ['mensaje' => ucfirst($tipo) . ' registrada a las ' . $hora]);
 
     } catch (Exception $e) {
-        file_put_contents($debugFile, $logMsg . "EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
         ssJson(false, error: 'Error de base de datos: ' . $e->getMessage());
     }
 }
