@@ -457,6 +457,14 @@ const SS_API = '<?= BASE_URL ?>servicio_social/api/accion.php';
 const CSRF   = '<?= $_SESSION['csrf_token'] ?? '' ?>';
 let tareaActualId = null;
 
+// -? Escapado simple para HTML en JS --------------------------
+function escHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
 // ── Registro de Errores Client-side ────────────────────────────
 window.onerror = function(msg, url, line, col, error) {
     const fd = new FormData();
@@ -559,8 +567,12 @@ function cargarEvidencias() {
                         <div style="font-size:.75rem;color:var(--text-muted);">${escHtml(e.descripcion||'')}</div>
                         <div style="font-size:.7rem;color:var(--text-muted);">Por ${escHtml(e.usuario_nombre)} · ${escHtml(e.created_at)}</div>
                     </div>
-                    ${e.archivo ? `<a href="<?= BASE_URL ?>public/uploads/ss/${escHtml(e.archivo)}"` : ''}
-                      class="btn btn-outline btn-icon btn-sm"><i class="fa-solid fa-download"></i></a>` : ''}
+                    ${e.archivo ? `
+                        <a href="<?= BASE_URL ?>public/uploads/ss/${escHtml(e.archivo)}" 
+                           class="btn btn-outline btn-icon btn-sm" 
+                           target="_blank" title="Descargar">
+                            <i class="fa-solid fa-download"></i>
+                        </a>` : ''}
                 </div>
             `).join('');
         });
