@@ -194,7 +194,7 @@ if ($accion === 'registrar_asistencia') {
     $hoy = date('Y-m-d');
     $stmtUlt = $pdo->prepare(
         "SELECT tipo FROM ss_asistencia
-         WHERE usuario_id = :uid AND DATE(fecha_hora AT TIME ZONE 'America/Mexico_City') = :hoy
+         WHERE usuario_id = :uid AND DATE(fecha_hora) = :hoy
          ORDER BY fecha_hora DESC LIMIT 1"
     );
     $stmtUlt->execute([':uid' => $ssId, ':hoy' => $hoy]);

@@ -50,7 +50,7 @@ $asistencia = $stmtAsist->fetchAll();
 $hoy    = date('Y-m-d');
 $stmtUlt = $pdo->prepare(
     "SELECT tipo FROM ss_asistencia
-     WHERE usuario_id = :uid AND DATE(fecha_hora AT TIME ZONE 'America/Mexico_City') = :hoy
+     WHERE usuario_id = :uid AND DATE(fecha_hora) = :hoy
      ORDER BY fecha_hora DESC LIMIT 1"
 );
 $stmtUlt->execute([':uid' => $ssId, ':hoy' => $hoy]);
@@ -64,7 +64,7 @@ $stmtComp = $pdo->prepare(
             u.email, u.institucion, u.carrera,
             (SELECT COUNT(*) FROM ss_kanban_tareas t WHERE t.asignado_a = u.id AND t.columna = 'completada') AS completadas,
             (SELECT COUNT(*) FROM ss_kanban_tareas t WHERE t.asignado_a = u.id AND t.columna != 'completada') AS en_curso,
-            (SELECT tipo FROM ss_asistencia a WHERE a.usuario_id = u.id AND DATE(a.fecha_hora AT TIME ZONE 'America/Mexico_City') = :hoy ORDER BY a.fecha_hora DESC LIMIT 1) AS estado_hoy
+            (SELECT tipo FROM ss_asistencia a WHERE a.usuario_id = u.id AND DATE(a.fecha_hora) = :hoy ORDER BY a.fecha_hora DESC LIMIT 1) AS estado_hoy
      FROM ss_usuarios u
      WHERE u.activo = TRUE AND u.id != :uid
      ORDER BY u.nombre"
@@ -74,7 +74,7 @@ $companeros = $stmtComp->fetchAll();
 
 // ── Estadísticas asistencia para gráfica ────────────────────────
 $stmtGraf = $pdo->prepare(
-    "SELECT TO_CHAR(fecha_hora AT TIME ZONE 'America/Mexico_City', 'YYYY-MM-DD') AS dia,
+    "SELECT TO_CHAR(fecha_hora, 'YYYY-MM-DD') AS dia,
             tipo, COUNT(*) AS total
      FROM ss_asistencia
      WHERE usuario_id = :uid AND fecha_hora >= NOW() - INTERVAL '30 days'
