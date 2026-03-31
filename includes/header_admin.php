@@ -30,7 +30,7 @@ if (isset($_SESSION['area_slug_activa'])) {
         // BLOQUEO DE ÁREAS EN DESARROLLO:
         // Si el área NO es Difusión (ya funcional) y el usuario está en /areas/
         // Solo puede ver el dashboard.php. Cualquier otro archivo redirecciona al dashboard.
-        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad'];
+        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento'];
         if (!in_array($slug_esperado, $areas_funcionales)) {
             $current_file = basename($script_path);
             if ($current_file !== 'dashboard.php') {
@@ -234,6 +234,30 @@ if (isset($_SESSION['user_area'])) {
             </a>
             <a href="<?= BASE_URL ?>areas/juridico_igualdad/adquisiciones.php" class="nav-link <?= $activeMenu === 'adquisiciones' ? 'active' : '' ?>">
                 <i class="fa-solid fa-cart-shopping nav-icon"></i><span>Adquisiciones</span>
+            </a>
+        </div>
+
+        <?php elseif ($slug_menu === 'financiamiento'): ?>
+        <!-- Menu Exclusivo Financiamiento -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos Financiamiento</span>
+            <a href="<?= BASE_URL ?>areas/financiamiento/agenda.php" class="nav-link <?= $activeMenu === 'agenda' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-week nav-icon"></i><span>Agenda y Kanban</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/financiamiento/personal.php" class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
+                <i class="fa-solid fa-id-card nav-icon"></i><span>Personal del Área</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/financiamiento/convocatorias.php" class="nav-link <?= $activeMenu === 'convocatorias' ? 'active' : '' ?>">
+                <i class="fa-solid fa-bullhorn nav-icon"></i><span>Convocatorias</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/financiamiento/becas.php" class="nav-link <?= $activeMenu === 'becas' ? 'active' : '' ?>">
+                <i class="fa-solid fa-graduation-cap nav-icon"></i><span>Becas y Apoyos</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/financiamiento/presupuesto.php" class="nav-link <?= $activeMenu === 'presupuesto' ? 'active' : '' ?>">
+                <i class="fa-solid fa-chart-pie nav-icon"></i><span>Presupuesto</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/financiamiento/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-file-chart-column nav-icon"></i><span>Reportes</span>
             </a>
         </div>
 
