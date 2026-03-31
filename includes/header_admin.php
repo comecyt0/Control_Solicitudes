@@ -30,7 +30,7 @@ if (isset($_SESSION['area_slug_activa'])) {
         // BLOQUEO DE ÁREAS EN DESARROLLO:
         // Si el área NO es Difusión (ya funcional) y el usuario está en /areas/
         // Solo puede ver el dashboard.php. Cualquier otro archivo redirecciona al dashboard.
-        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento', 'apoyo_investigacion'];
+        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento', 'apoyo_investigacion', 'formacion_rrhh'];
         if (!in_array($slug_esperado, $areas_funcionales)) {
             $current_file = basename($script_path);
             if ($current_file !== 'dashboard.php') {
@@ -282,6 +282,30 @@ if (isset($_SESSION['user_area'])) {
             </a>
             <a href="<?= BASE_URL ?>areas/apoyo_investigacion/convocatorias.php" class="nav-link <?= $activeMenu === 'convocatorias' ? 'active' : '' ?>">
                 <i class="fa-solid fa-satellite-dish nav-icon"></i><span>Convocatorias</span>
+            </a>
+        </div>
+
+        <?php elseif ($slug_menu === 'formacion_rrhh'): ?>
+        <!-- Menu Exclusivo Formación RRHH -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos RRHH</span>
+            <a href="<?= BASE_URL ?>areas/formacion_rrhh/agenda.php" class="nav-link <?= $activeMenu === 'agenda' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-week nav-icon"></i><span>Agenda y Kanban</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/formacion_rrhh/personal.php" class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
+                <i class="fa-solid fa-id-card nav-icon"></i><span>Personal del Área</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/formacion_rrhh/cursos.php" class="nav-link <?= $activeMenu === 'cursos' ? 'active' : '' ?>">
+                <i class="fa-solid fa-chalkboard-user nav-icon"></i><span>Cursos y Capacitación</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/formacion_rrhh/becas.php" class="nav-link <?= $activeMenu === 'becas' ? 'active' : '' ?>">
+                <i class="fa-solid fa-award nav-icon"></i><span>Becas y Apoyos</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/formacion_rrhh/igualdad.php" class="nav-link <?= $activeMenu === 'igualdad' ? 'active' : '' ?>">
+                <i class="fa-solid fa-scale-balanced nav-icon"></i><span>Igualdad de Género</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/formacion_rrhh/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-chart-bar nav-icon"></i><span>Reportes</span>
             </a>
         </div>
 
