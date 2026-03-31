@@ -30,7 +30,7 @@ if (isset($_SESSION['area_slug_activa'])) {
         // BLOQUEO DE ÁREAS EN DESARROLLO:
         // Si el área NO es Difusión (ya funcional) y el usuario está en /areas/
         // Solo puede ver el dashboard.php. Cualquier otro archivo redirecciona al dashboard.
-        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento', 'apoyo_investigacion', 'formacion_rrhh', 'desarrollo_tecnologico'];
+        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento', 'apoyo_investigacion', 'formacion_rrhh', 'desarrollo_tecnologico', 'juridico'];
         if (!in_array($slug_esperado, $areas_funcionales)) {
             $current_file = basename($script_path);
             if ($current_file !== 'dashboard.php') {
@@ -329,6 +329,30 @@ if (isset($_SESSION['user_area'])) {
                 <i class="fa-solid fa-flask nav-icon"></i><span>Transferencia Tecnológica</span>
             </a>
             <a href="<?= BASE_URL ?>areas/desarrollo_tecnologico/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-chart-bar nav-icon"></i><span>Reportes</span>
+            </a>
+        </div>
+
+        <?php elseif ($slug_menu === 'juridico'): ?>
+        <!-- Menu Exclusivo Asuntos Jurídicos -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos Jurídicos</span>
+            <a href="<?= BASE_URL ?>areas/juridico/agenda.php" class="nav-link <?= $activeMenu === 'agenda' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-week nav-icon"></i><span>Agenda y Kanban</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico/personal.php" class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
+                <i class="fa-solid fa-id-card nav-icon"></i><span>Personal del Área</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico/expedientes.php" class="nav-link <?= $activeMenu === 'expedientes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-folder-open nav-icon"></i><span>Expedientes Jurídicos</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico/dictamenes.php" class="nav-link <?= $activeMenu === 'dictamenes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-scroll nav-icon"></i><span>Dictámenes y Opiniones</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico/acuerdos.php" class="nav-link <?= $activeMenu === 'acuerdos' ? 'active' : '' ?>">
+                <i class="fa-solid fa-file-signature nav-icon"></i><span>Acuerdos y Resoluciones</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
                 <i class="fa-solid fa-chart-bar nav-icon"></i><span>Reportes</span>
             </a>
         </div>
