@@ -10,6 +10,7 @@ Sistema integral de gestión de solicitudes, agenda institucional, comunicación
 - Planeación estratégica mediante calendarios editoriales e institucionales.
 - **Repositorio de Documentos (DG)**: Gestión de archivos con carpetas anidadas, drag-and-drop, vista previa (imágenes, PDFs). Tablas: `dg_repo_carpetas`, `dg_repo_archivos`. Archivos en `public/uploads/dg_repo/{carpeta_id}/`. API: `areas/direccion_general/api/repositorio.php`.
 - **Panel Jurídico Administrativo**: 7 módulos: Dashboard, Agenda+Kanban (`df_eventos_editoriales`/`sb_kanban_tareas` filtrado por `cve_area=17`), Personal (solo lectura `cat_personal`), Contratos (`ja_contratos`), Normatividad (`ja_normatividad` + carpetas fijas), Igualdad (`ja_casos_igualdad` con folio `EQ-YYYY-NNNN`), Adquisiciones (`ja_adquisiciones` + CSV export). Uploads en `public/uploads/ja_contratos/`. Área: `juridico_igualdad`, cve_area=17. Agregado a `$areas_funcionales` en `header_admin.php`.
+- **Panel Financiamiento**: 7 módulos: Dashboard (KPIs: convocatorias, becas, presupuesto%, tareas), Agenda+Kanban (cve_area=15), Personal, Convocatorias (`fin_convocatorias`, auto-cierre expiradas), Becas (`fin_becas` vinculadas a convocatoria), Presupuesto (`fin_presupuesto` por partida con barra progreso), Reportes (CSV 3 módulos). Paleta: Verde `#064e3b`. Área: `financiamiento`, cve_area=15. Agregado a `$areas_funcionales`.
 
 ---
 
