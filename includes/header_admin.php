@@ -30,7 +30,7 @@ if (isset($_SESSION['area_slug_activa'])) {
         // BLOQUEO DE ÁREAS EN DESARROLLO:
         // Si el área NO es Difusión (ya funcional) y el usuario está en /areas/
         // Solo puede ver el dashboard.php. Cualquier otro archivo redirecciona al dashboard.
-        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento', 'apoyo_investigacion', 'formacion_rrhh'];
+        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento', 'apoyo_investigacion', 'formacion_rrhh', 'desarrollo_tecnologico'];
         if (!in_array($slug_esperado, $areas_funcionales)) {
             $current_file = basename($script_path);
             if ($current_file !== 'dashboard.php') {
@@ -305,6 +305,30 @@ if (isset($_SESSION['user_area'])) {
                 <i class="fa-solid fa-scale-balanced nav-icon"></i><span>Igualdad de Género</span>
             </a>
             <a href="<?= BASE_URL ?>areas/formacion_rrhh/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
+                <i class="fa-solid fa-chart-bar nav-icon"></i><span>Reportes</span>
+            </a>
+        </div>
+
+        <?php elseif ($slug_menu === 'desarrollo_tecnologico'): ?>
+        <!-- Menu Exclusivo Desarrollo Tecnológico y Vinculación -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos Des. Tecnológico</span>
+            <a href="<?= BASE_URL ?>areas/desarrollo_tecnologico/agenda.php" class="nav-link <?= $activeMenu === 'agenda' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-week nav-icon"></i><span>Agenda y Kanban</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/desarrollo_tecnologico/personal.php" class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
+                <i class="fa-solid fa-id-card nav-icon"></i><span>Personal del Área</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/desarrollo_tecnologico/proyectos.php" class="nav-link <?= $activeMenu === 'proyectos' ? 'active' : '' ?>">
+                <i class="fa-solid fa-diagram-project nav-icon"></i><span>Proyectos Tecnológicos</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/desarrollo_tecnologico/convenios.php" class="nav-link <?= $activeMenu === 'convenios' ? 'active' : '' ?>">
+                <i class="fa-solid fa-handshake nav-icon"></i><span>Convenios y Vinculación</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/desarrollo_tecnologico/transferencias.php" class="nav-link <?= $activeMenu === 'transferencias' ? 'active' : '' ?>">
+                <i class="fa-solid fa-flask nav-icon"></i><span>Transferencia Tecnológica</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/desarrollo_tecnologico/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
                 <i class="fa-solid fa-chart-bar nav-icon"></i><span>Reportes</span>
             </a>
         </div>
