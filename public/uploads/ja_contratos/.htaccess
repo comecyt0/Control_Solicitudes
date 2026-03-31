@@ -1,0 +1,5 @@
+# Bloquear ejecución PHP en uploads del área Jurídico-Administrativo
+<FilesMatch "\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

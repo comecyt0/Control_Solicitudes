@@ -30,7 +30,7 @@ if (isset($_SESSION['area_slug_activa'])) {
         // BLOQUEO DE ÁREAS EN DESARROLLO:
         // Si el área NO es Difusión (ya funcional) y el usuario está en /areas/
         // Solo puede ver el dashboard.php. Cualquier otro archivo redirecciona al dashboard.
-        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general'];
+        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad'];
         if (!in_array($slug_esperado, $areas_funcionales)) {
             $current_file = basename($script_path);
             if ($current_file !== 'dashboard.php') {
@@ -210,6 +210,30 @@ if (isset($_SESSION['user_area'])) {
             </a>
             <a href="<?= BASE_URL ?>areas/direccion_general/repositorio.php" class="nav-link <?= $activeMenu === 'repositorio' ? 'active' : '' ?>">
                 <i class="fa-solid fa-folder-tree nav-icon"></i><span>Repositorio de Documentos</span>
+            </a>
+        </div>
+
+        <?php elseif ($slug_menu === 'juridico_igualdad'): ?>
+        <!-- Menu Exclusivo Jurídico Administrativo -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos Jurídico-Admin</span>
+            <a href="<?= BASE_URL ?>areas/juridico_igualdad/agenda.php" class="nav-link <?= $activeMenu === 'agenda' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-week nav-icon"></i><span>Agenda y Kanban</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico_igualdad/personal.php" class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
+                <i class="fa-solid fa-id-card nav-icon"></i><span>Personal del Área</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico_igualdad/contratos.php" class="nav-link <?= $activeMenu === 'contratos' ? 'active' : '' ?>">
+                <i class="fa-solid fa-file-signature nav-icon"></i><span>Contratos</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico_igualdad/normatividad.php" class="nav-link <?= $activeMenu === 'normatividad' ? 'active' : '' ?>">
+                <i class="fa-solid fa-scale-balanced nav-icon"></i><span>Normatividad</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico_igualdad/igualdad.php" class="nav-link <?= $activeMenu === 'igualdad' ? 'active' : '' ?>">
+                <i class="fa-solid fa-venus-mars nav-icon"></i><span>Igualdad y Género</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/juridico_igualdad/adquisiciones.php" class="nav-link <?= $activeMenu === 'adquisiciones' ? 'active' : '' ?>">
+                <i class="fa-solid fa-cart-shopping nav-icon"></i><span>Adquisiciones</span>
             </a>
         </div>
 
