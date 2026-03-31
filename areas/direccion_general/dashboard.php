@@ -220,6 +220,10 @@ require_once __DIR__ . '/../../includes/header_admin.php';
         <i class="fa-solid fa-calendar-days"></i>
         Agenda Direccional
     </a>
+    <a href="repositorio.php" class="action-btn">
+        <i class="fa-solid fa-folder-tree"></i>
+        Repositorio
+    </a>
 </div>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

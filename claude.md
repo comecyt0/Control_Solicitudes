@@ -8,6 +8,7 @@ Sistema integral de gestión de solicitudes, agenda institucional, comunicación
 - Comunicación en tiempo real (Chat Híbrido).
 - Gestión de evidencias y transparencia institucional.
 - Planeación estratégica mediante calendarios editoriales e institucionales.
+- **Repositorio de Documentos (DG)**: Gestión de archivos institucionales con carpetas anidadas, drag-and-drop, vista previa inline (imágenes, PDFs) y descarga. Tablas: `dg_repo_carpetas`, `dg_repo_archivos`. Archivos físicos en `public/uploads/dg_repo/{carpeta_id}/`. API en `areas/direccion_general/api/repositorio.php`.
 
 ---
 

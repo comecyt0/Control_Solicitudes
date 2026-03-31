@@ -208,6 +208,9 @@ if (isset($_SESSION['user_area'])) {
             <a href="<?= BASE_URL ?>areas/direccion_general/calendario_editorial.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
                 <i class="fa-solid fa-clipboard-list nav-icon"></i><span>Agenda y Tareas</span>
             </a>
+            <a href="<?= BASE_URL ?>areas/direccion_general/repositorio.php" class="nav-link <?= $activeMenu === 'repositorio' ? 'active' : '' ?>">
+                <i class="fa-solid fa-folder-tree nav-icon"></i><span>Repositorio de Documentos</span>
+            </a>
         </div>
 
         <?php else: ?>
