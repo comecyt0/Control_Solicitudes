@@ -39,7 +39,10 @@
         b.textContent = txt;
         zona.appendChild(b);
         inp.value = '';
-        const fd = new FormData(); fd.append('mensaje', txt);
+        const fd = new FormData(); 
+        fd.append('mensaje', txt);
+        // Add CSRF token mapping for backend
+        fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? "" ?>');
 
         // Show typing indicator
         const typing = document.getElementById('iaTyping');
@@ -50,7 +53,8 @@
             if (typing) typing.style.display = 'none';
             const r = document.createElement('div');
             r.style.cssText = 'align-self:flex-start; background:#f0f0f0; border-radius:10px; margin:4px; max-width:95%; line-height:1.4;';
-            r.innerHTML = `<div style="padding:4px 8px; font-size:0.65rem; color:#6b7280; font-weight:700;"><i class="fa-solid fa-robot"></i> Asistente</div><div style="padding:0 8px 8px; font-size:0.85rem;">${d.respuesta || 'Error al conectar con la IA.'}</div>`;
+            const errorMsg = d.error ? ('<span style="color: #dc2626;">' + d.error + '</span>') : 'Error al conectar con la IA.';
+            r.innerHTML = `<div style="padding:4px 8px; font-size:0.65rem; color:#6b7280; font-weight:700;"><i class="fa-solid fa-robot"></i> Asistente</div><div style="padding:0 8px 8px; font-size:0.85rem;">${d.respuesta || errorMsg}</div>`;
             zona.appendChild(r);
             zona.scrollTop = zona.scrollHeight;
         }).catch(err => {
