@@ -1,62 +1,82 @@
-# Intranet COMECyT 🏢
-
-> **De "Control de Solicitudes" a Intranet Institucional**
-> Este proyecto evolucionó de un simple gestor unificado de peticiones a la plataforma integral corporativa del **Colegio Mexiquense de Ciencia y Tecnología (COMECyT)**, gestionando desde la asistencia técnica hasta calendarios compartidos y sistemas de comunicación interdepartamental y herramientas de inteligencia artificial.
-
----
-
-## 🌟 Características Principales
-
-1. **Gestión Departamental Segura**
-   - Espacios de despliegue para áreas como **Sistemas**, **Difusión**, **Asuntos Jurídicos**, entre otros.
-   - Seguridad por roles (Superadmin, Admin de Área, Jefaturas, Personal) y aislamiento total de datos de acuerdo al perfil del usuario.
-
-2. **Chat Colaborativo "Platinum Elite"**
-   - Chat grupal por áreas y soporte a Mensajes Directos entre administradores.
-   - Reacciones interactivas persistentes con Emojis (👍 ♥️ 😂 😮 🚀).
-   - Acciones enriquecidas directamente desde la ventana de chat: **Creación rápida de Tareas Kanban** y agendado de **Eventos de Calendario**.
-   - Auto-limpieza visual y seguridad perimetral de visibilidad temporal dependiendo el usuario, resguardada con diseño Glassmorphism Platinum.
-
-3. **Inteligencia Artificial (Groq Backend)**
-   - Asistente de Inteligencia Artificial propio anidado en todas las interfaces de Administración conectado en nube, listo para atender consultas de uso en instantes.
-
-4. **Productividad y Planeación**
-   - Calendarios interactivos (Editoriales y generales) para cada dependencia con restricciones dinámicas.
-   - Tablero Kanban (Pendientes, En Proceso, Completado).
-
-5. **Módulos Periféricos**
-   - Gestión y rastreo de personal en el programa de Servicio Social.
-   - Inventariado y asignación de equipo institucional.
-   - Expedientes, Reportes y Dictámenes para departamentos rigurosos de índole legal.
+<div align="center">
+  <img src="https://logodownload.org/wp-content/uploads/2021/04/estado-de-mexico-logo-1.png" alt="Edomex" width="180"/>
+  <h1>Gobierno Digital: Intranet Corporativa COMECyT</h1>
+  <p><strong>Plataforma integral, orquestamiento departamental y automatización con Inteligencia Artificial.</strong></p>
+</div>
 
 ---
 
-## 🚀 Arquitectura Tecnológica
+## 📌 Visión General del Proyecto
 
-La Intranet de COMECyT está desplegada bajo orquestamiento seguro en la intranet nativa del usuario, propulsado por un Stack rápido, dinámico y escalable:
+Esta plataforma fue conceptualizada originalmente para la gestión y **Control de Solicitudes**, pero rápidamente escaló y fue rediseñada para convertirse en el **Ecosistema Digital y de Colaboración Principal (Intranet)** del Consejo Mexiquense de Ciencia y Tecnología (COMECyT).
 
-- **Backend:** PHP 8.1 🐘
-- **Motor SQL:** PostgreSQL 15 🐘
-- **Framework V. Gráfica:** HTML5 + Vanilla JS + CSS3 (Zero Framework)
-- **Despliegue y Orquestación:** Docker + Docker Compose 🐋
-- **Peticiones Asíncronas e IA:** GroqCloud LLM Node integration + Fetch API
+El proyecto actúa como el cerebro operativo de la organización pública: unifica procesos que anteriormente se llevaban en papel u hojas de cálculo inconexas, proveyendo a **cada área o departamento** de su propia suite de herramientas aislada, centralizando el flujo de aprobaciones y manteniendo comunicación en tiempo real.
+
+### 💡 Impacto y Valor Agregado
+
+1. **Cero-Papel y Transparencia:** Digitalización al 100% en el ciclo de vida de peticiones y documentos legales (dictámenes, oficios, seguimiento de recursos).
+2. **Eliminación de Cuellos de Botella:** Tiempos de seguimiento reducidos de horas/días a cuestión de minutos gracias al tablero Kanban y métricas en tiempo real.
+3. **Escalabilidad Gubernamental:** Con un sistema robusto de roles y control de acceso (Firewall por Departamentos), la plataforma aísla expedientes de Asuntos Jurídicos de manera segura frente al área de Difusión o Mantenimiento.
+4. **Soporte Hiperconectado (IA):** Implementación de un modelo Large Language Model (Groq / LLaMA-3) operando a escala para resolver problemáticas de sistema a la medida del usuario sin necesidad de recurrir constantemente al área de Sistemas.
 
 ---
 
-## 🔌 Inicialización Local con Docker
+## ⚙️ Funcionamiento del Sistema General
 
-Asegúrate de preparar y duplicar correctamente las credenciales `.env` previo a compilar si accedes a una copia limpia. 
+La arquitectura sigue una convención MVC pura montada sobre servicios acoplados (Docker), separando claramente el Frontend Administrativo de la lógica API-first y persistencia de bases de datos.
+
+### 🏛 Estructura Organizacional Múltiple (Routing Dinámico)
+El sistema **no es monolítico en su flujo operativo**. Un Administrador de *Asuntos Jurídicos* inicia sesión y es redirigido a una interfaz ad-hoc con reportes judiciales, mientras que el *Equipo de Sistemas* visualiza tickets de reparación de software web. Esta orquestación dinámica del menú y capacidades mantiene limpia la UX para toda la base de empleados.
+
+### 🧠 El Ecosistema Operativo
+- **Dashboard Gerenciales:** Paneles resumen individuales que consumen métricas en tiempo real. Cada jefe de área puede validar su productividad.
+- **Workflow de Solicitudes (Aprobadores):** Transición rigurosa de folios *(Pendiente → En Proceso → Completada/Rechazada)*, permitiendo al solicitante externo o interno dar rastreo a la petición.
+- **Data Room & Logs:** Todo movimiento dentro del sistema es firmado ("logged") mediante variables de servidor y de base de datos para auditorías fiables.
+
+---
+
+## 🚀 Módulos Especializados & Soluciones Híbridas
+
+| Módulo | Despliegue Técnico y Funcionalidad |
+| --- | --- |
+| **Chat Platinum Elite** | Mensajería de área ultra-rápida (Long-Polling / Fetch API) con diseño Glassmorphism Platinum, reacciones persistentes mediante emojis en base de datos, auto-limpieza nocturna programática de visibilidad y acceso hiper-securizado mediante Dólar-ID / CSRF. |
+| **Asuntos Jurídicos** | Entorno restrictivo altamente confidencial (cve_area = 19). Posee registros vinculantes de Dictámenes, Acuerdos y Contratos Administrativos amparados en sub-cargas de archivos. |
+| **PVD (Personal & Estructura)** | Repositorios interconectados del programa "Servicio Social", inventariado de TI, control estricto de asistencia y geolocalización o justificaciones directas. |
+| **Productividad Kanban** | Agenda global, vista combinada en Kanban para distribución táctica de tareas entre equipos, con opción directa de interconectarlo desde el chat grupal y emitir una alerta instantánea (`m.tipo = 'tarea'`). |
+| **Asistente IA (Groq)** | Un **Chatbot Asistente** en nube a disposición de los administradores que analiza las variables de la sesión interactiva del usuario mediante `System Prompts` dinámicos y lo asiste en dudas técnicas de flujos de la Intranet. |
+
+---
+
+## 🛠 Topología de Desarrollo (Tech Stack)
+
+La infraestructura del servidor es administrada por un orquestador híbrido (`docker-compose.yml`) posicionado bajo el principio de infraestructura as code (IaC), permitiendo recuperar localmente el estado del software en desarrollo o producción con 1 comando.
+
+* **Backend Language:** PHP 8.1 FPM.
+* **Database & Persistence:** PostgreSQL 15 (Transaccional, Restricción por Foreign Keys, Time-Zoning adaptado).
+* **Interface & UX Engine:** Vanilla Javascript (ES6), HTML 5, SCSS/CSS3 puro (Cero inyección de frameworks pesados).
+* **Virtualización:** Docker & Compose Networking.
+* **Integraciones Híbridas:** LLaMA-3 Instant Engine (Cloud Node).
+
+
+## 💻 Iniciar Infraestructura
+
+Para levantar el clonado del repositorio debes contar con **Docker** en tu sistema local operativo o en tu instancia servidor (Proxmox/VPS).
 
 ```bash
-# Variables
-cp .env.example .env 
-# Edita tus credenciales base, variables CSRF y en especial tu [GROQ_API_KEY] para habilitar la Inteligencia Artificial.
+# 1. Copiar valores locales de la bóveda
+cp .env.example .env
 
-# Iniciar la infraestructura de contenedores 
+# 2. Asignar llave Cloud para usar funcionalidades de la Intranet (Inteligencia Artificial)
+# -> (Modificar `GROQ_API_KEY` en tu archivo root .env con credenciales productivas).
+
+# 3. Construir Contenedores Nativos
 docker compose up -d --build
 ```
-*Esto levantará el servidor Web `comecyt_app` en el puerto `8080`, la instancia central Postgres `comecyt_db` (y su contraparte gráfica pgAdmin `comecyt_pgadmin`).*
-
+> *Accede al servicio alojado localmente en `localhost:8080` (App) / `localhost:8081` (pgAdmin PostgreSQL visual GUI).*
 
 ---
-*Sistemas / COMECyT © Todos los derechos reservados.*
+<p align="center">
+  <code>Gobierno del Estado de México</code> • 
+  <code>COMECyT Intranet Oficial</code> • 
+  <code>Versión 5.3 (Stable Release)</code>
+</p>
