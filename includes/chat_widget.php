@@ -141,6 +141,13 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
     border: 1px solid rgba(0,0,0,0.03);
 }
 
+.msg-react-wrap { position: relative; }
+.plat-react-add { position: absolute; right: -15px; top: -10px; display: none; z-index: 10; }
+.msg-react-wrap:hover .plat-react-add { display: block; }
+.plat-react-add button { background: #fff; border: 1px solid #e2e8f0; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; color: #94a3b8; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.plat-react-add button:hover { background: #f8fafc; color: var(--chat-primary); }
+.r-pick-box { display: none; position: absolute; bottom: 100%; right: 0; background: #fff; padding: 8px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); gap: 8px; flex-direction: row; font-size: 1.1rem; }
+
 #chatInput {
     flex: 1; border: none; background: transparent; padding: 10px 0;
     font-size: 1rem; max-height: 150px; resize: none; outline: none;
@@ -240,10 +247,30 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
             <button onclick="toggleChat()" style="background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:1.5rem;"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div id="chatMessages"></div>
-        <div class="plat-footer">
+        <div class="plat-footer" style="position:relative;">
             <div class="plat-input-box">
+                <button onclick="togglePlatEmoji()" style="background:none; border:none; color:#cbd5e1; cursor:pointer; font-size:1.5rem;"><i class="fa-solid fa-face-smile"></i></button>
                 <textarea id="chatInput" placeholder="Enviar mensaje..." onkeydown="chatKeyDown(event)" rows="1"></textarea>
                 <button class="btn-send-elite" onclick="enviarMensaje()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            <!-- Contenedor Emojis -->
+            <div id="platEmojiGrid" style="display:none; position:absolute; bottom:85px; left:25px; background:rgba(255,255,255,0.95); backdrop-filter:blur(10px); padding:10px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.1); border:1px solid rgba(0,0,0,0.05); grid-template-columns:repeat(8,1fr); gap:5px; z-index:100; font-size:1.2rem;">
+                 <span onclick="inEm('😀')" style="cursor:pointer; padding:3px; text-align:center;">😀</span>
+                 <span onclick="inEm('😂')" style="cursor:pointer; padding:3px; text-align:center;">😂</span>
+                 <span onclick="inEm('🥺')" style="cursor:pointer; padding:3px; text-align:center;">🥺</span>
+                 <span onclick="inEm('😅')" style="cursor:pointer; padding:3px; text-align:center;">😅</span>
+                 <span onclick="inEm('😇')" style="cursor:pointer; padding:3px; text-align:center;">😇</span>
+                 <span onclick="inEm('😎')" style="cursor:pointer; padding:3px; text-align:center;">😎</span>
+                 <span onclick="inEm('😍')" style="cursor:pointer; padding:3px; text-align:center;">😍</span>
+                 <span onclick="inEm('🚀')" style="cursor:pointer; padding:3px; text-align:center;">🚀</span>
+                 <span onclick="inEm('👍')" style="cursor:pointer; padding:3px; text-align:center;">👍</span>
+                 <span onclick="inEm('🙌')" style="cursor:pointer; padding:3px; text-align:center;">🙌</span>
+                 <span onclick="inEm('✅')" style="cursor:pointer; padding:3px; text-align:center;">✅</span>
+                 <span onclick="inEm('🔥')" style="cursor:pointer; padding:3px; text-align:center;">🔥</span>
+                 <span onclick="inEm('🎉')" style="cursor:pointer; padding:3px; text-align:center;">🎉</span>
+                 <span onclick="inEm('💼')" style="cursor:pointer; padding:3px; text-align:center;">💼</span>
+                 <span onclick="inEm('💡')" style="cursor:pointer; padding:3px; text-align:center;">💡</span>
+                 <span onclick="inEm('🚨')" style="cursor:pointer; padding:3px; text-align:center;">🚨</span>
             </div>
         </div>
     </div>
@@ -356,14 +383,41 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
             res.mensajes.forEach(m => {
                 const isMe = String(m.admin_id) === String(ADMIN_ID);
                 const bub = document.createElement('div');
-                bub.className = `elite-msg ${isMe ? 'me' : 'other'}`;
+                bub.className = `elite-msg ${isMe ? 'me' : 'other'} msg-react-wrap`;
+                
+                let reactsHtml = '';
+                if(m.reacciones && m.reacciones.length > 0) {
+                    const grouped = {};
+                    m.reacciones.forEach(r => {
+                        if(!grouped[r.emoji]) grouped[r.emoji] = [];
+                        grouped[r.emoji].push(r.nombre);
+                    });
+                    const parts = [];
+                    for(const [em, names] of Object.entries(grouped)) {
+                        parts.push(`<span style="background:rgba(255,255,255,0.9); color:#1e293b; border:1px solid rgba(0,0,0,0.1); border-radius:10px; padding:2px 8px; font-size:0.8rem; display:inline-flex; align-items:center; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.05);" onclick="doReact(${m.id}, '${em}')" title="${names.join(', ')}">${em} ${names.length}</span>`);
+                    }
+                    reactsHtml = `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">` + parts.join('') + `</div>`;
+                }
+
+                const pickBox = `<div id="rPick_${m.id}" class="r-pick-box">
+                    <span style="cursor:pointer;" onclick="doReact(${m.id}, '👍')">👍</span>
+                    <span style="cursor:pointer;" onclick="doReact(${m.id}, '❤️')">❤️</span>
+                    <span style="cursor:pointer;" onclick="doReact(${m.id}, '😂')">😂</span>
+                    <span style="cursor:pointer;" onclick="doReact(${m.id}, '😮')">😮</span>
+                    <span style="cursor:pointer;" onclick="doReact(${m.id}, '🚀')">🚀</span>
+                </div>`;
+                const rb = `<div class="plat-react-add">
+                     <button onclick="let b=document.getElementById('rPick_${m.id}'); b.style.display=b.style.display==='flex'?'none':'flex';"><i class="fa-solid fa-face-smile"></i></button>
+                     ${pickBox}
+                </div>`;
+
                 let content = ``;
                 if (m.tipo === 'tarea') {
-                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="display:flex; gap:12px; align-items:center; background:#00000010; padding:10px; border-radius:12px;"><i class="fa-solid fa-list-check" style="font-size:1.2rem;"></i><div><strong>${m.ref_titulo}</strong><br><small>Tarea Kanban registrada</small></div></div>`;
+                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="display:flex; gap:12px; align-items:center; background:#00000010; padding:10px; border-radius:12px;"><i class="fa-solid fa-list-check" style="font-size:1.2rem;"></i><div><strong>${m.ref_titulo}</strong><br><small>Tarea Kanban registrada</small></div></div>${reactsHtml}${rb}`;
                 } else if (m.tipo === 'evento') {
-                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="display:flex; gap:12px; align-items:center; background:#ffffff15; padding:10px; border-radius:12px; border:1px solid #B19A6D33;"><i class="fa-solid fa-calendar-star" style="color:var(--chat-accent); font-size:1.2rem;"></i><div><strong>${m.ref_titulo}</strong><br><small>Evento agendado</small></div></div>`;
+                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="display:flex; gap:12px; align-items:center; background:#ffffff15; padding:10px; border-radius:12px; border:1px solid #B19A6D33;"><i class="fa-solid fa-calendar-star" style="color:var(--chat-accent); font-size:1.2rem;"></i><div><strong>${m.ref_titulo}</strong><br><small>Evento agendado</small></div></div>${reactsHtml}${rb}`;
                 } else {
-                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="word-break:break-word;">${m.mensaje}</div>`;
+                    content = `<span class="elite-meta" style="${isMe?'color:#ffffffaa':''}">${m.admin_nombre} • ${m.hora}</span><div style="word-break:break-word;">${m.mensaje}</div>${reactsHtml}${rb}`;
                 }
                 bub.innerHTML = content;
                 zona.appendChild(bub);
@@ -389,6 +443,26 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
     };
 
     window.chatKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensaje(); } };
+
+    // Funciones Emoji & Reacciones
+    window.togglePlatEmoji = () => {
+        const e = document.getElementById('platEmojiGrid');
+        e.style.display = e.style.display === 'grid' ? 'none' : 'grid';
+    };
+    window.inEm = (em) => {
+        const i = document.getElementById('chatInput');
+        i.value += em;
+        i.focus();
+        togglePlatEmoji();
+    };
+    window.doReact = (msgId, emoji) => {
+        const fd = new FormData();
+        fd.append('accion', 'reaccionar');
+        fd.append('mensaje_id', msgId);
+        fd.append('emoji', emoji);
+        fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+        fetch(API, {method:'POST', body:fd}).then(() => { loadMsgs(false); });
+    };
 
     // Modales Platinum Elite
     window.opModPlat = (tipo) => {

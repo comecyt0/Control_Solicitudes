@@ -85,6 +85,12 @@ if ($accion === 'listar') {
         // Canal Grupal: Filtrar por el área asignada al mensaje (visibilidad total garantizada)
         $where .= " AND m.destinatario_id IS NULL AND m.destinatario_usuario_id IS NULL AND m.cve_area = :cve_area";
         $params[':cve_area'] = $cveArea;
+        
+        // --- LIMPIEZA DE CHAT A MEDIANOCHE (Excepto admin/sistemas) ---
+        $adminRol = $_SESSION['admin_rol'] ?? '';
+        if ($adminRol !== 'sistemas' && $adminRol !== 'admin' && $cveArea !== 1) {
+            $where .= " AND DATE(m.fecha AT TIME ZONE 'America/Mexico_City') = CURRENT_DATE";
+        }
     }
 
     if ($desde === 0) {
