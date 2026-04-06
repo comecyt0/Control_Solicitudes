@@ -188,13 +188,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         
         <?php elseif ($exito): ?>
-        <div class="alert alert-success" style="text-align: center;">
-            <i class="fa-solid fa-circle-check" style="font-size: 2rem; margin-bottom: 10px; display: block; color: var(--color-success);"></i>
-            <strong>¡Registro completado!</strong><br><br>
-            Tu cuenta ha sido creada exitosamente. Sin embargo, para mantener la seguridad del sistema, <strong>un administrador debe autorizar tu acceso.</strong><br><br>
-            Serás notificado o podrás intentar iniciar sesión más tarde.
+        <div class="alert alert-success" style="display: block; text-align: center; padding: 2rem;">
+            <i class="fa-solid fa-circle-check" style="font-size: 3rem; margin-bottom: 15px; display: block; color: var(--color-success);"></i>
+            <strong style="font-size: 1.2rem; display: block; margin-bottom: 15px;">¡Registro completado!</strong>
+            <p style="margin-bottom: 10px; line-height: 1.6;">
+                Tu cuenta ha sido creada exitosamente. Sin embargo, para mantener la seguridad del sistema, <strong>un administrador debe autorizar tu acceso.</strong>
+            </p>
+            <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.95rem;">
+                Serás notificado o podrás intentar iniciar sesión más tarde.
+            </p>
             <div style="margin-top: 1.5rem;">
-                <a href="<?= BASE_URL ?>admin/login.php" class="btn btn-primary" style="width: 100%;">Volver al inicio de sesión</a>
+                <a href="<?= BASE_URL ?>admin/login.php" class="btn btn-primary" style="width: 100%; justify-content: center;">Volver al inicio de sesión</a>
             </div>
         </div>
         <?php else: ?>
