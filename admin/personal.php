@@ -696,8 +696,17 @@ require_once __DIR__ . '/../includes/header_admin.php';
     };
     ?>
 
+    <?php if (!empty($inactivos)): ?>
+        <h3 style="margin: 1.5rem 0 1rem; color: #DC2626; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #FECACA; padding-bottom: 0.5rem;">
+            <i class="fa-solid fa-users-slash"></i> Personal Inactivo
+        </h3>
+        <div class="user-cards-grid" style="opacity: 0.85;">
+            <?php foreach ($inactivos as $usr) echo $renderUserCard($usr); ?>
+        </div>
+    <?php endif; ?>
+
     <?php if (!empty($lideres)): ?>
-        <h3 style="margin: 1.5rem 0 1rem; color: #6D28D9; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+        <h3 style="margin: 2rem 0 1rem; color: #6D28D9; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
             <i class="fa-solid fa-users-viewfinder"></i> Equipo Directivo y Jefaturas
         </h3>
         <div class="user-cards-grid">
@@ -711,15 +720,6 @@ require_once __DIR__ . '/../includes/header_admin.php';
         </h3>
         <div class="user-cards-grid">
             <?php foreach ($operativos as $usr) echo $renderUserCard($usr); ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($inactivos)): ?>
-        <h3 style="margin: 2rem 0 1rem; color: #DC2626; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #FECACA; padding-bottom: 0.5rem;">
-            <i class="fa-solid fa-users-slash"></i> Personal Inactivo
-        </h3>
-        <div class="user-cards-grid" style="opacity: 0.85;">
-            <?php foreach ($inactivos as $usr) echo $renderUserCard($usr); ?>
         </div>
     <?php endif; ?>
 
