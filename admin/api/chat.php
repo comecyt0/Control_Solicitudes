@@ -206,20 +206,24 @@ if ($accion === 'reaccionar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $emoji     = trim($_POST['emoji'] ?? '');
 
     if ($mensajeId > 0 && $emoji) {
-        // Si el usuario ya reaccionó con el MISMO emoji -> quitarla (toggle)
-        $chk = $pdo->prepare("SELECT id FROM sb_chat_reacciones WHERE mensaje_id = ? AND admin_id = ? AND emoji = ?");
-        $chk->execute([$mensajeId, $adminId, $emoji]);
-        
-        if ($chk->fetch()) {
+        $found = false;
+        if ($adminId) {
+            $chk = $pdo->prepare("SELECT id FROM sb_chat_reacciones WHERE mensaje_id = ? AND admin_id = ? AND emoji = ?");
+            $chk->execute([$mensajeId, $adminId, $emoji]);
+            $found = $chk->fetch();
+        } else if ($personalId) {
+            $chk = $pdo->prepare("SELECT id FROM sb_chat_reacciones WHERE mensaje_id = ? AND usuario_id = ? AND emoji = ?");
+            $chk->execute([$mensajeId, $personalId, $emoji]);
+            $found = $chk->fetch();
+        }
+
+        if ($found) {
             $pdo->prepare("DELETE FROM sb_chat_reacciones WHERE mensaje_id = ? AND (admin_id = ? OR usuario_id = ?) AND emoji = ?")
                 ->execute([$mensajeId, $adminId, $personalId, $emoji]);
             $res = 'deleted';
         } else {
-            $sql = "INSERT INTO sb_chat_reacciones (mensaje_id, admin_id, usuario_id, emoji)
-                    VALUES (?, ?, ?, ?)
-                    ON CONFLICT (mensaje_id, COALESCE(admin_id, -1), COALESCE(usuario_id, -1)) DO UPDATE SET emoji = EXCLUDED.emoji";
-            // Nota: El ON CONFLICT requiere un índice que cubra nulls o usar COALESCE si se cambió la constraint
-            $pdo->prepare($sql)->execute([$mensajeId, $adminId, $personalId, $emoji]);
+            $pdo->prepare("INSERT INTO sb_chat_reacciones (mensaje_id, admin_id, usuario_id, emoji) VALUES (?, ?, ?, ?)")
+                ->execute([$mensajeId, $adminId, $personalId, $emoji]);
             $res = 'saved';
         }
         echo json_encode(['ok' => true, 'res' => $res]);
