@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * COMECyT â€” Agenda y Tablero de Tareas (JurÃ­dico Administrativo)
  * Calendario de eventos + Kanban de Ã¡rea, patrÃ³n idÃ©ntico a DifusiÃ³n.
