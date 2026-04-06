@@ -147,6 +147,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         }
         header('Location: ' . BASE_URL . 'admin/personal.php?flash=perfil_rechazado');
         exit;
+    } elseif ($accion === 'asignar_operativos') {
+        $jefe_id = (int) postParam('jefe_id');
+        $operativos = $_POST['operativos'] ?? [];
+        if ($jefe_id > 0) {
+            $pdo->beginTransaction();
+            try {
+                $stmtCl = $pdo->prepare("UPDATE cat_personal SET jefe_directo_id = NULL WHERE jefe_directo_id = ?");
+                $stmtCl->execute([$jefe_id]);
+                if (!empty($operativos) && is_array($operativos)) {
+                    $inQuery = implode(',', array_map('intval', $operativos));
+                    $stmtUpd = $pdo->prepare("UPDATE cat_personal SET jefe_directo_id = ? WHERE cve_personal IN ($inQuery)");
+                    $stmtUpd->execute([$jefe_id]);
+                }
+                $pdo->commit();
+                header('Location: ' . BASE_URL . 'admin/personal.php?flash=operativos_asignados');
+                exit;
+            } catch (Exception $e) {
+                $pdo->rollBack();
+            }
+        }
     }
 }
 
@@ -175,6 +195,9 @@ if ($flashCode === 'usuario_toggle') {
     $tipoFlash = "success";
 } elseif ($flashCode === 'perfil_rechazado') {
     $mensajeFlash = "Se rechazaron los cambios gráficos del perfil y se descartó la imagen.";
+    $tipoFlash = "success";
+} elseif ($flashCode === 'operativos_asignados') {
+    $mensajeFlash = "El equipo de trabajo ha sido asignado correctamente.";
     $tipoFlash = "success";
 }
 
@@ -524,6 +547,14 @@ require_once __DIR__ . '/../includes/header_admin.php';
                             <?php endif; ?>
                         </form>
 
+                        <!-- Gestionar Operativos -->
+                        <?php if (!empty($usr['rol_jefatura'])): ?>
+                            <button type="button" class="btn btn-outline btn-icon" title="Gestionar equipo operativo" style="color: #6D28D9; border-color: transparent;"
+                                    onclick="abrirModalOperativos(<?= $usr['id'] ?>, '<?= esc(addslashes($nombreCompleto)) ?>')">
+                                <i class="fa-solid fa-users-gear"></i>
+                            </button>
+                        <?php endif; ?>
+
                         <!-- Eliminar Físicamente -->
                         <form method="POST" action="" style="display:inline-block; margin:0;">
                             <?= csrfField() ?>
@@ -677,3 +708,80 @@ function abrirModalEditar(data) {
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
+
+<!-- ======================================================= -->
+<!-- MODAL: GESTIONAR OPERATIVOS                             -->
+<!-- ======================================================= -->
+<div class="modal-backdrop" id="modalOperativos">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Asignar Equipo: <span id="op_jefe_nombre"></span></h3>
+            <button type="button" class="modal-close" onclick="cerrarModal('modalOperativos')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form method="POST" action="">
+                <?= csrfField() ?>
+                <input type="hidden" name="_accion" value="asignar_operativos">
+                <input type="hidden" name="jefe_id" id="op_jefe_id" value="">
+                
+                <p class="text-muted" style="margin-bottom: 15px;">Selecciona al personal que reporta directamente a este líder departamental.</p>
+                
+                <div id="op_loading" style="text-align:center; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Cargando personal...</div>
+                
+                <div id="op_listado" style="display:none; max-height: 400px; overflow-y:auto; border:1px solid #e2e8f0; border-radius: 8px; padding: 10px;">
+                    <!-- checkboxes -->
+                </div>
+                
+                <div style="margin-top: 1.5rem; text-align: right;">
+                    <button type="button" class="btn btn-outline" onclick="cerrarModal('modalOperativos')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="margin-left: 10px;" id="btn_save_ops">Guardar Asignaciones</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+async function abrirModalOperativos(jefeId, jefeNombre) {
+    document.getElementById('op_jefe_id').value = jefeId;
+    document.getElementById('op_jefe_nombre').innerText = jefeNombre;
+    document.getElementById('op_loading').style.display = 'block';
+    document.getElementById('op_listado').style.display = 'none';
+    document.getElementById('op_listado').innerHTML = '';
+    
+    abrirModal('modalOperativos');
+    
+    try {
+        const resp = await fetch(`<?= BASE_URL ?>admin/api/operativos.php?jefe_id=${jefeId}`);
+        const data = await resp.json();
+        
+        if(data.ok) {
+            let html = '';
+            let currentArea = null;
+            
+            data.data.forEach(emp => {
+                if (currentArea !== emp.des_area) {
+                    currentArea = emp.des_area;
+                    html += `<div style="font-weight:bold; background:#f1f5f9; padding:5px 8px; margin-top:10px; border-radius:4px; font-size:0.9rem;">${currentArea || 'Generales'}</div>`;
+                }
+                const checked = (emp.jefe_directo_id == jefeId) ? 'checked' : '';
+                html += `
+                    <label style="display:flex; align-items:center; gap:8px; padding:5px 8px; cursor:pointer; border-bottom:1px solid #f1f5f9;">
+                        <input type="checkbox" name="operativos[]" value="${emp.id}" ${checked}>
+                        <span>${emp.nombre} ${emp.appat} ${emp.apmat || ''} 
+                            <small style="color:#64748b; margin-left:5px;">${emp.correo_institucional || 'Sin correo'}</small>
+                        </span>
+                    </label>
+                `;
+            });
+            
+            document.getElementById('op_listado').innerHTML = html;
+            document.getElementById('op_loading').style.display = 'none';
+            document.getElementById('op_listado').style.display = 'block';
+        }
+    } catch(e) {
+        console.error("Error cargando operativos:", e);
+        document.getElementById('op_loading').innerHTML = '<span style="color:red;">Error de conexión. Intente otra vez.</span>';
+    }
+}
+</script>

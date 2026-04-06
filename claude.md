@@ -40,7 +40,7 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 ## 🧠 Contexto Importante (Arquitectura)
 - **Ruteo Centralizado**: `public/router.php` es el director de tráfico. Mapea `cve_area` a slugs de carpetas físicas en `/areas/`.
 - **Autenticación Híbrida**: Soporta `admin_id` y `user_id` (Personal). Centralizado en `config/auth.php`.
-- **Identidad Extendida de Directivos**: La tabla `cat_personal` incluye `rol_jefatura` (jefe_departamento, director_area) y `nombre_jefatura`. Estas columnas proveen un badge y descripciones personalizadas de las subdivisiones debajo del `cve_area` para organigramas u honoríficos.
+- **Identidad Extendida de Directivos**: La tabla `cat_personal` incluye `rol_jefatura` (jefe_departamento, director_area) y `nombre_jefatura`. Estas columnas proveen un badge y descripciones personalizadas de las subdivisiones debajo del `cve_area` para organigramas u honoríficos. Así mismo, la columna `jefe_directo_id` vincula múltiples empleados a un líder para delegación de tareas y reportes de subordinados.
 - **Chat Multi-tenant**: Aislado por `cve_area` y persistido en `sb_chat_lectura` (notificaciones proactivas).
 - **Universal Widgets**: Se utiliza una arquitectura de componentes extraíbles (`includes/chat_widget.php`, `includes/help_widget.php`) para mantener las cabeceras (`header_admin`, `header_user`, `header_ss`) delgadas, consistentes y fáciles de mantener.
 - **Constantes de Ruta**: Usar siempre `ROOT` para subidas (`move_uploaded_file`) y `BASE_URL` para enlaces front-end.
