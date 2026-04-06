@@ -68,6 +68,7 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 - **PHP Tag Missing**: Omitir `<?php` al inicio tras una edición automática. **Solución**: Verificar siempre la etiqueta de apertura en reemplazos de bloque.
 
 ### 🖼️ UI/UX y Layout
+- **Tarjetas de Usuarios**: Se implementó una separación explícita de personal dado de baja/inactivo en un grid bloqueado al fondo de `personal.php`, enviándolos a un arreglo propio (`$inactivos`) para no entorpecer ni saturar los bloques principales de la plantilla activa.
 - **Desfasado de Títulos en Alertas**: Títulos absolutos tapan la imagen. **Solución**: Mover títulos a contenedores externos (footer/header) fuera del frame de la imagen.
 - **🚨 Regresión de Layout en Topbar (Div no cerrado) 🚨**: Un `div` sin cerrar en el `globalSearchWrapper` puede causar que los botones de acción (`darkMode`, `chat`, `IA`) se aniden incorrectamente y se apilen verticalmente. **Solución**: Verificar siempre que el contenedor de búsqueda se cierre antes de los botones de acción para mantener el flujo horizontal del `topbar-actions`.
 - **Avatares Gigantes**: Para el diseño "Wow" de 300px, usar `margin` correctivo para no romper el grid de 3 columnas del Hero.

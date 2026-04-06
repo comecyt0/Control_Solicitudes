@@ -567,9 +567,14 @@ require_once __DIR__ . '/../includes/header_admin.php';
     <?php
     $lideres = [];
     $operativos = [];
+    $inactivos = [];
     foreach ($listaUsuarios as $u) {
-        if (!empty($u['rol_jefatura'])) $lideres[] = $u;
-        else $operativos[] = $u;
+        if (!$u['activo']) {
+            $inactivos[] = $u;
+        } else {
+            if (!empty($u['rol_jefatura'])) $lideres[] = $u;
+            else $operativos[] = $u;
+        }
     }
 
     $renderUserCard = function($usr) {
@@ -708,6 +713,16 @@ require_once __DIR__ . '/../includes/header_admin.php';
             <?php foreach ($operativos as $usr) echo $renderUserCard($usr); ?>
         </div>
     <?php endif; ?>
+
+    <?php if (!empty($inactivos)): ?>
+        <h3 style="margin: 2rem 0 1rem; color: #DC2626; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #FECACA; padding-bottom: 0.5rem;">
+            <i class="fa-solid fa-users-slash"></i> Personal Inactivo
+        </h3>
+        <div class="user-cards-grid" style="opacity: 0.85;">
+            <?php foreach ($inactivos as $usr) echo $renderUserCard($usr); ?>
+        </div>
+    <?php endif; ?>
+
     <?php else: ?>
     <div class="empty-state">
         <p>No hay usuarios registrados en el sistema.</p>
