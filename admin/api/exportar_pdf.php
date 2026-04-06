@@ -21,7 +21,7 @@ if ($id <= 0) {
 $pdo = getConnection();
 
 $stmt = $pdo->prepare(
-    "SELECT s.*, b.marca, b.modelo, b.num_serie, b.num_inventario
+    "SELECT s.*, b.marca, b.modelo, b.num_serie, b.num_inventario, s.sistema_especifico
      FROM solicitudes s
      LEFT JOIN sb_bienes b ON s.equipo_id = b.cve_bienes
      WHERE s.id = ?"
@@ -241,6 +241,12 @@ $fechaExport = date('d/m/Y H:i');
                 <div class="field-label">Estatus Actual</div>
                 <div class="field-value" style="font-weight:600;"><?= esc(getEtiqueta('estatus', $sol['estatus'])) ?></div>
             </div>
+            <?php if (!empty($sol['sistema_especifico'])): ?>
+            <div class="field">
+                <div class="field-label">Plataforma / Sistema</div>
+                <div class="field-value" style="color: #662331; font-weight: 700;"><?= esc($sol['sistema_especifico']) ?></div>
+            </div>
+            <?php endif; ?>
             <?php if ($sol['resuelto_por']): ?>
             <div class="field">
                 <div class="field-label">Atendido por</div>

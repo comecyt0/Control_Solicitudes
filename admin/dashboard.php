@@ -53,7 +53,7 @@ $porTipo = $stmtTipo->fetchAll();
 
 // Solicitudes recientes (ultimas 8)
 $stmtRecientes = $pdo->query(
-    "SELECT id, folio, tipo, solicitante, area, prioridad, estatus, fecha_creacion
+    "SELECT id, folio, tipo, solicitante, area, prioridad, estatus, fecha_creacion, sistema_especifico
      FROM solicitudes
      ORDER BY fecha_creacion DESC
      LIMIT 8"
@@ -202,6 +202,11 @@ require_once __DIR__ . '/../includes/header_admin.php';
                             <i class="<?= getIconoTipo($sol['tipo']) ?>"></i>
                             <?= esc(getEtiqueta('tipo', $sol['tipo'])) ?>
                         </span>
+                        <?php if ($sol['tipo'] === 'sistemas' && !empty($sol['sistema_especifico'])): ?>
+                            <div style="margin-top: 4px; font-size: 0.65rem; color: #4f46e5; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="<?= esc($sol['sistema_especifico']) ?>">
+                                <i class="fa-solid fa-layer-group"></i> <?= esc($sol['sistema_especifico']) ?>
+                            </div>
+                        <?php endif; ?>
                     </td>
                     <td><?= esc($sol['solicitante']) ?></td>
                     <td><?= esc($sol['area']) ?></td>
