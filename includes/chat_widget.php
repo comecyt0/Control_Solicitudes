@@ -295,8 +295,20 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
         chatOpen = !chatOpen;
         document.getElementById('chatPanel').style.display = chatOpen ? 'flex' : 'none';
         if (chatOpen) { loadAdmins(); loadMsgs(true); startPoll(); badgeCnt = 0; const b = document.getElementById('chatBadge'); if(b) b.style.display = 'none'; }
-        else detenerPoll();
+        else stopPoll(); // FIX: antes era detenerPoll()
     };
+
+    function marcarLeidoServidor(id) {
+        if (!id) return;
+        const fd = new FormData();
+        fd.append('accion', 'marcar_leido');
+        fd.append('ultimo_id', id);
+        // Fallback seguro por si no esta la variable de sesion definida
+        fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? "" ?>');
+        fetch(API, { method: 'POST', body: fd }).then(() => {
+            if (window.COMECyTNotificationBell) window.COMECyTNotificationBell.fetch();
+        }).catch(e => console.error(e));
+    }
 
     window.selChat = function(id, nombre = 'General de Área') {
         canalActual = id; ultimoId = 0;
@@ -362,6 +374,9 @@ $darkMode = $darkMode ?? (int) ($_SESSION['admin_dark_mode'] ?? $_SESSION['user_
                 badgeCnt += res.mensajes.length;
                 const b = document.getElementById('chatBadge'); if (b) { b.textContent = badgeCnt > 99 ? '99+' : badgeCnt; b.style.display = 'flex'; }
                 if (window.COMECyTNotificationBell) window.COMECyTNotificationBell.notify();
+            } else {
+                // Reportar últimos mensajes cargados al server como leídos
+                marcarLeidoServidor(ultimoId);
             }
         });
     }
