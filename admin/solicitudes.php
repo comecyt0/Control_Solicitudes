@@ -267,6 +267,11 @@ require_once __DIR__ . '/../includes/header_admin.php';
                             <i class="<?= getIconoTipo($sol['tipo']) ?>"></i>
                             <?= esc(getEtiqueta('tipo', $sol['tipo'])) ?>
                         </span>
+                        <?php if ($sol['tipo'] === 'sistemas' && !empty($sol['sistema_especifico'])): ?>
+                            <div style="margin-top: 4px; font-size: 0.70rem; color: #4f46e5; border-top: 1px dotted #c7d2fe; padding-top: 4px; font-weight: 600; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= esc($sol['sistema_especifico']) ?>">
+                                <i class="fa-solid fa-layer-group"></i> <?= esc($sol['sistema_especifico']) ?>
+                            </div>
+                        <?php endif; ?>
                     </td>
                     <td>
                         <div style="display: flex; align-items: center; gap: 8px;">

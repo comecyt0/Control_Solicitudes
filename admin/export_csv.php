@@ -26,6 +26,7 @@ $stmt = $pdo->query(
         area, 
         prioridad, 
         estatus, 
+        sistema_especifico,
         fecha_creacion, 
         fecha_actualizacion 
      FROM solicitudes 
@@ -58,6 +59,7 @@ fputcsv($output, [
     'Area/Departamento',
     'Prioridad',
     'Estatus',
+    'Sistema Específico',
     'Fecha de Creacion',
     'Ultima Actualizacion'
 ], ',', '"', "\\");
@@ -80,6 +82,7 @@ foreach ($solicitudes as $row) {
         $row['area'],
         $prioridad,
         $estatus,
+        $row['sistema_especifico'] ?? '',
         $creado,
         $actual
     ], ',', '"', "\\");

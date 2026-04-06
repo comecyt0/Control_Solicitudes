@@ -163,6 +163,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $subtipoSistemas = null;
             }
 
+            // Capturar sistema especifico
+            $sistemaEspecifico = null;
+            if ($datos['tipo'] === 'sistemas') {
+                $sisInvolucrado = postParam('sistema_involucrado');
+                if ($sisInvolucrado === 'Otro') {
+                    $otroSys = trim(postParam('otro_sistema'));
+                    $sistemaEspecifico = !empty($otroSys) ? mb_substr('Otro: ' . $otroSys, 0, 255) : 'Otro';
+                } elseif (!empty($sisInvolucrado)) {
+                    $sistemaEspecifico = mb_substr(trim($sisInvolucrado), 0, 255);
+                }
+            }
+
             // Apendizar detalles dinámicos a la descripción principal
             if ($subtipoSistemas === 'generar_link') {
                 $url_ref = postParam('url_referencia');
@@ -183,8 +195,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $folio = generarFolio($pdo);
 
             $ins = $pdo->prepare(
-                "INSERT INTO solicitudes (folio, tipo, solicitante, email_solicitante, area, prioridad, descripcion, equipo_id, archivo_adjunto, archivos_adjuntos, subtipo_sistemas)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                "INSERT INTO solicitudes (folio, tipo, solicitante, email_solicitante, area, prioridad, descripcion, equipo_id, archivo_adjunto, archivos_adjuntos, subtipo_sistemas, sistema_especifico)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             );
             $ins->execute([
                 $folio,
@@ -197,7 +209,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $equipo_id,
                 $archivoFinal,
                 $archivosJsonFinal,
-                $subtipoSistemas
+                $subtipoSistemas,
+                $sistemaEspecifico
             ]);
 
             $idNuevo = (int) $pdo->lastInsertId();
@@ -606,6 +619,36 @@ if ($usuariologueado) {
                     </div>
                 </div>
 
+                <!-- ⑥ SISTEMA INVOLUCRADO -->
+                <div id="caja_sistema_especifico" style="margin-top: 24px; padding-top: 24px; border-top: 1px dashed #d1d5db;">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label" for="sistema_involucrado">
+                            <i class="fa-solid fa-layer-group" style="color:#8b5cf6;"></i> Sistema Web Involucrado
+                        </label>
+                        <select id="sistema_involucrado" name="sistema_involucrado" class="form-control" onchange="toggleOtroSistema()">
+                            <option value="">-- General / No Especificado --</option>
+                            <option value="BECAS">BECAS</option>
+                            <option value="SAEPI">SAEPI</option>
+                            <option value="DUAL">DUAL</option>
+                            <option value="FECIEM">FECIEM</option>
+                            <option value="TITULACIÓN/BECATESIS">TITULACIÓN/BECATESIS</option>
+                            <option value="ESTANCIAS">ESTANCIAS</option>
+                            <option value="ESYCA">ESYCA</option>
+                            <option value="POSGRADO/BECAS">POSGRADO/BECAS</option>
+                            <option value="MUJERES">MUJERES</option>
+                            <option value="SALUD">SALUD</option>
+                            <option value="INTERNACIONAL">INTERNACIONAL</option>
+                            <option value="BECA CIENCIA/LICENCIATURA">BECA CIENCIA/LICENCIATURA</option>
+                            <option value="Otro">Otro (Especificar)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="caja_otro_sistema" style="display: none; margin-bottom: 0;">
+                        <label class="form-label" for="otro_sistema">Especifique el sistema o página web</label>
+                        <input type="text" id="otro_sistema" name="otro_sistema" class="form-control" placeholder="Ej. Portal de Transparencia">
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -710,6 +753,19 @@ function resetSubtipoSistemas() {
     cajaLink.style.display      = 'none';
     cajaHiper.style.display     = 'none';
     cajaProblema.style.display  = 'none';
+    document.getElementById('sistema_involucrado').value = '';
+    document.getElementById('caja_otro_sistema').style.display = 'none';
+    document.getElementById('otro_sistema').value = '';
+}
+
+function toggleOtroSistema() {
+    const sel = document.getElementById('sistema_involucrado');
+    const cajaOtro = document.getElementById('caja_otro_sistema');
+    if (sel && sel.value === 'Otro') {
+        cajaOtro.style.display = 'block';
+    } else {
+        cajaOtro.style.display = 'none';
+    }
 }
 
 // =================================================================

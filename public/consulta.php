@@ -238,6 +238,11 @@ if ($usuariologueado) {
                 </div>
                 <div class="detail-field-value" style="font-weight: 600; color: #6d28d9;">
                     <?= esc(ETIQUETAS_SUBTIPO_SISTEMAS[$resultado['subtipo_sistemas']] ?? $resultado['subtipo_sistemas']) ?>
+                    <?php if (!empty($resultado['sistema_especifico'])): ?>
+                        <div style="margin-top: 6px; font-size: 0.85rem; color: #4b5563; font-weight: 500;">
+                            <i class="fa-solid fa-layer-group" style="color: #8b5cf6;"></i> Plataforma: <?= esc($resultado['sistema_especifico']) ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endif; ?>
