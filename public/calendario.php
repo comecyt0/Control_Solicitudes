@@ -49,9 +49,9 @@ $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // 2. Consultar cumpleaños activos institucionales del mes
 $mesAlineado = str_pad($mes, 2, '0', STR_PAD_LEFT);
 $sqlCumpleanos = "
-    SELECT nombre, fecha_nacimiento, foto_perfil FROM cat_personal WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND TO_CHAR(fecha_nacimiento, 'MM') = ?
+    SELECT TRIM(CONCAT(nombre, ' ', COALESCE(appat, ''), ' ', COALESCE(apmat, ''))) AS nombre, fecha_nacimiento, foto_perfil FROM cat_personal WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND TO_CHAR(fecha_nacimiento, 'MM') = ?
     UNION
-    SELECT nombre, fecha_nacimiento, foto_perfil FROM ss_usuarios WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND TO_CHAR(fecha_nacimiento, 'MM') = ?
+    SELECT TRIM(CONCAT(nombre, ' ', COALESCE(appat, ''), ' ', COALESCE(apmat, ''))) AS nombre, fecha_nacimiento, foto_perfil FROM ss_usuarios WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND TO_CHAR(fecha_nacimiento, 'MM') = ?
 ";
 $stmtCump = $pdo->prepare($sqlCumpleanos);
 $stmtCump->execute([$mesAlineado, $mesAlineado]);

@@ -58,7 +58,8 @@ $topAreas = $stmtAreas->fetchAll();
 
 // ── Top 5 solicitantes ────────────────────────────────────────────
 $stmtSol = $pdo->query(
-    "SELECT solicitante, area, COUNT(*) AS total
+    "SELECT solicitante, area, COUNT(*) AS total,
+            (SELECT foto_perfil FROM cat_personal WHERE correo_institucional = MAX(solicitudes.email_solicitante) OR correo_personal = MAX(solicitudes.email_solicitante) LIMIT 1) as foto_perfil
      FROM solicitudes
      GROUP BY solicitante, area ORDER BY total DESC LIMIT 5"
 );
@@ -224,7 +225,16 @@ require_once __DIR__ . '/../includes/header_admin.php';
                 <tbody>
                     <?php foreach ($topSolicitantes as $s): ?>
                     <tr>
-                        <td class="fw-600" style="font-size:0.83rem;"><?= esc($s['solicitante']) ?></td>
+                        <td class="fw-600" style="font-size:0.83rem;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <?php
+                                $defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRIOTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+';
+                                $fotoUrl = !empty($s['foto_perfil']) ? BASE_URL . 'public/uploads/avatares/' . esc($s['foto_perfil']) : $defaultAvatar;
+                                ?>
+                                <img src="<?= $fotoUrl ?>" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink:0;" onerror="this.onerror=null; this.src='<?= $defaultAvatar ?>'" alt="Avatar">
+                                <?= esc($s['solicitante']) ?>
+                            </div>
+                        </td>
                         <td class="text-muted" style="font-size:0.78rem;"><?= esc($s['area']) ?></td>
                         <td style="text-align:center;">
                             <span class="badge" style="background:rgba(177,154,109,0.12);color:var(--color-accent);border:1px solid var(--border-accent);"><?= (int)$s['total'] ?></span>

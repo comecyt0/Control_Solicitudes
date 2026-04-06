@@ -122,7 +122,7 @@ $condAprobados = implode(' AND ', $whereAprobados);
 $condPendientes = implode(' AND ', $wherePendientes);
 
 // Obtener lista de equipos aprobados
-$sqlAprobados = "SELECT b.cve_bienes, b.marca, b.modelo, b.num_serie, b.num_inventario, b.cve_area, b.resguardatario, b.estatus_alta, a.des_area, p.nombre, p.appat, p.apmat 
+$sqlAprobados = "SELECT b.cve_bienes, b.marca, b.modelo, b.num_serie, b.num_inventario, b.cve_area, b.resguardatario, b.estatus_alta, a.des_area, p.nombre, p.appat, p.apmat, p.foto_perfil 
                  FROM sb_bienes b
                  LEFT JOIN cat_areas a ON b.cve_area = a.cve_area
                  LEFT JOIN cat_personal p ON b.resguardatario = p.cve_personal
@@ -133,7 +133,7 @@ $stmtAprobados->execute($params);
 $listaEquiposAprobados = $stmtAprobados->fetchAll();
 
 // Obtener lista de equipos pendientes
-$sqlPendientes = "SELECT b.cve_bienes, b.marca, b.modelo, b.num_serie, b.num_inventario, b.cve_area, b.resguardatario, b.estatus_alta, a.des_area, p.nombre, p.appat, p.apmat 
+$sqlPendientes = "SELECT b.cve_bienes, b.marca, b.modelo, b.num_serie, b.num_inventario, b.cve_area, b.resguardatario, b.estatus_alta, a.des_area, p.nombre, p.appat, p.apmat, p.foto_perfil 
                  FROM sb_bienes b
                  LEFT JOIN cat_areas a ON b.cve_area = a.cve_area
                  LEFT JOIN cat_personal p ON b.resguardatario = p.cve_personal
@@ -219,8 +219,17 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         </div>
                     </td>
                     <td>
-                        <div><i class="fa-solid fa-user fa-fw text-muted" style="color: #B45309 !important;"></i> <?= esc($nombreResguardo) ?></div>
-                        <div class="fs-sm"><i class="fa-solid fa-building fa-fw text-muted" style="color: #B45309 !important;"></i> <?= esc($ep['des_area'] ?? 'Área no vinculada') ?></div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <?php
+                            $defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRIOTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+';
+                            $fotoUrl = !empty($ep['foto_perfil']) ? BASE_URL . 'public/uploads/avatares/' . esc($ep['foto_perfil']) : $defaultAvatar;
+                            ?>
+                            <img src="<?= $fotoUrl ?>" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink:0;" onerror="this.onerror=null; this.src='<?= $defaultAvatar ?>'" alt="Avatar">
+                            <div>
+                                <div style="color: #92400E; font-weight: 600;"><?= esc($nombreResguardo) ?></div>
+                                <div class="fs-sm"><i class="fa-solid fa-building fa-fw text-muted" style="color: #B45309 !important;"></i> <?= esc($ep['des_area'] ?? 'Área no vinculada') ?></div>
+                            </div>
+                        </div>
                     </td>
                     <td class="text-muted fs-sm">
                         SN: <?= esc($ep['num_serie'] ?: 'Desconocido') ?>
@@ -309,7 +318,16 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         <?= esc($equipoDesc) ?>
                     </td>
                     <td class="text-muted fs-sm"><?= esc($e['num_serie'] ?: 'N/A') ?></td>
-                    <td><?= esc($nombreCompleto) ?></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <?php
+                            $defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRIOTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+';
+                            $fotoUrl = !empty($e['foto_perfil']) ? BASE_URL . 'public/uploads/avatares/' . esc($e['foto_perfil']) : $defaultAvatar;
+                            ?>
+                            <img src="<?= $fotoUrl ?>" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink:0;" onerror="this.onerror=null; this.src='<?= $defaultAvatar ?>'" alt="Avatar">
+                            <?= esc($nombreCompleto) ?>
+                        </div>
+                    </td>
                     <td class="text-muted fs-sm"><?= esc($e['des_area'] ?? 'No definida') ?></td>
                     <td class="td-actions">
                         <!-- Editar -->

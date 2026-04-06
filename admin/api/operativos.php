@@ -8,6 +8,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/helpers.php';
 require_once __DIR__ . '/../../config/auth.php';
 
+inicializarSesion();
 verificarSesionAdmin();
 
 $pdo = getConnection();
@@ -19,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt = $pdo->query("SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.cve_area, a.des_area, u.jefe_directo_id 
                          FROM cat_personal u 
                          LEFT JOIN cat_areas a ON u.cve_area = a.cve_area 
-                         WHERE u.activo = 1 AND u.cve_personal != $jefe_id 
+                         WHERE u.activo = true AND u.cve_personal != $jefe_id 
                          ORDER BY a.des_area ASC, u.nombre ASC");
     $lista = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

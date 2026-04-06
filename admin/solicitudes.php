@@ -133,7 +133,7 @@ $total      = (int) $stmtTotal->fetchColumn();
 $totalPages = (int) ceil($total / $limite);
 
 // Solicitudes de la pagina actual
-$sql  = "SELECT * FROM solicitudes {$condicion} ORDER BY fecha_creacion DESC LIMIT {$limite} OFFSET {$offset}";
+$sql  = "SELECT *, (SELECT foto_perfil FROM cat_personal WHERE correo_institucional = solicitudes.email_solicitante OR correo_personal = solicitudes.email_solicitante LIMIT 1) as foto_perfil FROM solicitudes {$condicion} ORDER BY fecha_creacion DESC LIMIT {$limite} OFFSET {$offset}";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $solicitudes = $stmt->fetchAll();
@@ -268,7 +268,16 @@ require_once __DIR__ . '/../includes/header_admin.php';
                             <?= esc(getEtiqueta('tipo', $sol['tipo'])) ?>
                         </span>
                     </td>
-                    <td><?= esc($sol['solicitante']) ?></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <?php
+                            $defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRIOTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+';
+                            $fotoUrl = !empty($sol['foto_perfil']) ? BASE_URL . 'public/uploads/avatares/' . esc($sol['foto_perfil']) : $defaultAvatar;
+                            ?>
+                            <img src="<?= $fotoUrl ?>" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" onerror="this.onerror=null; this.src='<?= $defaultAvatar ?>'" alt="Avatar">
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; display:inline-block;" title="<?= esc($sol['solicitante']) ?>"><?= esc($sol['solicitante']) ?></span>
+                        </div>
+                    </td>
                     <td class="text-muted fs-sm"><?= esc($sol['area']) ?></td>
                     <td>
                         <span class="badge <?= getBadgeClase('prioridad', $sol['prioridad']) ?>">

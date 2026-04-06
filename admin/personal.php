@@ -244,7 +244,7 @@ if ($filtroEstatus === '1' || $filtroEstatus === '0') {
 $condicion = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
 // Obtener lista de personal con su area aplicando filtros
-$sql = "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.correo_personal, u.ext_telefonica, COALESCE(u.correo_institucional, u.correo_personal, 'Sin correo') as email, u.activo, u.cve_area, a.des_area, u.fecha_nacimiento, u.rol_jefatura, u.nombre_jefatura
+$sql = "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.correo_personal, u.ext_telefonica, COALESCE(u.correo_institucional, u.correo_personal, 'Sin correo') as email, u.activo, u.cve_area, a.des_area, u.fecha_nacimiento, u.foto_perfil, u.rol_jefatura, u.nombre_jefatura
         FROM cat_personal u
         LEFT JOIN cat_areas a ON u.cve_area = a.cve_area
         {$condicion}
@@ -463,114 +463,251 @@ require_once __DIR__ . '/../includes/header_admin.php';
     </div>
 
     <?php if (!empty($listaUsuarios)): ?>
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Nombre Completo</th>
-                    <th>Email</th>
-                    <th>Área</th>
-                    <th>Estatus Login</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($listaUsuarios as $usr): 
-                    $nombreCompleto = trim($usr['nombre'] . ' ' . $usr['appat'] . ' ' . $usr['apmat']);
-                ?>
-                <tr>
-                    <td class="fw-600"><?= esc($nombreCompleto) ?></td>
-                    <td>
-                        <?= esc($usr['email']) ?>
-                        <?php if (!empty($usr['rol_jefatura'])): ?>
-                            <div style="margin-top: 5px;">
-                                <span class="badge" style="background: rgba(109, 40, 217, 0.1); color: #6D28D9; border: 1px solid rgba(109, 40, 217, 0.2); font-size: 0.75rem;">
-                                    <i class="fa-solid <?= $usr['rol_jefatura'] === 'director_area' ? 'fa-user-tie' : 'fa-user-shield' ?>"></i>
-                                    <?= esc(ucwords(str_replace('_', ' ', $usr['rol_jefatura']))) ?>
-                                </span>
-                            </div>
-                        <?php endif; ?>
-                    </td>
-                    <td class="text-muted fs-sm">
-                        <?= esc($usr['des_area'] ?? 'General') ?>
-                        <?php if (!empty($usr['nombre_jefatura'])): ?>
-                            <div style="font-size: 0.8rem; color: #475569; margin-top: 3px;">
-                                <i class="fa-solid fa-building-user text-muted"></i> <?= esc($usr['nombre_jefatura']) ?>
-                            </div>
-                        <?php endif; ?>
-                    </td>
-                    <td>
+    <style>
+    .user-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+        padding: 1rem 0;
+    }
+    .user-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        border: 1px solid #e2e8f0;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .user-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+    .user-card-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #e2e8f0;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .user-header-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .user-name {
+        margin: 0 0 4px 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .user-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .user-card-body {
+        padding: 1.2rem 1.5rem;
+        flex: 1;
+        color: #475569;
+        font-size: 0.95rem;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .user-info-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .user-info-row i {
+        width: 16px;
+        color: #94a3b8;
+        margin-top: 3px;
+        text-align: center;
+    }
+    .user-info-row span {
+        flex: 1;
+        word-break: break-word;
+    }
+    .user-card-footer {
+        padding: 1rem 1.5rem;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .user-card-footer .btn-icon {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        border-radius: 6px;
+    }
+    </style>
+    
+    <?php
+    $lideres = [];
+    $operativos = [];
+    foreach ($listaUsuarios as $u) {
+        if (!empty($u['rol_jefatura'])) $lideres[] = $u;
+        else $operativos[] = $u;
+    }
+
+    $renderUserCard = function($usr) {
+        ob_start();
+        $nombreCompleto = trim($usr['nombre'] . ' ' . $usr['appat'] . ' ' . $usr['apmat']);
+        $defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRIOTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+';
+        $fotoUrl = !empty($usr['foto_perfil']) ? BASE_URL . 'public/uploads/avatares/' . esc($usr['foto_perfil']) : $defaultAvatar;
+    ?>
+        <div class="user-card">
+            <div class="user-card-header">
+                <img src="<?= $fotoUrl ?>" alt="Avatar" class="user-avatar" onerror="this.onerror=null; this.src='<?= $defaultAvatar ?>'">
+                
+                <div class="user-header-info">
+                    <h3 class="user-name" title="<?= esc($nombreCompleto) ?>"><?= esc($nombreCompleto) ?></h3>
+                    <div class="user-badges">
                         <?php if ($usr['activo']): ?>
-                            <span class="badge" style="background: rgba(22, 163, 74, 0.1); color: #16A34A; border: 1px solid rgba(22, 163, 74, 0.2);">
+                            <span class="badge" style="background: rgba(22, 163, 74, 0.1); color: #16A34A; border: 1px solid rgba(22, 163, 74, 0.2); font-size: 0.7rem; padding: 2px 6px;">
                                 Activo
                             </span>
                         <?php else: ?>
-                            <span class="badge" style="background: rgba(248, 113, 113, 0.1); color: #DC2626; border: 1px solid rgba(248, 113, 113, 0.2);">
+                            <span class="badge" style="background: rgba(248, 113, 113, 0.1); color: #DC2626; border: 1px solid rgba(248, 113, 113, 0.2); font-size: 0.7rem; padding: 2px 6px;">
                                 Inactivo
                             </span>
                         <?php endif; ?>
-                    </td>
-                    <td class="td-actions">
-                        <!-- Editar -->
-                        <button type="button" class="btn btn-outline btn-icon" title="Editar personal" 
-                                onclick="abrirModalEditar(<?= htmlspecialchars(json_encode([
-                                    'id'                   => $usr['id'],
-                                    'nombre'               => $usr['nombre'],
-                                    'appat'                => $usr['appat'],
-                                    'apmat'                => $usr['apmat'],
-                                    'correo_institucional' => $usr['correo_institucional'],
-                                    'correo_personal'      => $usr['correo_personal'],
-                                    'ext_telefonica'       => $usr['ext_telefonica'],
-                                    'fecha_nacimiento'     => $usr['fecha_nacimiento'],
-                                    'cve_area'             => (int)($usr['cve_area'] ?? 0),
-                                    'rol_jefatura'         => $usr['rol_jefatura'],
-                                    'nombre_jefatura'      => $usr['nombre_jefatura']
-                                ]), ENT_QUOTES, 'UTF-8') ?>)">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
                         
-                        <!-- Toggle Activo/Inactivo -->
-                        <form method="POST" action="" style="display:inline-block; margin:0;">
-                            <?= csrfField() ?>
-                            <input type="hidden" name="_accion" value="toggle_usuario">
-                            <input type="hidden" name="usuario_id" value="<?= $usr['id'] ?>">
-                            <input type="hidden" name="activo" value="<?= $usr['activo'] ? '0' : '1' ?>">
-                            
-                            <?php if ($usr['activo']): ?>
-                                <button type="submit" class="btn btn-outline btn-icon" title="Desactivar acceso" style="color: #F87171; border-color: transparent;" data-confirm="¿Seguro que deseas desactivar a este usuario?">
-                                    <i class="fa-solid fa-user-slash"></i>
-                                </button>
-                            <?php else: ?>
-                                <button type="submit" class="btn btn-outline btn-icon" title="Aprobar acceso" style="color: #4ADE80; border-color: transparent;" data-confirm="¿Seguro que deseas activar a este usuario?">
-                                    <i class="fa-solid fa-user-check"></i>
-                                </button>
-                            <?php endif; ?>
-                        </form>
-
-                        <!-- Gestionar Operativos -->
                         <?php if (!empty($usr['rol_jefatura'])): ?>
-                            <button type="button" class="btn btn-outline btn-icon" title="Gestionar equipo operativo" style="color: #6D28D9; border-color: transparent;"
-                                    onclick="abrirModalOperativos(<?= $usr['id'] ?>, '<?= esc(addslashes($nombreCompleto)) ?>')">
-                                <i class="fa-solid fa-users-gear"></i>
-                            </button>
+                            <span class="badge" style="background: rgba(109, 40, 217, 0.1); color: #6D28D9; border: 1px solid rgba(109, 40, 217, 0.2); font-size: 0.7rem; padding: 2px 6px;">
+                                <i class="fa-solid <?= $usr['rol_jefatura'] === 'director_area' ? 'fa-user-tie' : 'fa-user-shield' ?>"></i>
+                                <?= esc(ucwords(str_replace('_', ' ', $usr['rol_jefatura']))) ?>
+                            </span>
                         <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="user-card-body">
+                <div class="user-info-row" title="Correo Electrónico">
+                    <i class="fa-regular fa-envelope"></i>
+                    <span><?= esc($usr['email']) ?></span>
+                </div>
+                
+                <?php if (!empty($usr['ext_telefonica'])): ?>
+                <div class="user-info-row" title="Extensión Telefónica">
+                    <i class="fa-solid fa-phone"></i>
+                    <span>Ext: <strong><?= esc($usr['ext_telefonica']) ?></strong></span>
+                </div>
+                <?php endif; ?>
+                
+                <div class="user-info-row" title="Área Asignada">
+                    <i class="fa-solid fa-building"></i>
+                    <span>
+                        <?= esc($usr['des_area'] ?? 'General') ?>
+                        <?php if (!empty($usr['nombre_jefatura'])): ?>
+                            <br><small style="color:#64748b; font-weight: 500;"><i class="fa-solid fa-sitemap" style="font-size:0.75rem; color:#94a3b8;"></i> <?= esc($usr['nombre_jefatura']) ?></small>
+                        <?php endif; ?>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="user-card-footer">
+                <!-- Editar -->
+                <button type="button" class="btn btn-outline btn-icon" title="Editar personal" 
+                        onclick="abrirModalEditar(<?= htmlspecialchars(json_encode([
+                            'id'                   => $usr['id'],
+                            'nombre'               => $usr['nombre'],
+                            'appat'                => $usr['appat'],
+                            'apmat'                => $usr['apmat'],
+                            'correo_institucional' => $usr['correo_institucional'],
+                            'correo_personal'      => $usr['correo_personal'],
+                            'ext_telefonica'       => $usr['ext_telefonica'],
+                            'fecha_nacimiento'     => $usr['fecha_nacimiento'],
+                            'cve_area'             => (int)($usr['cve_area'] ?? 0),
+                            'rol_jefatura'         => $usr['rol_jefatura'],
+                            'nombre_jefatura'      => $usr['nombre_jefatura']
+                        ]), ENT_QUOTES, 'UTF-8') ?>)">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                
+                <!-- Toggle Activo/Inactivo -->
+                <form method="POST" action="" style="display:inline-block; margin:0;">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="_accion" value="toggle_usuario">
+                    <input type="hidden" name="usuario_id" value="<?= $usr['id'] ?>">
+                    <input type="hidden" name="activo" value="<?= $usr['activo'] ? '0' : '1' ?>">
+                    
+                    <?php if ($usr['activo']): ?>
+                        <button type="submit" class="btn btn-outline btn-icon" title="Desactivar acceso" style="color: #F87171; border-color: transparent;" data-confirm="¿Seguro que deseas desactivar a este usuario?">
+                            <i class="fa-solid fa-user-slash"></i>
+                        </button>
+                    <?php else: ?>
+                        <button type="submit" class="btn btn-outline btn-icon" title="Aprobar acceso" style="color: #4ADE80; border-color: transparent;" data-confirm="¿Seguro que deseas activar a este usuario?">
+                            <i class="fa-solid fa-user-check"></i>
+                        </button>
+                    <?php endif; ?>
+                </form>
 
-                        <!-- Eliminar Físicamente -->
-                        <form method="POST" action="" style="display:inline-block; margin:0;">
-                            <?= csrfField() ?>
-                            <input type="hidden" name="_accion" value="eliminar_personal">
-                            <input type="hidden" name="usuario_id" value="<?= $usr['id'] ?>">
-                            <button type="button" class="btn btn-outline btn-icon" title="Eliminar personal permanentemente" style="color: #DC2626; border-color: transparent;"
-                                    onclick="confirmarAccionDoble(this, '¿Quieres borrar este registro de personal?', '¿Estás SEGURO? Esta acción borrará al usuario permanentemente.')">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
+                <!-- Gestionar Operativos -->
+                <?php if (!empty($usr['rol_jefatura'])): ?>
+                    <button type="button" class="btn btn-outline btn-icon" title="Gestionar equipo operativo" style="color: #6D28D9; border-color: transparent;"
+                            onclick="abrirModalOperativos(<?= $usr['id'] ?>, '<?= esc(addslashes($nombreCompleto)) ?>')">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </button>
+                <?php endif; ?>
+
+                <!-- Eliminar Físicamente -->
+                <form method="POST" action="" style="display:inline-block; margin:0;">
+                    <?= csrfField() ?>
+                    <input type="hidden" name="_accion" value="eliminar_personal">
+                    <input type="hidden" name="usuario_id" value="<?= $usr['id'] ?>">
+                    <button type="button" class="btn btn-outline btn-icon" title="Eliminar personal permanentemente" style="color: #DC2626; border-color: transparent;"
+                            onclick="confirmarAccionDoble(this, '¿Quieres borrar este registro de personal?', '¿Estás SEGURO? Esta acción borrará al usuario permanentemente.')">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    <?php
+        return ob_get_clean();
+    };
+    ?>
+
+    <?php if (!empty($lideres)): ?>
+        <h3 style="margin: 1.5rem 0 1rem; color: #6D28D9; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+            <i class="fa-solid fa-users-viewfinder"></i> Equipo Directivo y Jefaturas
+        </h3>
+        <div class="user-cards-grid">
+            <?php foreach ($lideres as $usr) echo $renderUserCard($usr); ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($operativos)): ?>
+        <h3 style="margin: 2rem 0 1rem; color: #475569; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">
+            <i class="fa-solid fa-users"></i> Personal Operativo
+        </h3>
+        <div class="user-cards-grid">
+            <?php foreach ($operativos as $usr) echo $renderUserCard($usr); ?>
+        </div>
+    <?php endif; ?>
     <?php else: ?>
     <div class="empty-state">
         <p>No hay usuarios registrados en el sistema.</p>
@@ -587,7 +724,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
             <h3 class="modal-title">Editar Personal</h3>
             <button type="button" class="modal-close" onclick="cerrarModal('modalEditarPersonal')">&times;</button>
         </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height: 75vh; overflow-y: auto; padding-right: 15px;">
                 <form method="POST" action="">
                     <?= csrfField() ?>
                     <input type="hidden" name="_accion" value="editar_personal">
@@ -752,7 +889,9 @@ async function abrirModalOperativos(jefeId, jefeNombre) {
     abrirModal('modalOperativos');
     
     try {
-        const resp = await fetch(`<?= BASE_URL ?>admin/api/operativos.php?jefe_id=${jefeId}`);
+        const resp = await fetch(`api/operativos.php?jefe_id=${jefeId}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
         const data = await resp.json();
         
         if(data.ok) {

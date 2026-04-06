@@ -13,3 +13,6 @@ Makefile
 docker-compose*.yml
 .vscode/
 .idea/
+public/uploads/
+.agents/
+.aider/

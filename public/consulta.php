@@ -23,7 +23,8 @@ $sinResultado = false;
 if ($busqueda !== '') {
     // Buscar por folio exacto o por correo (puede retornar multiples)
     $stmt = $pdo->prepare(
-        "SELECT s.*, b.marca, b.modelo, b.num_serie, b.num_inventario, b.estatus_alta
+        "SELECT s.*, b.marca, b.modelo, b.num_serie, b.num_inventario, b.estatus_alta,
+                (SELECT foto_perfil FROM cat_personal WHERE correo_institucional = s.email_solicitante OR correo_personal = s.email_solicitante LIMIT 1) as foto_perfil
          FROM solicitudes s
          LEFT JOIN sb_bienes b ON s.equipo_id = b.cve_bienes
          WHERE s.folio = ? OR (s.email_solicitante != '' AND s.email_solicitante = ?)
@@ -209,7 +210,14 @@ if ($usuariologueado) {
         <div class="detail-grid" style="margin-top: 4px;">
             <div class="detail-field">
                 <div class="detail-field-label">Solicitante</div>
-                <div class="detail-field-value"><?= esc($resultado['solicitante']) ?></div>
+                <div class="detail-field-value" style="display: flex; align-items: center; gap: 8px;">
+                    <?php
+                    $defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRhM2I4IiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIwIDIxdi0yYTRgNCAwIDAgMC00LTRIOTRhNCA0IDAgMCAwLTQgNHYyIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ii8+PC9zdmc+';
+                    $fotoUrl = !empty($resultado['foto_perfil']) ? BASE_URL . 'public/uploads/avatares/' . esc($resultado['foto_perfil']) : $defaultAvatar;
+                    ?>
+                    <img src="<?= $fotoUrl ?>" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" onerror="this.onerror=null; this.src='<?= $defaultAvatar ?>'" alt="Avatar">
+                    <?= esc($resultado['solicitante']) ?>
+                </div>
             </div>
             <div class="detail-field">
                 <div class="detail-field-label">Area</div>

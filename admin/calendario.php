@@ -30,8 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         
         if ($titulo && $fechaInicio && $fechaFin) {
             $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-            $stmt = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, $publico)");
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id']]);
+            $stmt = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area) VALUES (?, ?, ?, ?, ?, ?, $publico, ?)");
+            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id'], $_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0]);
             header('Location: ' . BASE_URL . 'admin/calendario.php?flash=evento_creado');
             exit;
         } else {
@@ -165,7 +165,7 @@ $diaSemanaInicio = (int)$dtMes->format('N');
 $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
-$stmt = $pdo->prepare("SELECT * FROM eventos WHERE fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+$stmt = $pdo->prepare("SELECT * FROM eventos WHERE fecha_inicio < ? AND fecha_fin > ? AND (publico = TRUE OR cve_area = " . ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0) . ") ORDER BY fecha_inicio ASC");
 $stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -177,7 +177,7 @@ $stmtAdmins = $pdo->query("SELECT id, nombre FROM administradores WHERE activo =
 $adminsDisponibles = $stmtAdmins->fetchAll(PDO::FETCH_ASSOC);
 
 // Tareas con JOIN a administradores
-$stmtT = $pdo->query("SELECT t.*, a.nombre AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id ORDER BY t.estatus DESC, t.id DESC");
+$stmtT = $pdo->query("SELECT t.*, a.nombre AS asignado_nombre FROM sb_kanban_tareas t LEFT JOIN administradores a ON t.asignado_a = a.id WHERE t.cve_area = " . ($_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0) . " ORDER BY t.estatus DESC, t.id DESC");
 $tareas = $stmtT->fetchAll(PDO::FETCH_ASSOC);
 foreach ($tareas as $t) {
     if (isset($listaTareas[$t['estatus']])) {
@@ -205,7 +205,7 @@ foreach ($eventosRaw as $ev) {
 // -------------------------------------------------------
 if ($mes > 0 && $mes <= 12) {
     $stmtB = $pdo->prepare(
-        "SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil
+        "SELECT TRIM(CONCAT(nombre, ' ', COALESCE(appat, ''), ' ', COALESCE(apmat, ''))) AS nombre, fecha_nacimiento, foto_perfil
          FROM cat_personal
          WHERE activo = TRUE
            AND fecha_nacimiento IS NOT NULL
@@ -216,7 +216,7 @@ if ($mes > 0 && $mes <= 12) {
 
     foreach ($cumpleaneros as $cp) {
         $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
-        $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
+        $nombreCompleto = trim($cp['nombre']);
         $calendarioEventos[$diaCumple][] = [
             'id'           => null,
             'titulo'       => "\u{1F382} " . $nombreCompleto,
