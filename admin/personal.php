@@ -48,22 +48,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
 
         if ($idUsuario > 0 && !empty($nombre) && !empty($appat)) {
             $cve_area = !empty($_POST['cve_area']) ? (int) $_POST['cve_area'] : null;
+            $rol_jefatura = !empty(postParam('rol_jefatura')) ? postParam('rol_jefatura') : null;
+            $nombre_jefatura = !empty(postParam('nombre_jefatura')) ? postParam('nombre_jefatura') : null;
 
             if (!empty($password)) {
                 $hash = password_hash($password, PASSWORD_BCRYPT);
                 $stmtU = $pdo->prepare(
                     "UPDATE cat_personal 
-                     SET nombre = ?, appat = ?, apmat = ?, correo_institucional = ?, correo_personal = ?, ext_telefonica = ?, password_hash = ?, fecha_nacimiento = ?, cve_area = ?
+                     SET nombre = ?, appat = ?, apmat = ?, correo_institucional = ?, correo_personal = ?, ext_telefonica = ?, password_hash = ?, fecha_nacimiento = ?, cve_area = ?, rol_jefatura = ?, nombre_jefatura = ?
                      WHERE cve_personal = ?"
                 );
-                $stmtU->execute([$nombre, $appat, $apmat, $correo_institucional, $correo_personal, $ext_telefonica, $hash, $fecha_nacimiento, $cve_area, $idUsuario]);
+                $stmtU->execute([$nombre, $appat, $apmat, $correo_institucional, $correo_personal, $ext_telefonica, $hash, $fecha_nacimiento, $cve_area, $rol_jefatura, $nombre_jefatura, $idUsuario]);
             } else {
                 $stmtU = $pdo->prepare(
                     "UPDATE cat_personal 
-                     SET nombre = ?, appat = ?, apmat = ?, correo_institucional = ?, correo_personal = ?, ext_telefonica = ?, fecha_nacimiento = ?, cve_area = ?
+                     SET nombre = ?, appat = ?, apmat = ?, correo_institucional = ?, correo_personal = ?, ext_telefonica = ?, fecha_nacimiento = ?, cve_area = ?, rol_jefatura = ?, nombre_jefatura = ?
                      WHERE cve_personal = ?"
                 );
-                $stmtU->execute([$nombre, $appat, $apmat, $correo_institucional, $correo_personal, $ext_telefonica, $fecha_nacimiento, $cve_area, $idUsuario]);
+                $stmtU->execute([$nombre, $appat, $apmat, $correo_institucional, $correo_personal, $ext_telefonica, $fecha_nacimiento, $cve_area, $rol_jefatura, $nombre_jefatura, $idUsuario]);
             }
             // Eliminar solicitud de actualizacion nativa pendiente si es que habia
             $stmtDelPend = $pdo->prepare("DELETE FROM solicitudes_actualizacion_personal WHERE cve_personal = ?");
@@ -206,9 +208,9 @@ $where = [];
 $params = [];
 
 if ($busqueda !== '') {
-    $where[] = "(u.nombre LIKE ? OR u.appat LIKE ? OR u.apmat LIKE ? OR u.correo_institucional LIKE ? OR u.correo_personal LIKE ? OR a.des_area LIKE ? OR u.ext_telefonica LIKE ?)";
+    $where[] = "(u.nombre LIKE ? OR u.appat LIKE ? OR u.apmat LIKE ? OR u.correo_institucional LIKE ? OR u.correo_personal LIKE ? OR a.des_area LIKE ? OR u.ext_telefonica LIKE ? OR u.rol_jefatura LIKE ? OR u.nombre_jefatura LIKE ?)";
     $like = '%' . $busqueda . '%';
-    $params = array_merge($params, [$like, $like, $like, $like, $like, $like, $like]);
+    $params = array_merge($params, [$like, $like, $like, $like, $like, $like, $like, $like, $like]);
 }
 
 if ($filtroEstatus === '1' || $filtroEstatus === '0') {
@@ -219,7 +221,7 @@ if ($filtroEstatus === '1' || $filtroEstatus === '0') {
 $condicion = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
 // Obtener lista de personal con su area aplicando filtros
-$sql = "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.correo_personal, u.ext_telefonica, COALESCE(u.correo_institucional, u.correo_personal, 'Sin correo') as email, u.activo, u.cve_area, a.des_area, u.fecha_nacimiento 
+$sql = "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.correo_personal, u.ext_telefonica, COALESCE(u.correo_institucional, u.correo_personal, 'Sin correo') as email, u.activo, u.cve_area, a.des_area, u.fecha_nacimiento, u.rol_jefatura, u.nombre_jefatura
         FROM cat_personal u
         LEFT JOIN cat_areas a ON u.cve_area = a.cve_area
         {$condicion}
@@ -455,8 +457,25 @@ require_once __DIR__ . '/../includes/header_admin.php';
                 ?>
                 <tr>
                     <td class="fw-600"><?= esc($nombreCompleto) ?></td>
-                    <td><?= esc($usr['email']) ?></td>
-                    <td class="text-muted fs-sm"><?= esc($usr['des_area'] ?? 'General') ?></td>
+                    <td>
+                        <?= esc($usr['email']) ?>
+                        <?php if (!empty($usr['rol_jefatura'])): ?>
+                            <div style="margin-top: 5px;">
+                                <span class="badge" style="background: rgba(109, 40, 217, 0.1); color: #6D28D9; border: 1px solid rgba(109, 40, 217, 0.2); font-size: 0.75rem;">
+                                    <i class="fa-solid <?= $usr['rol_jefatura'] === 'director_area' ? 'fa-user-tie' : 'fa-user-shield' ?>"></i>
+                                    <?= esc(ucwords(str_replace('_', ' ', $usr['rol_jefatura']))) ?>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                    </td>
+                    <td class="text-muted fs-sm">
+                        <?= esc($usr['des_area'] ?? 'General') ?>
+                        <?php if (!empty($usr['nombre_jefatura'])): ?>
+                            <div style="font-size: 0.8rem; color: #475569; margin-top: 3px;">
+                                <i class="fa-solid fa-building-user text-muted"></i> <?= esc($usr['nombre_jefatura']) ?>
+                            </div>
+                        <?php endif; ?>
+                    </td>
                     <td>
                         <?php if ($usr['activo']): ?>
                             <span class="badge" style="background: rgba(22, 163, 74, 0.1); color: #16A34A; border: 1px solid rgba(22, 163, 74, 0.2);">
@@ -480,7 +499,9 @@ require_once __DIR__ . '/../includes/header_admin.php';
                                     'correo_personal'      => $usr['correo_personal'],
                                     'ext_telefonica'       => $usr['ext_telefonica'],
                                     'fecha_nacimiento'     => $usr['fecha_nacimiento'],
-                                    'cve_area'             => (int)($usr['cve_area'] ?? 0)
+                                    'cve_area'             => (int)($usr['cve_area'] ?? 0),
+                                    'rol_jefatura'         => $usr['rol_jefatura'],
+                                    'nombre_jefatura'      => $usr['nombre_jefatura']
                                 ]), ENT_QUOTES, 'UTF-8') ?>)">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
@@ -597,6 +618,25 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         </small>
                     </div>
 
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; padding: 1rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="edit_rol_jefatura">
+                                <i class="fa-solid fa-user-tie" style="color: #6D28D9; margin-right: 4px;"></i> Roles de Alta Dirección
+                            </label>
+                            <select id="edit_rol_jefatura" name="rol_jefatura" class="form-control">
+                                <option value="">-- Empleado regular --</option>
+                                <option value="jefe_departamento">Jefe de Departamento</option>
+                                <option value="director_area">Director de Área</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" for="edit_nombre_jefatura">
+                                Nombre Específico del Departamento/Área
+                            </label>
+                            <input type="text" id="edit_nombre_jefatura" name="nombre_jefatura" class="form-control" placeholder="Ej. Departamento de Soporte Técnico">
+                        </div>
+                    </div>
+
                     <div class="form-group" style="margin-bottom: 0; margin-top: 1rem;">
                         <label class="form-label" for="edit_password">Nueva Contraseña (Opcional)</label>
                         <input type="password" id="edit_password" name="password" class="form-control" placeholder="Dejar en blanco para mantener la actual">
@@ -623,6 +663,8 @@ function abrirModalEditar(data) {
     document.getElementById('edit_ext_telefonica').value     = data.ext_telefonica || '';
     document.getElementById('edit_fecha_nacimiento').value   = data.fecha_nacimiento || '';
     document.getElementById('edit_password').value           = '';
+    document.getElementById('edit_rol_jefatura').value       = data.rol_jefatura || '';
+    document.getElementById('edit_nombre_jefatura').value    = data.nombre_jefatura || '';
 
     // Seleccionar el área correcta
     const selArea = document.getElementById('edit_cve_area');
