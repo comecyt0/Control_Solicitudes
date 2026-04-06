@@ -384,6 +384,9 @@ if (isset($_SESSION['user_area'])) {
 <!-- Overlay para sidebar movil -->
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+<!-- Componente del Asistente IA -->
+<?php require_once __DIR__ . '/ia_widget.php'; ?>
+
 <!-- Chat and IA Assistant now handled by chat_widget.php -->
 
 <script>
