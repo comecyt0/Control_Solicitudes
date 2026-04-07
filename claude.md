@@ -87,7 +87,9 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 - **🚨 Botón Ojo (Eye) Inactivo en Eventos Institucionales/Cumpleaños 🚨**: El botón `Ver` llamaba `event.stopPropagation()` pero no abría ningún modal. **Solución**: Implementar modal genérico `modalVerEvento` con funciones `verEvento()` y `verEventoPublico()` en todos los `agenda.php` de áreas. El modal muestra título, fecha y descripción (foto si es cumpleaños).
 - **🚨 Modales No Cierran al Hacer Clic Fuera (Backdrop) 🚨**: Los modales solo cerraban con el botón X o `Cancelar`. **Causa**: La propiedad `onclick` del backdrop no estaba configurada. **Solución**: Agregar `onclick="cerrarModalBackdrop(event,'modalId')"` en cada `.modal-backdrop` y la función JS `cerrarModalBackdrop(evt, id)` que compara `evt.target === evt.currentTarget`.
 - **🚨 Color no Persistido en Tarjetas Kanban (editar_tarea) 🚨**: Al guardar una tarea editada, el `border-top-color` de la tarjeta en el tablero no cambiaba. **Causa**: La query `UPDATE sb_kanban_tareas` no incluía clave de aislamiento `AND cve_area=?`, y el PHP template literal del color usaba comillas que se escapaban mal. **Solución**: Usar `addslashes()` al pasar el color a JS y asegurar que la query de UPDATE incluya siempre `AND cve_area=?` para seguridad.
-- **🚨 Registros Kanban con cve_area NULL No Visibles 🚨**: Registros históricos se guardaron sin `cve_area`, por lo que el filtro estricto `WHERE t.cve_area = ?` los excluía. **Solución**: Migración SQL: `UPDATE sb_kanban_tareas SET cve_area = 1 WHERE cve_area IS NULL;` y verificar el área 1 (Sistemas) para afianzar la propiedad de esos registros.
+- **🚨 BUG CRÍTICO — Modales no abren/cierran en calendarios de área 🚨**: Los modales de agenda.php usaban `.classList.add('active')` / `.classList.remove('active')` con `.modal-backdrop.active{display:flex}` en CSS local. **Conflicto**: `main.css` global ya define `.modal-backdrop.open{display:flex}` y `.modal-backdrop{display:none}`. Con ambos coexistiendo, al remover la clase `active` el modal no desaparecía. **Solución definitiva**: Usar `style.display='flex'/'none'` directamente (como en `public/calendario.php`), NUNCA clases CSS para modales. También renombrar las clases CSS de modal con prefijo `agenda-` (`.agenda-modal-backdrop`, `.agenda-modal`, etc.) para evitar cualquier solapamiento con el sistema global de modales.
+- **🚨 Homologación de Calendarios de Área 🚨**: Todos los calendarios `areas/*/agenda.php` DEBEN seguir el mismo diseño y patrones. El archivo **maestro** es `areas/desarrollo_tecnologico/agenda.php`. Al modificarlo, replicar con `_agents/scripts/replicate_agenda.ps1`. El modal de cumpleaños **debe ser idéntico** al de `public/calendario.php` (fondo dorado `#fde68a`, foto 110px centrada con border `#fcd34d`).
+- **Regla de Permisos Calendarios**: Áreas solo editan `df_eventos_editoriales` donde `cve_area = {suya}`. Los eventos de la tabla `eventos` (publicos=TRUE) son **solo lectura** para todas las áreas. Solo **Dirección General** y **Sistemas** pueden escribir en `eventos`.
 
 ---
 
@@ -97,4 +99,9 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 - **Workflows Disponibles**:
   - `/system_sync`: Sincronización completa de Docker y Git.
   - `/db_health`: Verificación de salud de PostgreSQL.
-- **Skills Reutilizables**: Ver `_agents/skills/` para skills de depuración de agenda y sincronización de sistema.
+- **Skills Reutilizables** (auto-cargar cuando sean relevantes):
+  - `.agents/skills/agenda-area-calendar.md` — Módulo Agenda+Kanban de área (modales, cumpleaños, permisos, bugs).
+  - `.agents/skills/departamentos-en-desarrollo.md` — Estado de módulos departamentales.
+- **Scripts de Mantenimiento** (`_agents/scripts/`):
+  - `replicate_agenda.ps1` — Propaga `desarrollo_tecnologico/agenda.php` → 5 áreas restantes.
+  - `check_agenda.ps1` — Verifica que todos los agenda.php tengan el fix de modales aplicado.
