@@ -210,15 +210,15 @@ $extraHead = '<style>
 .calendar-cell.empty{background:#f8fafc;cursor:default;}
 .day-number{font-weight:500;color:#334155;font-size:1rem;align-self:flex-end;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;}
 .calendar-cell.today .day-number{color:#fff;background:#1e3a5f;font-weight:700;}
-.evento-pildora{font-size:.75rem;padding:.5rem .6rem;border-radius:2px 2px 12px 2px;color:#1e293b;margin-bottom:.25rem;cursor:pointer;position:relative;box-shadow:2px 2px 4px rgba(0,0,0,.05);transition:all .2s;display:flex;flex-direction:column;gap:.2rem;width:100%;box-sizing:border-box;overflow:hidden;}
-.evento-pildora:hover{transform:scale(1.02) translateY(-2px);box-shadow:4px 6px 12px rgba(0,0,0,.1);z-index:10;}
-.evento-pildora::after{content:"";position:absolute;bottom:0;right:0;border-width:0 0 12px 12px;border-style:solid;border-color:rgba(0,0,0,.06) white;border-radius:0 0 0 2px;}
+.evento-pildora{font-size:.75rem;padding:.5rem .6rem;border-radius:2px 2px 12px 2px;color:#1e293b;margin-bottom:.25rem;cursor:pointer;position:relative;box-shadow:2px 2px 4px rgba(0,0,0,.05),inset -10px -10px 20px rgba(0,0,0,.03);transition:all .2s cubic-bezier(.175,.885,.32,1.275);display:flex;flex-direction:column;gap:.2rem;line-height:1.3;animation:agFadeIn .3s ease;width:100%;min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden;}
+.evento-pildora:hover{transform:scale(1.02) translateY(-2px) rotate(-1deg);box-shadow:4px 6px 12px rgba(0,0,0,.1),inset -10px -10px 20px rgba(0,0,0,.02);z-index:10;}
+.evento-pildora::after{content:"";position:absolute;bottom:0;right:0;border-width:0 0 12px 12px;border-style:solid;border-color:rgba(0,0,0,.06) white;box-shadow:-1px -1px 2px rgba(0,0,0,.05);border-radius:0 0 0 2px;}
 .evento-titulo{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px;}
 .evento-hora{font-size:.65rem;opacity:.75;font-weight:500;display:flex;align-items:center;gap:3px;}
-.evento-acciones{display:flex;gap:4px;margin-top:0;opacity:0;max-height:0;overflow:hidden;transition:all .2s;}
+.evento-acciones{display:flex;gap:4px;margin-top:0;opacity:0;max-height:0;overflow:hidden;transition:all .2s ease;}
 .evento-pildora:hover .evento-acciones{opacity:1;max-height:30px;margin-top:4px;padding-bottom:2px;}
-.btn-evento-accion{flex:1;background:rgba(255,255,255,.7);border:none;border-radius:4px;padding:4px 0;cursor:pointer;font-size:.75rem;color:#475569;display:flex;justify-content:center;align-items:center;transition:all .2s;}
-.btn-evento-accion:hover{background:#fff;color:#1e3a5f;}
+.btn-evento-accion{flex:1;background:rgba(255,255,255,.7);border:none;border-radius:4px;padding:4px 0;cursor:pointer;font-size:.75rem;color:#475569;display:flex;justify-content:center;align-items:center;transition:all .2s ease;}
+.btn-evento-accion:hover{background:#fff;color:var(--color-primary);box-shadow:0 1px 2px rgba(0,0,0,.1);}
 .nota-ja{background:#ede9fe;border-top:3px solid #1e3a5f;}
 .nota-institucional{background:#f1f5f9;border-top:3px solid #64748b;}
 .nota-dorado{background:#fef08a;border-top:3px solid #ca8a04;}
@@ -343,15 +343,19 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= $horaDisplay ?></div>
                         <?php endif; ?>
                         <?php if ($pillTipo === 'area'): ?>
-                        <div style="font-size:.62rem;opacity:.55;margin-top:2px;display:flex;gap:6px;align-items:center;">
-                            <i class="fa-solid fa-eye" title="Ver"></i>
-                            <i class="fa-solid fa-pen" title="Editar"></i>
-                            <i class="fa-solid fa-trash-can" style="color:#ef4444;" title="Eliminar"></i>
+                        <div class="evento-acciones">
+                            <button type="button" class="btn-evento-accion" title="Ver" onclick="event.stopPropagation();agPillClick(this.closest('.evento-pildora'), 'ver')"><i class="fa-solid fa-eye"></i></button>
+                            <button type="button" class="btn-evento-accion" title="Editar" onclick="event.stopPropagation();agPillClick(this.closest('.evento-pildora'), 'editar')"><i class="fa-solid fa-pen"></i></button>
+                            <button type="button" class="btn-evento-accion" title="Eliminar" style="color:#ef4444;" onclick="event.stopPropagation();var p=this.closest('.evento-pildora');_agEvId=parseInt(p.dataset.id);agAbrirModal('modalConfirmarEliminar');"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                         <?php elseif ($pillTipo === 'institucional'): ?>
-                        <div style="font-size:.62rem;opacity:.5;margin-top:2px;"><i class="fa-solid fa-eye"></i> Ver</div>
+                        <div class="evento-acciones">
+                            <button type="button" class="btn-evento-accion" title="Ver" onclick="event.stopPropagation();agPillClick(this.closest('.evento-pildora'), 'ver')"><i class="fa-solid fa-eye"></i></button>
+                        </div>
                         <?php elseif ($pillTipo === 'cumple'): ?>
-                        <div style="font-size:.62rem;opacity:.5;margin-top:2px;"><i class="fa-solid fa-cake-candles"></i> Ver</div>
+                        <div class="evento-acciones">
+                            <button type="button" class="btn-evento-accion" title="Ver" onclick="event.stopPropagation();agPillClick(this.closest('.evento-pildora'), 'ver')"><i class="fa-solid fa-cake-candles"></i></button>
+                        </div>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
@@ -703,7 +707,8 @@ function agAbrirCrearDesdeCelda(f) {
  * Lee datos desde atributos data-* (esc/htmlspecialchars en PHP, seguro para cualquier caracter).
  * NO usa addslashes() ni inline JS arguments.
  */
-function agPillClick(el) {
+function agPillClick(el, modo) {
+    var m = modo || 'ver';
     var tipo = el.dataset.tipo;
     if (tipo === 'area') {
         agVerDetalleEvento(
@@ -712,7 +717,8 @@ function agPillClick(el) {
             el.dataset.desc,
             el.dataset.fi,
             el.dataset.ff,
-            el.dataset.color
+            el.dataset.color,
+            m
         );
     } else if (tipo === 'institucional') {
         agVerEvento(
@@ -743,8 +749,9 @@ function agAbrirEditar(id, titulo, desc, fi, ff, color) {
 // Ver+Editar evento propio (clic en píldora del área)
 // data-id guardado en variable para el eliminar
 var _agEvId = null;
-function agVerDetalleEvento(id, titulo, desc, fi, ff, color) {
+function agVerDetalleEvento(id, titulo, desc, fi, ff, color, modo) {
     _agEvId = id;
+    var m = modo || 'ver';
     // Poblar vista lectura
     document.getElementById('vd_titulo').textContent = agDecode(titulo);
     document.getElementById('vd_fi').textContent     = fi.replace(/-/g,'/');
@@ -757,7 +764,7 @@ function agVerDetalleEvento(id, titulo, desc, fi, ff, color) {
     document.getElementById('vd_e_fi').value     = fi;
     document.getElementById('vd_e_ff').value     = ff;
     document.getElementById('vd_e_color').value  = color || '<?= $colorPrimary ?>';
-    agVdModo('ver');
+    agVdModo(m);
     agAbrirModal('modalVerDetalle');
 }
 // Cambiar entre modo Ver y Editar dentro del mismo modal

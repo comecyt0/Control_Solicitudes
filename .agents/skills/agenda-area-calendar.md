@@ -130,6 +130,36 @@ SELECT *, TRUE AS es_institucional FROM eventos
 WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
 ```
 
+### Píldoras del Calendario (Diseño "Post-it" Homologado)
+
+Para igualar el diseño de `admin/calendario.php`, las píldoras usan un efecto de revelado de botones en hover y sombreado profundo:
+
+**CSS ($extraHead):**
+```css
+.evento-pildora { 
+    transition: all .2s cubic-bezier(.175,.885,.32,1.275); 
+    box-shadow: 2px 2px 4px rgba(0,0,0,.05), inset -10px -10px 20px rgba(0,0,0,0.03); 
+}
+.evento-pildora:hover { transform: scale(1.02) translateY(-2px) rotate(-1deg); }
+.evento-acciones { opacity: 0; max-height: 0; transition: all .2s ease; }
+.evento-pildora:hover .evento-acciones { opacity: 1; max-height: 30px; margin-top: 4px; }
+```
+
+**JS Signature:**
+```javascript
+// ✅ CORRECTO — permite abrir directamente en modo 'ver' o 'editar'
+function agPillClick(el, modo) {
+    var m = modo || 'ver';
+    // ... invoca agVerDetalleEvento(..., m)
+}
+```
+
+**HTML (Botones):**
+```html
+<button onclick="event.stopPropagation(); agPillClick(this.closest('.evento-pildora'), 'ver')">👁</button>
+<button onclick="event.stopPropagation(); agPillClick(this.closest('.evento-pildora'), 'editar')">✏️</button>
+```
+
 ### Kanban — filtro estricto por cveArea
 
 ```sql
