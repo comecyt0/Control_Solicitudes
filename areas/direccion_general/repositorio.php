@@ -304,23 +304,18 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 .m-urgente { background: #991b1b; }
 .m-borrador { background: #64748b; }
 
-.marcador-selector {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    opacity: 0;
-    transition: opacity .2s;
-    z-index: 5;
+.btn-marcador:hover { border-color: #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.05); }
+
+/* Lista de opciones en modal */
+.marcador-opciones { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.marcador-opt {
+    display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+    border-radius: 10px; border: 1.5px solid var(--border-color);
+    cursor: pointer; transition: all .2s; font-size: 0.88rem; font-weight: 600;
 }
-.file-card:hover .marcador-selector { opacity: 1; }
-.marcador-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    box-shadow: 0 0 0 1px #e2e8f0;
-    cursor: pointer;
-}
+.marcador-opt:hover { border-color: var(--dg-accent); background: var(--dg-bg-soft); }
+.marcador-opt.active { border-color: var(--dg-primary); background: var(--dg-bg-soft); box-shadow: 0 4px 12px rgba(102,35,49,0.1); }
+.marcador-opt i { font-size: 0.9rem; }
 
 .file-actions {
     display: flex;
@@ -597,7 +592,23 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 
                 <!-- Grid de archivos -->
                 <div class="file-grid" id="fileGrid">
-                    <!-- cargado por JS -->
+                    <!-- ═══════════════════════════════════════════════════════════════
+     MODAL: SELECCIONAR MARCADOR
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="mini-modal-overlay" id="marcadorModal" onclick="if(event.target===this) cerrarModalMarcador()">
+    <div class="mini-modal" style="width:340px;">
+        <h3><i class="fa-solid fa-tag" style="color:var(--dg-accent);margin-right:8px;"></i>Marcador de Estado</h3>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:16px;">Selecciona una etiqueta para organizar este archivo.</p>
+        
+        <div class="marcador-opciones" id="marcadorOpcionesList">
+            <!-- Inyectado por JS -->
+        </div>
+
+        <div class="mini-modal-actions" style="margin-top:24px;">
+            <button class="repo-btn" style="background:var(--bg-hover);color:var(--text-muted);" onclick="cerrarModalMarcador()">Cancelar</button>
+        </div>
+    </div>
+</div>
                 </div>
             </div>
         </div>
@@ -777,20 +788,6 @@ async function cargarArchivos() {
         
         return `
         <div class="file-card" title="${escHtml(f.nombre_original)}">
-            <div class="marcador-selector dropdown">
-                <div class="marcador-dot ${mClase}" data-bs-toggle="dropdown" title="Cambiar marcador"></div>
-                <ul class="dropdown-menu shadow" style="font-size:0.75rem;">
-                    <li><h6 class="dropdown-header">Marcador</h6></li>
-                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Ninguno')"> Ninguno</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Pendiente')"><i class="fa-solid fa-circle" style="color:#f59e0b"></i> Pendiente</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Completado')"><i class="fa-solid fa-circle" style="color:#10b981"></i> Completado</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Revision')"><i class="fa-solid fa-circle" style="color:#3b82f6"></i> En Revisión</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Urgente')"><i class="fa-solid fa-circle" style="color:#991b1b"></i> Urgente</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Borrador')"><i class="fa-solid fa-circle" style="color:#64748b"></i> Borrador</a></li>
-                    <li><a class="dropdown-item text-danger" href="#" onclick="cambiarMarcador(${f.id}, 'Cancelado')"><i class="fa-solid fa-circle"></i> Cancelado</a></li>
-                </ul>
-            </div>
-            
             <div class="file-marcador ${mClase}">${escHtml(f.marcador === 'Revision' ? 'En Revisión' : f.marcador)}</div>
 
             <span class="file-icon" onclick="abrirPreview('${escHtml(f.nombre_original).replace(/'/g,"\\\'").replace(/"/g,'&quot;')}', '${urlArchivo}', '${f.tipo_mime}', '${formatBytes(f.tamano_bytes)}', '${escHtml(f.fecha)}')" >
@@ -799,6 +796,10 @@ async function cargarArchivos() {
             <div class="file-name" onclick="abrirPreview('${escHtml(f.nombre_original).replace(/'/g,"\\\'").replace(/"/g,'&quot;')}', '${urlArchivo}', '${f.tipo_mime}', '${formatBytes(f.tamano_bytes)}', '${escHtml(f.fecha)}')" >${escHtml(f.nombre_original)}</div>
             <div class="file-meta">${formatBytes(f.tamano_bytes)} · ${escHtml(f.fecha)}</div>
             <div class="file-actions">
+                <button class="file-action-btn btn-marcador" title="Cambiar Marcador"
+                        onclick="abrirModalMarcador(${f.id}, '${f.marcador || 'Ninguno'}')">
+                    <i class="fa-solid fa-tag"></i>
+                </button>
                 <button class="file-action-btn" title="Vista previa"
                         onclick="abrirPreview('${escHtml(f.nombre_original).replace(/'/g,"\\\'").replace(/"/g,'&quot;')}', '${urlArchivo}', '${f.tipo_mime}', '${formatBytes(f.tamano_bytes)}', '${escHtml(f.fecha)}')" >
                     <i class="fa-solid fa-eye"></i>
@@ -1001,7 +1002,36 @@ function mostrarToast(msg, tipo = 'success') {
 }
 
 // ── Marcadores ────────────────────────────────────────────────
+let marcadorArchivoId = 0;
+const OPCIONES_MARCADOR = [
+    {v: 'Ninguno',    n: 'Ninguno',      c: '#94a3b8', i: 'fa-ban'},
+    {v: 'Pendiente',  n: 'Pendiente',    c: '#f59e0b', i: 'fa-clock'},
+    {v: 'Completado', n: 'Completado',   c: '#10b981', i: 'fa-check-circle'},
+    {v: 'Revision',   n: 'En Revisión',  c: '#3b82f6', i: 'fa-magnifying-glass'},
+    {v: 'Urgente',    n: 'Urgente',      c: '#991b1b', i: 'fa-triangle-exclamation'},
+    {v: 'Borrador',   n: 'Borrador',     c: '#64748b', i: 'fa-file-signature'},
+    {v: 'Cancelado',  n: 'Cancelado',    c: '#ef4444', i: 'fa-times-circle'}
+];
+
+function abrirModalMarcador(id, actual) {
+    marcadorArchivoId = id;
+    const list = document.getElementById('marcadorOpcionesList');
+    list.innerHTML = OPCIONES_MARCADOR.map(o => `
+        <div class="marcador-opt ${actual === o.v ? 'active' : ''}" onclick="cambiarMarcador(${id}, '${o.v}')">
+            <i class="fa-solid ${o.i}" style="color:${o.c}"></i>
+            <span>${o.n}</span>
+            ${actual === o.v ? '<i class="fa-solid fa-check" style="margin-left:auto;color:var(--dg-primary)"></i>' : ''}
+        </div>
+    `).join('');
+    document.getElementById('marcadorModal').classList.add('open');
+}
+
+function cerrarModalMarcador() {
+    document.getElementById('marcadorModal').classList.remove('open');
+}
+
 async function cambiarMarcador(id, valor) {
+    cerrarModalMarcador();
     const fd = new FormData();
     fd.append('accion', 'set_marcador');
     fd.append('csrf_token', CSRF);
@@ -1033,7 +1063,7 @@ async function recargarCarpetas() {
 
 // ── ESC cierra modales ────────────────────────────────────────
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { cerrarPreview(); cerrarModalCarpeta(); cerrarRenombrar(); }
+    if (e.key === 'Escape') { cerrarPreview(); cerrarModalCarpeta(); cerrarRenombrar(); cerrarModalMarcador(); }
 });
 
 // ── Bootstrap ────────────────────────────────────────────────
