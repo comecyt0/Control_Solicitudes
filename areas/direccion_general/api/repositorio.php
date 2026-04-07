@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $accion === 'listar_carpetas') {
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $accion === 'listar_archivos') {
     $carpetaId = (int) ($_GET['carpeta_id'] ?? 1);
     $stmt = $pdo->prepare(
-        "SELECT id, nombre_original, archivo_path, tipo_mime, tamano_bytes,
+        "SELECT id, nombre_original, archivo_path, tipo_mime, tamano_bytes, marcador,
                 TO_CHAR(created_at, 'DD/MM/YYYY HH24:MI') AS fecha
          FROM dg_repo_archivos
          WHERE carpeta_id = :cid
@@ -219,6 +219,19 @@ if ($accion === 'renombrar') {
         repoJson(false, error: 'Tipo inválido');
     }
     repoJson(true, ['mensaje' => 'Renombrado correctamente']);
+}
+
+// ────────────────────────────────────────────────────────────────
+// POST: Cambiar marcador de archivo
+// ────────────────────────────────────────────────────────────────
+if ($accion === 'set_marcador') {
+    $id    = (int) ($_POST['id'] ?? 0);
+    $valor = trim($_POST['marcador'] ?? 'Ninguno');
+    if (!$id) repoJson(false, error: 'ID de archivo requerido');
+
+    $stmt = $pdo->prepare("UPDATE dg_repo_archivos SET marcador = ? WHERE id = ?");
+    $stmt->execute([$valor, $id]);
+    repoJson(true, ['mensaje' => 'Marcador actualizado', 'marcador' => $valor]);
 }
 
 repoJson(false, error: 'Acción no reconocida');

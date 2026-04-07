@@ -283,6 +283,45 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     color: var(--text-muted, #94a3b8);
 }
 
+/* Marcadores */
+.file-marcador {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,.1);
+}
+.m-ninguno { display: none; }
+.m-pendiente { background: #f59e0b; }
+.m-completado { background: #10b981; }
+.m-cancelado { background: #ef4444; }
+.m-revision { background: #3b82f6; }
+.m-urgente { background: #991b1b; }
+.m-borrador { background: #64748b; }
+
+.marcador-selector {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    opacity: 0;
+    transition: opacity .2s;
+    z-index: 5;
+}
+.file-card:hover .marcador-selector { opacity: 1; }
+.marcador-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #e2e8f0;
+    cursor: pointer;
+}
+
 .file-actions {
     display: flex;
     justify-content: center;
@@ -734,12 +773,30 @@ async function cargarArchivos() {
     grid.innerHTML = archivos.map(f => {
         const {icon, color} = iconoPorMime(f.tipo_mime);
         const urlArchivo    = UPLOAD_BASE + f.archivo_path;
+        const mClase = 'm-' + (f.marcador || 'ninguno').toLowerCase().replace(' ', '-').replace('ó','o');
+        
         return `
         <div class="file-card" title="${escHtml(f.nombre_original)}">
-            <span class="file-icon">
+            <div class="marcador-selector dropdown">
+                <div class="marcador-dot ${mClase}" data-bs-toggle="dropdown" title="Cambiar marcador"></div>
+                <ul class="dropdown-menu shadow" style="font-size:0.75rem;">
+                    <li><h6 class="dropdown-header">Marcador</h6></li>
+                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Ninguno')"> Ninguno</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Pendiente')"><i class="fa-solid fa-circle" style="color:#f59e0b"></i> Pendiente</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Completado')"><i class="fa-solid fa-circle" style="color:#10b981"></i> Completado</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Revision')"><i class="fa-solid fa-circle" style="color:#3b82f6"></i> En Revisión</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Urgente')"><i class="fa-solid fa-circle" style="color:#991b1b"></i> Urgente</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="cambiarMarcador(${f.id}, 'Borrador')"><i class="fa-solid fa-circle" style="color:#64748b"></i> Borrador</a></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="cambiarMarcador(${f.id}, 'Cancelado')"><i class="fa-solid fa-circle"></i> Cancelado</a></li>
+                </ul>
+            </div>
+            
+            <div class="file-marcador ${mClase}">${escHtml(f.marcador === 'Revision' ? 'En Revisión' : f.marcador)}</div>
+
+            <span class="file-icon" onclick="abrirPreview('${escHtml(f.nombre_original).replace(/'/g,"\\\'").replace(/"/g,'&quot;')}', '${urlArchivo}', '${f.tipo_mime}', '${formatBytes(f.tamano_bytes)}', '${escHtml(f.fecha)}')" >
                 <i class="fa-solid ${icon}" style="color:${color};"></i>
             </span>
-            <div class="file-name">${escHtml(f.nombre_original)}</div>
+            <div class="file-name" onclick="abrirPreview('${escHtml(f.nombre_original).replace(/'/g,"\\\'").replace(/"/g,'&quot;')}', '${urlArchivo}', '${f.tipo_mime}', '${formatBytes(f.tamano_bytes)}', '${escHtml(f.fecha)}')" >${escHtml(f.nombre_original)}</div>
             <div class="file-meta">${formatBytes(f.tamano_bytes)} · ${escHtml(f.fecha)}</div>
             <div class="file-actions">
                 <button class="file-action-btn" title="Vista previa"
@@ -941,6 +998,28 @@ function mostrarToast(msg, tipo = 'success') {
     t.innerHTML = `<i class="fa-solid fa-${tipo==='success'?'check':'circle-exclamation'}"></i> ${escHtml(msg)}`;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3000);
+}
+
+// ── Marcadores ────────────────────────────────────────────────
+async function cambiarMarcador(id, valor) {
+    const fd = new FormData();
+    fd.append('accion', 'set_marcador');
+    fd.append('csrf_token', CSRF);
+    fd.append('id', id);
+    fd.append('marcador', valor);
+
+    try {
+        const res  = await fetch(API_REPO, { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.ok) {
+            cargarArchivos(); // Recargar para mostrar el nuevo marcador
+            mostrarToast('Marcador actualizado: ' + valor, 'success');
+        } else {
+            alert(data.error || 'Error actualizando marcador');
+        }
+    } catch (e) {
+        alert('Error de conexión al actualizar marcador');
+    }
 }
 
 // ── Inicializar ───────────────────────────────────────────────
