@@ -627,6 +627,23 @@ $extraHead = '
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    overflow-y: auto;
+    max-height: 550px;
+}
+
+/* Custom Scrollbar for Kanban Columns */
+.kanban-col-body::-webkit-scrollbar {
+    width: 6px;
+}
+.kanban-col-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.kanban-col-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+.kanban-col-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 /* Tarea Card (Drag and Drop) */

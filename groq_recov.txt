@@ -1,0 +1,405 @@
+﻿commit c0eca56868d67e907b803255c6e3191d6523361c
+Author: Administrador COMECyT <admin@comecyt.gob.mx>
+Date:   Thu Mar 26 16:36:27 2026 +0100
+
+    update: sincronizaci├│n de sistema
+
+diff --git a/admin/api/agente_ia.php b/admin/api/agente_ia.php
+index b060c5f..6c6e678 100644
+--- a/admin/api/agente_ia.php
++++ b/admin/api/agente_ia.php
+@@ -54,120 +54,45 @@ if (mb_strlen($mensaje) > $maxChars) {
+     $mensaje = mb_substr($mensaje, 0, $maxChars);
+ }
+ 
+-// ÔöÇÔöÇ Groq API Key ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+-$apiKey = $_ENV['GROQ_API_KEY'] ?? '';
+-if (empty($apiKey)) {
+-    echo json_encode([
+-        'ok'       => false,
+-        'error'    => 'API key de Groq no configurada. Edita el archivo .env y agrega tu GROQ_API_KEY (gratis en https://console.groq.com).',
+-        'no_key'   => true,
+-    ]);
+-    exit;
+-}
++// ÔöÇÔöÇ Ollama Local ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++require_once __DIR__ . '/../../config/ai_config.php';
++
++$ollamaUrl   = 'http://host.docker.internal:11434/api/chat'; // Cambiado a /chat para mejor manejo de mensajes
++$ollamaModel = defined('OLLAMA_MODEL') ? OLLAMA_MODEL : 'qwen2.5-coder:1.5b';
+ 
+ // ÔöÇÔöÇ Historial ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+ $histRaw = json_decode($histJson, true);
+ if (!is_array($histRaw)) $histRaw = [];
++$histRaw = array_slice($histRaw, -10);
+ 
+-// Limitar historial a ├║ltimas 10 rondas para no exceder tokens
+-$histRaw = array_slice($histRaw, -20);
+-
+-// Construir mensajes en formato Groq
+ $messages = [];
+-
+-// ÔöÇÔöÇ PROMPT SISTEMA ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+-$systemPrompt = <<<PROMPT
+-Eres el Asistente Oficial del sistema COMECyT Control de Solicitudes, un panel administrativo interno del Colegio Mexiquense (COMECyT) para gestionar solicitudes de personal (becas, licencias, permisos, constancias, etc.).
+-
+-REGLAS ESTRICTAS:
+-- Responde SIEMPRE en espa├▒ol, de forma clara, concisa y profesional.
+-- NO inventes datos num├®ricos ni estad├¡sticas del sistema (no tienes acceso a la base de datos en tiempo real).
+-- Si no sabes algo, dilo honestamente y sugiere al admin que revise el m├│dulo correspondiente.
+-- Mant├®n un tono amable pero formal.
+-- No hagas nada fuera del sistema COMECyT (no das recetas, noticias, etc.).
+-
+-CONTEXTO DEL SISTEMA ÔÇö LO QUE SABES:
+-
+-M├ôDULOS DISPONIBLES EN EL ADMIN:
+-1. Dashboard ÔÇö Resumen general de solicitudes con estad├¡sticas y gr├íficas. Muestra totales por estatus.
+-2. Todas las Solicitudes ÔÇö Listado completo con filtros por estatus, convocatoria, ├írea y b├║squeda.
+-3. Pendientes ÔÇö Solicitudes con estatus "pendiente" que esperan revisi├│n.
+-4. En Proceso ÔÇö Solicitudes activamente siendo tramitadas.
+-5. Completadas ÔÇö Solicitudes finalizadas o rechazadas.
+-6. Administradores ÔÇö Gesti├│n de cuentas de administradores del sistema (crear, activar/desactivar).
+-7. Calendario ÔÇö Agenda con vista mensual/semanal, tareas Kanban integradas con el chat del equipo.
+-8. Personal ÔÇö Directorio del personal de COMECyT con datos de contacto y ├írea.
+-9. Correos Oficiales ÔÇö Gesti├│n de correos institucionales asignados al personal.
+-10. Control de Equipos ÔÇö Inventario de equipos tecnol├│gicos asignados al personal.
+-11. Vista P├║blica (enlace externo) ÔÇö Portal donde usuarios externos consultan y env├¡an solicitudes.
+-
+-ESTATUS DE SOLICITUDES:
+-- pendiente ÔåÆ reci├®n recibida, sin revisi├│n
+-- en_proceso ÔåÆ en tr├ímite por el administrador
+-- completada ÔåÆ resuelta/aprobada
+-- rechazada ÔåÆ no procedi├│
+-
+-ROLES EN EL SISTEMA:
+-- Administrador: acceso total al panel admin
+-- Usuario externo (personal): solo ve sus propias solicitudes en el portal p├║blico
+-
+-CHAT DEL EQUIPO TI:
+-- Chat grupal visible solo para administradores
+-- Permite crear tareas Kanban y eventos de calendario directamente desde el chat
+-- Badge de notificaciones en el header cuando hay mensajes no le├¡dos
+-
+-ACCIONES COMUNES QUE PUEDES EXPLICAR:
+-- C├│mo cambiar el estatus de una solicitud (ir a detalle y seleccionar nuevo estatus)
+-- C├│mo exportar solicitudes a CSV (bot├│n en el listado de solicitudes)
+-- C├│mo crear un administrador nuevo (m├│dulo Administradores ÔåÆ bot├│n "Nuevo")
+-- C├│mo usar el chat del equipo (├¡cono de chat en el header)
+-- C├│mo agendar eventos desde el calendario o desde el chat
+-- C├│mo filtrar solicitudes por convocatoria o ├írea
+-
+-P├üGINA ACTUAL DEL ADMIN: {PAGINA_ACTUAL}
+-
+-Responde de forma ├║til seg├║n el contexto de la p├ígina actual cuando sea relevante.
+-PROMPT;
+-
+-$systemPrompt = str_replace('{PAGINA_ACTUAL}', htmlspecialchars($paginaCtx, ENT_QUOTES), $systemPrompt);
+-
++// Prompt Sistema
++$systemPrompt = "Eres el Asistente Oficial del sistema COMECyT Control de Solicitudes. Responde en espa├▒ol, de forma concisa. Pagina actual: " . $paginaCtx;
+ $messages[] = ['role' => 'system', 'content' => $systemPrompt];
+ 
+-// Agregar historial anterior
+ foreach ($histRaw as $turn) {
+-    $role    = ($turn['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
+-    $content = mb_substr(trim($turn['content'] ?? ''), 0, 500);
+-    if ($content !== '') {
+-        $messages[] = ['role' => $role, 'content' => $content];
+-    }
++    $role = ($turn['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
++    $messages[] = ['role' => $role, 'content' => $turn['content'] ?? ''];
+ }
+-
+-// Mensaje actual del usuario
+ $messages[] = ['role' => 'user', 'content' => $mensaje];
+ 
+-// ÔöÇÔöÇ Llamada a Groq API ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
+-$groqModel  = $_ENV['GROQ_MODEL']     ?? 'llama-3.1-8b-instant';
+-$maxTokens  = (int) ($_ENV['AI_MAX_TOKENS'] ?? 600);
+-
+ $payload = json_encode([
+-    'model'       => $groqModel,
+-    'messages'    => $messages,
+-    'max_tokens'  => $maxTokens,
+-    'temperature' => 0.5,
+-    'stream'      => false,
++    'model'    => $ollamaModel,
++    'messages' => $messages,
++    'stream'   => false,
++    'options'  => [
++        'temperature' => 0.6,
++        'num_predict' => 800
++    ]
+ ]);
+ 
+-$ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
++$ch = curl_init($ollamaUrl);
+ curl_setopt_array($ch, [
+     CURLOPT_RETURNTRANSFER => true,
+     CURLOPT_POST           => true,
+     CURLOPT_POSTFIELDS     => $payload,
+-    CURLOPT_TIMEOUT        => 30,
+-    CURLOPT_HTTPHEADER     => [
+-        'Content-Type: application/json',
+-        'Authorization: Bearer ' . $apiKey,
+-    ],
+-    CURLOPT_SSL_VERIFYPEER => true,
++    CURLOPT_TIMEOUT        => 45,
++    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+ ]);
+ 
+ $rawResponse = curl_exec($ch);
+@@ -176,30 +101,16 @@ $curlError   = curl_error($ch);
+ curl_close($ch);
+ 
+ if ($curlError) {
+-    error_log('[AGENTE_IA] cURL error: ' . $curlError);
+-    echo json_encode(['ok' => false, 'error' => 'Error de conexi├│n con el servicio de IA. Verifica tu conexi├│n.']);
+-    exit;
+-}
+-
+-$groqData = json_decode($rawResponse, true);
+-
+-if ($httpCode !== 200 || !isset($groqData['choices'][0]['message']['content'])) {
+-    $groqError = $groqData['error']['message'] ?? 'Respuesta inesperada del servicio de IA.';
+-    error_log('[AGENTE_IA] Groq HTTP ' . $httpCode . ': ' . $groqError);
+-
+-    // Error espec├¡fico de API key inv├ílida
+-    if ($httpCode === 401) {
+-        echo json_encode(['ok' => false, 'error' => 'API key inv├ílida. Verifica tu GROQ_API_KEY en el archivo .env.', 'no_key' => true]);
+-    } else {
+-        echo json_encode(['ok' => false, 'error' => 'El servicio de IA no est├í disponible en este momento. Intenta de nuevo.']);
+-    }
++    echo json_encode(['ok' => false, 'error' => 'No se pudo conectar con Ollama Local. Aseg├║rate de que el contenedor ai_ollama est├® corriendo.']);
+     exit;
+ }
+ 
+-$respuesta = trim($groqData['choices'][0]['message']['content']);
++$data = json_decode($rawResponse, true);
++$respuesta = $data['message']['content'] ?? 'Error al procesar respuesta local.';
+ 
+ echo json_encode([
+     'ok'        => true,
+     'respuesta' => $respuesta,
+-    'modelo'    => $groqData['model'] ?? 'llama-3.1-8b-instant',
++    'modelo'    => $ollamaModel,
++    'source'    => 'local'
+ ]);
+
+commit 6bf7714b435ebc1d718da1faf4b3e263721fdd23
+Author: Administrador COMECyT <admin@comecyt.gob.mx>
+Date:   Thu Mar 12 21:17:36 2026 +0100
+
+    Consolidacion de Auditoria Senior - Fase 3 - Blindaje y Optimizacion
+
+diff --git a/admin/api/agente_ia.php b/admin/api/agente_ia.php
+new file mode 100644
+index 0000000..b060c5f
+--- /dev/null
++++ b/admin/api/agente_ia.php
+@@ -0,0 +1,205 @@
++<?php
++/**
++ * COMECyT Control de Solicitudes
++ * Endpoint: Agente IA ÔÇö Groq (LLaMA 3)
++ *
++ * POST: { mensaje, historial[], pagina, csrf_token }
++ * GET:  { ping } ÔåÆ {"ok":true}
++ */
++
++require_once __DIR__ . '/../../config/database.php'; // carga .env ÔåÆ $_ENV
++require_once __DIR__ . '/../../config/auth.php';
++
++// ÔöÇÔöÇ Seguridad: solo admins ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++verificarSesionAdmin();
++
++header('Content-Type: application/json; charset=utf-8');
++header('X-Content-Type-Options: nosniff');
++
++// ÔöÇÔöÇ Ping de salud ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['ping'])) {
++    $keyConfigured = !empty($_ENV['GROQ_API_KEY']);
++    echo json_encode(['ok' => true, 'api_key_set' => $keyConfigured]);
++    exit;
++}
++
++// ÔöÇÔöÇ Solo POST de aqu├¡ en adelante ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
++    http_response_code(405);
++    echo json_encode(['ok' => false, 'error' => 'M├®todo no permitido']);
++    exit;
++}
++
++// ÔöÇÔöÇ CSRF ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++$tokenRecibido = $_POST['csrf_token'] ?? '';
++if (!hash_equals($_SESSION['csrf_token'] ?? '', $tokenRecibido)) {
++    http_response_code(403);
++    echo json_encode(['ok' => false, 'error' => 'Token CSRF inv├ílido']);
++    exit;
++}
++
++// ÔöÇÔöÇ Leer par├ímetros ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++$mensaje   = trim($_POST['mensaje'] ?? '');
++$paginaCtx = trim($_POST['pagina'] ?? 'general');
++$histJson  = $_POST['historial'] ?? '[]';
++
++if ($mensaje === '') {
++    echo json_encode(['ok' => false, 'error' => 'Mensaje vac├¡o']);
++    exit;
++}
++
++// Sanitizar longitud (configurable desde .env)
++$maxChars = (int) ($_ENV['AI_MAX_CHARS'] ?? 800);
++if (mb_strlen($mensaje) > $maxChars) {
++    $mensaje = mb_substr($mensaje, 0, $maxChars);
++}
++
++// ÔöÇÔöÇ Groq API Key ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++$apiKey = $_ENV['GROQ_API_KEY'] ?? '';
++if (empty($apiKey)) {
++    echo json_encode([
++        'ok'       => false,
++        'error'    => 'API key de Groq no configurada. Edita el archivo .env y agrega tu GROQ_API_KEY (gratis en https://console.groq.com).',
++        'no_key'   => true,
++    ]);
++    exit;
++}
++
++// ÔöÇÔöÇ Historial ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++$histRaw = json_decode($histJson, true);
++if (!is_array($histRaw)) $histRaw = [];
++
++// Limitar historial a ├║ltimas 10 rondas para no exceder tokens
++$histRaw = array_slice($histRaw, -20);
++
++// Construir mensajes en formato Groq
++$messages = [];
++
++// ÔöÇÔöÇ PROMPT SISTEMA ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++$systemPrompt = <<<PROMPT
++Eres el Asistente Oficial del sistema COMECyT Control de Solicitudes, un panel administrativo interno del Colegio Mexiquense (COMECyT) para gestionar solicitudes de personal (becas, licencias, permisos, constancias, etc.).
++
++REGLAS ESTRICTAS:
++- Responde SIEMPRE en espa├▒ol, de forma clara, concisa y profesional.
++- NO inventes datos num├®ricos ni estad├¡sticas del sistema (no tienes acceso a la base de datos en tiempo real).
++- Si no sabes algo, dilo honestamente y sugiere al admin que revise el m├│dulo correspondiente.
++- Mant├®n un tono amable pero formal.
++- No hagas nada fuera del sistema COMECyT (no das recetas, noticias, etc.).
++
++CONTEXTO DEL SISTEMA ÔÇö LO QUE SABES:
++
++M├ôDULOS DISPONIBLES EN EL ADMIN:
++1. Dashboard ÔÇö Resumen general de solicitudes con estad├¡sticas y gr├íficas. Muestra totales por estatus.
++2. Todas las Solicitudes ÔÇö Listado completo con filtros por estatus, convocatoria, ├írea y b├║squeda.
++3. Pendientes ÔÇö Solicitudes con estatus "pendiente" que esperan revisi├│n.
++4. En Proceso ÔÇö Solicitudes activamente siendo tramitadas.
++5. Completadas ÔÇö Solicitudes finalizadas o rechazadas.
++6. Administradores ÔÇö Gesti├│n de cuentas de administradores del sistema (crear, activar/desactivar).
++7. Calendario ÔÇö Agenda con vista mensual/semanal, tareas Kanban integradas con el chat del equipo.
++8. Personal ÔÇö Directorio del personal de COMECyT con datos de contacto y ├írea.
++9. Correos Oficiales ÔÇö Gesti├│n de correos institucionales asignados al personal.
++10. Control de Equipos ÔÇö Inventario de equipos tecnol├│gicos asignados al personal.
++11. Vista P├║blica (enlace externo) ÔÇö Portal donde usuarios externos consultan y env├¡an solicitudes.
++
++ESTATUS DE SOLICITUDES:
++- pendiente ÔåÆ reci├®n recibida, sin revisi├│n
++- en_proceso ÔåÆ en tr├ímite por el administrador
++- completada ÔåÆ resuelta/aprobada
++- rechazada ÔåÆ no procedi├│
++
++ROLES EN EL SISTEMA:
++- Administrador: acceso total al panel admin
++- Usuario externo (personal): solo ve sus propias solicitudes en el portal p├║blico
++
++CHAT DEL EQUIPO TI:
++- Chat grupal visible solo para administradores
++- Permite crear tareas Kanban y eventos de calendario directamente desde el chat
++- Badge de notificaciones en el header cuando hay mensajes no le├¡dos
++
++ACCIONES COMUNES QUE PUEDES EXPLICAR:
++- C├│mo cambiar el estatus de una solicitud (ir a detalle y seleccionar nuevo estatus)
++- C├│mo exportar solicitudes a CSV (bot├│n en el listado de solicitudes)
++- C├│mo crear un administrador nuevo (m├│dulo Administradores ÔåÆ bot├│n "Nuevo")
++- C├│mo usar el chat del equipo (├¡cono de chat en el header)
++- C├│mo agendar eventos desde el calendario o desde el chat
++- C├│mo filtrar solicitudes por convocatoria o ├írea
++
++P├üGINA ACTUAL DEL ADMIN: {PAGINA_ACTUAL}
++
++Responde de forma ├║til seg├║n el contexto de la p├ígina actual cuando sea relevante.
++PROMPT;
++
++$systemPrompt = str_replace('{PAGINA_ACTUAL}', htmlspecialchars($paginaCtx, ENT_QUOTES), $systemPrompt);
++
++$messages[] = ['role' => 'system', 'content' => $systemPrompt];
++
++// Agregar historial anterior
++foreach ($histRaw as $turn) {
++    $role    = ($turn['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
++    $content = mb_substr(trim($turn['content'] ?? ''), 0, 500);
++    if ($content !== '') {
++        $messages[] = ['role' => $role, 'content' => $content];
++    }
++}
++
++// Mensaje actual del usuario
++$messages[] = ['role' => 'user', 'content' => $mensaje];
++
++// ÔöÇÔöÇ Llamada a Groq API ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
++$groqModel  = $_ENV['GROQ_MODEL']     ?? 'llama-3.1-8b-instant';
++$maxTokens  = (int) ($_ENV['AI_MAX_TOKENS'] ?? 600);
++
++$payload = json_encode([
++    'model'       => $groqModel,
++    'messages'    => $messages,
++    'max_tokens'  => $maxTokens,
++    'temperature' => 0.5,
++    'stream'      => false,
++]);
++
++$ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
++curl_setopt_array($ch, [
++    CURLOPT_RETURNTRANSFER => true,
++    CURLOPT_POST           => true,
++    CURLOPT_POSTFIELDS     => $payload,
++    CURLOPT_TIMEOUT        => 30,
++    CURLOPT_HTTPHEADER     => [
++        'Content-Type: application/json',
++        'Authorization: Bearer ' . $apiKey,
++    ],
++    CURLOPT_SSL_VERIFYPEER => true,
++]);
++
++$rawResponse = curl_exec($ch);
++$httpCode    = curl_getinfo($ch, CURLINFO_HTTP_CODE);
++$curlError   = curl_error($ch);
++curl_close($ch);
++
++if ($curlError) {
++    error_log('[AGENTE_IA] cURL error: ' . $curlError);
++    echo json_encode(['ok' => false, 'error' => 'Error de conexi├│n con el servicio de IA. Verifica tu conexi├│n.']);
++    exit;
++}
++
++$groqData = json_decode($rawResponse, true);
++
++if ($httpCode !== 200 || !isset($groqData['choices'][0]['message']['content'])) {
++    $groqError = $groqData['error']['message'] ?? 'Respuesta inesperada del servicio de IA.';
++    error_log('[AGENTE_IA] Groq HTTP ' . $httpCode . ': ' . $groqError);
++
++    // Error espec├¡fico de API key inv├ílida
++    if ($httpCode === 401) {
++        echo json_encode(['ok' => false, 'error' => 'API key inv├ílida. Verifica tu GROQ_API_KEY en el archivo .env.', 'no_key' => true]);
++    } else {
++        echo json_encode(['ok' => false, 'error' => 'El servicio de IA no est├í disponible en este momento. Intenta de nuevo.']);
++    }
++    exit;
++}
++
++$respuesta = trim($groqData['choices'][0]['message']['content']);
++
++echo json_encode([
++    'ok'        => true,
++    'respuesta' => $respuesta,
++    'modelo'    => $groqData['model'] ?? 'llama-3.1-8b-instant',
++]);
