@@ -592,7 +592,15 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 
                 <!-- Grid de archivos -->
                 <div class="file-grid" id="fileGrid">
-                    <!-- ═══════════════════════════════════════════════════════════════
+                    <!-- cargado por JS -->
+                </div>
+            </div>
+        </div>
+
+    </div><!-- .repo-body -->
+</div><!-- .repo-wrapper -->
+
+<!-- ═══════════════════════════════════════════════════════════════
      MODAL: SELECCIONAR MARCADOR
      ═══════════════════════════════════════════════════════════════ -->
 <div class="mini-modal-overlay" id="marcadorModal" onclick="if(event.target===this) cerrarModalMarcador()">
@@ -609,12 +617,6 @@ require_once __DIR__ . '/../../includes/header_admin.php';
         </div>
     </div>
 </div>
-                </div>
-            </div>
-        </div>
-
-    </div><!-- .repo-body -->
-</div><!-- .repo-wrapper -->
 
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -797,7 +799,7 @@ async function cargarArchivos() {
             <div class="file-meta">${formatBytes(f.tamano_bytes)} · ${escHtml(f.fecha)}</div>
             <div class="file-actions">
                 <button class="file-action-btn btn-marcador" title="Cambiar Marcador"
-                        onclick="abrirModalMarcador(${f.id}, '${f.marcador || 'Ninguno'}')">
+                        onclick="event.stopPropagation(); abrirModalMarcador(${f.id}, '${f.marcador || 'Ninguno'}')">
                     <i class="fa-solid fa-tag"></i>
                 </button>
                 <button class="file-action-btn" title="Vista previa"
