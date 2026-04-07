@@ -83,12 +83,18 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 - **🚨 Error de Asistencia SS (Mismatch de Timezone) 🚨**: Los registros de entrada/salida en `ss_asistencia` fallaban o se bloqueaban incorrectamente. **Causa**: La columna era `timestamp without time zone` (ya local), pero las queries usaban `AT TIME ZONE 'America/Mexico_City'`, lo que provocaba un desplazamiento de +6 horas (hacia UTC) al comparar con la fecha de PHP. **Solución**: Eliminar `AT TIME ZONE` de las consultas en `dashboard.php` y `accion.php`, comparando directamente `DATE(fecha_hora) = :hoy`.
 - **🚫 Error Fatal de JS en Dashboard SS (`ReferenceError`) 🚫**: Los botones no hacían nada y la consola mostraba `registrarAsistencia is not defined`. **Causa**: Un error de sintaxis en `cargarEvidencias` (ternarios mal cerrados en template literals) y el uso de la función inexistente `escHtml` hacían que todo el bloque `<script>` fallara al cargar. **Solución**: Corregir la sintaxis de los backticks y definir `escHtml` al inicio del bloque JS.
 - **Truncado de Calendario**: Flex-items no se limitan solos. **Solución**: Usar `min-width: 0` + `overflow: hidden` en celdas de calendario.
+- **🚨 Corrupción de Codificación en agenda.php de Áreas 🚨**: Los archivos `agenda.php` de las áreas (`desarrollo_tecnologico`, `juridico`, etc.) se corrompieron a Latin-1/Windows-1252 (garbled: `Ã©`, `Ã¡`, `ðŸŽ‚`). **Causa**: Edición con herramientas que no respetan UTF-8 sin BOM. **Solución**: Reescribir siempre con API .NET `[IO.File]::WriteAllText(path, content, New-Object System.Text.UTF8Encoding $False)`. La reescritura también aplicó todos los fixes de bug del módulo agenda.
+- **🚨 Botón Ojo (Eye) Inactivo en Eventos Institucionales/Cumpleaños 🚨**: El botón `Ver` llamaba `event.stopPropagation()` pero no abría ningún modal. **Solución**: Implementar modal genérico `modalVerEvento` con funciones `verEvento()` y `verEventoPublico()` en todos los `agenda.php` de áreas. El modal muestra título, fecha y descripción (foto si es cumpleaños).
+- **🚨 Modales No Cierran al Hacer Clic Fuera (Backdrop) 🚨**: Los modales solo cerraban con el botón X o `Cancelar`. **Causa**: La propiedad `onclick` del backdrop no estaba configurada. **Solución**: Agregar `onclick="cerrarModalBackdrop(event,'modalId')"` en cada `.modal-backdrop` y la función JS `cerrarModalBackdrop(evt, id)` que compara `evt.target === evt.currentTarget`.
+- **🚨 Color no Persistido en Tarjetas Kanban (editar_tarea) 🚨**: Al guardar una tarea editada, el `border-top-color` de la tarjeta en el tablero no cambiaba. **Causa**: La query `UPDATE sb_kanban_tareas` no incluía clave de aislamiento `AND cve_area=?`, y el PHP template literal del color usaba comillas que se escapaban mal. **Solución**: Usar `addslashes()` al pasar el color a JS y asegurar que la query de UPDATE incluya siempre `AND cve_area=?` para seguridad.
+- **🚨 Registros Kanban con cve_area NULL No Visibles 🚨**: Registros históricos se guardaron sin `cve_area`, por lo que el filtro estricto `WHERE t.cve_area = ?` los excluía. **Solución**: Migración SQL: `UPDATE sb_kanban_tareas SET cve_area = 1 WHERE cve_area IS NULL;` y verificar el área 1 (Sistemas) para afianzar la propiedad de esos registros.
 
 ---
 
 ## 🤖 Subagentes & IA
-- **Agente IA Local**: Integración con Ollama (`host.docker.internal:11434`).
+- **Agente IA Local**: Integración con Ollama (`host.docker.internal:11434`) / Groq Cloud API.
 - **Capacidades**: Generación de código, auditoría de seguridad y asistencia en chat administrativo.
 - **Workflows Disponibles**:
   - `/system_sync`: Sincronización completa de Docker y Git.
-  - `/branding_check`: (Propuesto) Verificación de cumplimiento de guías de estilo.
+  - `/db_health`: Verificación de salud de PostgreSQL.
+- **Skills Reutilizables**: Ver `_agents/skills/` para skills de depuración de agenda y sincronización de sistema.
