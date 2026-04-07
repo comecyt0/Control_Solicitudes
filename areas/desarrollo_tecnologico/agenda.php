@@ -300,34 +300,35 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     $esCumple        = !empty($ev['es_cumple']);
                     $esInstitucional = !empty($ev['es_institucional']);
                     $colorEv         = $ev['color'] ?? $colorPrimary;
-                    $styleAttr       = 'background-color:'.esc($colorEv).'1a;border-top:3px solid '.esc($colorEv).';';
+                    $styleAttr       = 'background-color:'.esc($colorEv).'1a;border-top:3px solid '.esc($colorEv).';;';
                     if ($esCumple) $styleAttr = '';
 
                     $claseNota = $esCumple ? 'nota-dorado' : ($esInstitucional ? 'nota-institucional' : 'nota-dt');
-                    if (!$esCumple && !$esInstitucional) $claseNota = ''; // usa style dinámico
+                    if (!$esCumple && !$esInstitucional) $claseNota = '';
 
-                    $tituloArg = esc(addslashes($ev['titulo'] ?? ''));
-                    $descArg   = esc(addslashes($ev['descripcion'] ?? ''));
-                    $fotoUrl   = '';
+                    $fotoUrl      = '';
                     if ($esCumple && !empty($ev['foto_perfil'])) {
-                        $fotoUrl = BASE_URL.'public/uploads/avatares/'.esc($ev['foto_perfil']);
+                        $fotoUrl = BASE_URL.'public/uploads/avatares/'.$ev['foto_perfil'];
                     }
                     $fechaDisplay = date('d/m/Y', strtotime($ev['fecha_inicio']));
                     $horaDisplay  = date('H:i', strtotime($ev['fecha_inicio']));
+                    $pillTipo     = $esCumple ? 'cumple' : ($esInstitucional ? 'institucional' : 'area');
                 ?>
-                    <?php
-                    // Determinar la acción al hacer click en la píldora
-                    if ($esCumple) {
-                        $pillOnclick = "event.stopPropagation();agVerCumple('".$tituloArg."','".esc(addslashes($fotoUrl))."','".esc(addslashes($ev['nombre_cumple'] ?? ''))."','".esc($ev['fecha_display'] ?? $fechaDisplay)."')";
-                    } elseif ($esInstitucional) {
-                        $pillOnclick = "event.stopPropagation();agVerEvento('".$tituloArg."','".$descArg."','".esc(date('d/m/Y H:i', strtotime($ev['fecha_inicio'])))."','".esc(date('d/m/Y H:i', strtotime($ev['fecha_fin'])))."')";
-                    } else {
-                        // Evento propio: clic abre el modal de ver/editar (no requiere hover)
-                        $pillOnclick = "event.stopPropagation();agVerDetalleEvento(".(int)$ev['id'].",'".addslashes($ev['titulo'] ?? '')."','".addslashes($ev['descripcion'] ?? '')."','".date('Y-m-d', strtotime($ev['fecha_inicio']))."','".date('Y-m-d', strtotime($ev['fecha_fin']))."','".esc($colorEv)."')";
-                    }
-                    ?>
-                    <div class="evento-pildora <?= $claseNota ?>" style="<?= $styleAttr ?>;cursor:pointer;"
-                         onclick="<?= $pillOnclick ?>">
+                    <div class="evento-pildora <?= $claseNota ?>"
+                         style="<?= $styleAttr ?>;cursor:pointer;"
+                         onclick="event.stopPropagation();agPillClick(this)"
+                         data-tipo="<?= $pillTipo ?>"
+                         data-id="<?= (int)($ev['id'] ?? 0) ?>"
+                         data-titulo="<?= esc($ev['titulo'] ?? '') ?>"
+                         data-desc="<?= esc($ev['descripcion'] ?? '') ?>"
+                         data-fi="<?= esc(date('Y-m-d', strtotime($ev['fecha_inicio']))) ?>"
+                         data-ff="<?= esc(date('Y-m-d', strtotime($ev['fecha_fin']))) ?>"
+                         data-fi-display="<?= esc(date('d/m/Y H:i', strtotime($ev['fecha_inicio']))) ?>"
+                         data-ff-display="<?= esc(date('d/m/Y H:i', strtotime($ev['fecha_fin']))) ?>"
+                         data-color="<?= esc($colorEv) ?>"
+                         data-foto="<?= esc($fotoUrl) ?>"
+                         data-nombre="<?= esc($ev['nombre_cumple'] ?? '') ?>"
+                         data-fecha-display="<?= esc($ev['fecha_display'] ?? $fechaDisplay) ?>">
                         <div class="evento-titulo">
                             <?php if ($esCumple): ?>
                                 <?php if (!empty($fotoUrl)): ?>
@@ -341,8 +342,16 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <?php if (!$esCumple): ?>
                         <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= $horaDisplay ?></div>
                         <?php endif; ?>
-                        <?php if (!$esCumple && !$esInstitucional): ?>
-                        <div style="font-size:.65rem;opacity:.6;margin-top:2px;"><i class="fa-solid fa-hand-pointer"></i> Clic para ver detalles</div>
+                        <?php if ($pillTipo === 'area'): ?>
+                        <div style="font-size:.62rem;opacity:.55;margin-top:2px;display:flex;gap:6px;align-items:center;">
+                            <i class="fa-solid fa-eye" title="Ver"></i>
+                            <i class="fa-solid fa-pen" title="Editar"></i>
+                            <i class="fa-solid fa-trash-can" style="color:#ef4444;" title="Eliminar"></i>
+                        </div>
+                        <?php elseif ($pillTipo === 'institucional'): ?>
+                        <div style="font-size:.62rem;opacity:.5;margin-top:2px;"><i class="fa-solid fa-eye"></i> Ver</div>
+                        <?php elseif ($pillTipo === 'cumple'): ?>
+                        <div style="font-size:.62rem;opacity:.5;margin-top:2px;"><i class="fa-solid fa-cake-candles"></i> Ver</div>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
@@ -687,6 +696,39 @@ function agAbrirCrearDesdeCelda(f) {
     document.getElementById('c_ff').value = f;
     if (document.getElementById('c_titulo')) document.getElementById('c_titulo').value = '';
     agAbrirModal('modalCrearEvento');
+}
+
+/**
+ * agPillClick — Handler único para todas las píldoras del calendario.
+ * Lee datos desde atributos data-* (esc/htmlspecialchars en PHP, seguro para cualquier caracter).
+ * NO usa addslashes() ni inline JS arguments.
+ */
+function agPillClick(el) {
+    var tipo = el.dataset.tipo;
+    if (tipo === 'area') {
+        agVerDetalleEvento(
+            parseInt(el.dataset.id),
+            el.dataset.titulo,
+            el.dataset.desc,
+            el.dataset.fi,
+            el.dataset.ff,
+            el.dataset.color
+        );
+    } else if (tipo === 'institucional') {
+        agVerEvento(
+            el.dataset.titulo,
+            el.dataset.desc,
+            el.dataset.fiDisplay,
+            el.dataset.ffDisplay
+        );
+    } else if (tipo === 'cumple') {
+        agVerCumple(
+            el.dataset.titulo,
+            el.dataset.foto,
+            el.dataset.nombre,
+            el.dataset.fechaDisplay
+        );
+    }
 }
 function agAbrirEditar(id, titulo, desc, fi, ff, color) {
     document.getElementById('e_id').value    = id;
