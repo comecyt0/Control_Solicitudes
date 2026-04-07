@@ -315,7 +315,19 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     $fechaDisplay = date('d/m/Y', strtotime($ev['fecha_inicio']));
                     $horaDisplay  = date('H:i', strtotime($ev['fecha_inicio']));
                 ?>
-                    <div class="evento-pildora <?= $claseNota ?>" style="<?= $styleAttr ?>" onclick="event.stopPropagation();">
+                    <?php
+                    // Determinar la acción al hacer click en la píldora
+                    if ($esCumple) {
+                        $pillOnclick = "event.stopPropagation();agVerCumple('".$tituloArg."','".esc(addslashes($fotoUrl))."','".esc(addslashes($ev['nombre_cumple'] ?? ''))."','".esc($ev['fecha_display'] ?? $fechaDisplay)."')";
+                    } elseif ($esInstitucional) {
+                        $pillOnclick = "event.stopPropagation();agVerEvento('".$tituloArg."','".$descArg."','".esc(date('d/m/Y H:i', strtotime($ev['fecha_inicio'])))."','".esc(date('d/m/Y H:i', strtotime($ev['fecha_fin'])))."')";
+                    } else {
+                        // Evento propio: clic abre el modal de ver/editar (no requiere hover)
+                        $pillOnclick = "event.stopPropagation();agVerDetalleEvento(".(int)$ev['id'].",'".addslashes($ev['titulo'] ?? '')."','".addslashes($ev['descripcion'] ?? '')."','".date('Y-m-d', strtotime($ev['fecha_inicio']))."','".date('Y-m-d', strtotime($ev['fecha_fin']))."','".esc($colorEv)."')";
+                    }
+                    ?>
+                    <div class="evento-pildora <?= $claseNota ?>" style="<?= $styleAttr ?>;cursor:pointer;"
+                         onclick="<?= $pillOnclick ?>">
                         <div class="evento-titulo">
                             <?php if ($esCumple): ?>
                                 <?php if (!empty($fotoUrl)): ?>
@@ -329,32 +341,9 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <?php if (!$esCumple): ?>
                         <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= $horaDisplay ?></div>
                         <?php endif; ?>
-                        <div class="evento-acciones">
-                            <?php if ($esCumple): ?>
-                                <button type="button" class="btn-evento-accion" title="Ver cumpleaños"
-                                    onclick="event.stopPropagation();agVerCumple('<?= $tituloArg ?>','<?= esc(addslashes($fotoUrl)) ?>','<?= esc(addslashes($ev['nombre_cumple'] ?? '')) ?>','<?= esc($ev['fecha_display'] ?? $fechaDisplay) ?>')">
-                                    <i class="fa-solid fa-cake-candles"></i> Ver
-                                </button>
-                            <?php elseif ($esInstitucional): ?>
-                                <button type="button" class="btn-evento-accion" title="Ver detalle"
-                                    onclick="event.stopPropagation();agVerEvento('<?= $tituloArg ?>','<?= $descArg ?>','<?= esc(date('d/m/Y H:i', strtotime($ev['fecha_inicio']))) ?>','<?= esc(date('d/m/Y H:i', strtotime($ev['fecha_fin']))) ?>')">
-                                    <i class="fa-solid fa-eye"></i> Ver
-                                </button>
-                            <?php else: ?>
-                                <button type="button" class="btn-evento-accion" title="Ver"
-                                    onclick="event.stopPropagation();agVerEvento('<?= $tituloArg ?>','<?= $descArg ?>','<?= esc(date('d/m/Y H:i', strtotime($ev['fecha_inicio']))) ?>','<?= esc(date('d/m/Y H:i', strtotime($ev['fecha_fin']))) ?>')">
-                                    <i class="fa-solid fa-eye"></i>
-                                </button>
-                                <button type="button" class="btn-evento-accion" title="Editar"
-                                    onclick="event.stopPropagation();agAbrirEditar(<?= (int)$ev['id'] ?>,'<?= $tituloArg ?>','<?= $descArg ?>','<?= date('Y-m-d', strtotime($ev['fecha_inicio'])) ?>','<?= date('Y-m-d', strtotime($ev['fecha_fin'])) ?>','<?= esc($colorEv) ?>')">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <button type="button" class="btn-evento-accion" title="Eliminar" style="color:#ef4444"
-                                    onclick="event.stopPropagation();agConfirmarEliminarEvento(<?= (int)$ev['id'] ?>)">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            <?php endif; ?>
-                        </div>
+                        <?php if (!$esCumple && !$esInstitucional): ?>
+                        <div style="font-size:.65rem;opacity:.6;margin-top:2px;"><i class="fa-solid fa-hand-pointer"></i> Clic para ver detalles</div>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -433,17 +422,17 @@ require_once __DIR__ . '/../../includes/header_admin.php';
     </div>
 </div>
 
-<!-- Modal Cumpleaños (diseño idéntico al calendario público) -->
+<!-- Modal Ver Cumpleaños (diseño idéntico al calendario público) -->
 <div class="agenda-modal-backdrop" id="modalVerCumple" style="display:none;" onclick="if(event.target===this)agCerrarModal('modalVerCumple')">
     <div class="agenda-modal" style="max-width:400px;animation:agFadeIn .25s;">
         <div class="agenda-modal-header" style="background:linear-gradient(135deg,#fef9c3,#fde68a);border-bottom:1px solid #fcd34d;">
-            <h3 class="agenda-modal-title" style="color:#92400e;">🎂 ¡Feliz Cumpleaños!</h3>
+            <h3 class="agenda-modal-title" style="color:#92400e;">&#x1F382; &#xA1;Feliz Cumpleaños!</h3>
             <button class="agenda-modal-close" onclick="agCerrarModal('modalVerCumple')" style="background:rgba(146,64,14,.15);color:#92400e;">&#x2715;</button>
         </div>
         <div class="agenda-modal-body" style="text-align:center;padding:2rem 1.5rem;">
             <div style="margin-bottom:1.25rem;">
                 <img id="mc_foto" src="" alt="" style="width:110px;height:110px;border-radius:50%;object-fit:cover;border:4px solid #fcd34d;box-shadow:0 8px 20px rgba(0,0,0,.1);display:none;margin:0 auto;">
-                <div id="mc_placeholder" style="width:110px;height:110px;border-radius:50%;background:#fde68a;display:flex;align-items:center;justify-content:center;margin:0 auto;border:4px solid #fcd34d;font-size:2.5rem;">🎂</div>
+                <div id="mc_placeholder" style="width:110px;height:110px;border-radius:50%;background:#fde68a;display:flex;align-items:center;justify-content:center;margin:0 auto;border:4px solid #fcd34d;font-size:2.5rem;">&#x1F382;</div>
             </div>
             <h2 id="mc_nombre" style="margin:0 0 .25rem;font-size:1.25rem;font-weight:800;color:#1e293b;"></h2>
             <div style="display:inline-block;background:#fef3c7;border:1px solid #fde68a;border-radius:20px;padding:4px 15px;font-size:.85rem;color:#92400e;font-weight:700;margin-top:.75rem;">
@@ -451,10 +440,93 @@ require_once __DIR__ . '/../../includes/header_admin.php';
             </div>
         </div>
         <div class="agenda-modal-footer" style="justify-content:center;">
-            <button type="button" class="btn btn-primary" onclick="agCerrarModal('modalVerCumple')">¡Felicidades!</button>
+            <button type="button" class="btn btn-primary" onclick="agCerrarModal('modalVerCumple')">&#xA1;Felicidades!</button>
         </div>
     </div>
 </div>
+
+<!-- Modal VER + EDITAR Evento del Área (clic en píldora propia) -->
+<div class="agenda-modal-backdrop" id="modalVerDetalle" style="display:none;" onclick="if(event.target===this)agCerrarModal('modalVerDetalle')">
+    <div class="agenda-modal" style="max-width:540px;animation:agFadeIn .25s;">
+        <div class="agenda-modal-header" style="background:linear-gradient(135deg,<?= $colorPrimary ?>,<?= $colorPrimary ?>cc);">
+            <h3 class="agenda-modal-title" id="vd_header_titulo"><i class="fa-solid fa-calendar-check"></i> Detalle del Evento</h3>
+            <button class="agenda-modal-close" onclick="agCerrarModal('modalVerDetalle')">&#x2715;</button>
+        </div>
+        <!-- Vista detalle -->
+        <div id="vd_vista" class="agenda-modal-body">
+            <div style="margin-bottom:14px;">
+                <p style="margin:0 0 4px;font-size:.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">T&iacute;tulo</p>
+                <p id="vd_titulo" style="margin:0;font-size:1.1rem;font-weight:700;color:#1e293b;"></p>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+                <div style="background:#f8fafc;border-radius:10px;padding:12px;border:1px solid #e2e8f0;">
+                    <p style="margin:0 0 4px;font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;">Desde</p>
+                    <p id="vd_fi" style="margin:0;font-weight:600;color:#334155;"></p>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:12px;border:1px solid #e2e8f0;">
+                    <p style="margin:0 0 4px;font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;">Hasta</p>
+                    <p id="vd_ff" style="margin:0;font-weight:600;color:#334155;"></p>
+                </div>
+            </div>
+            <div>
+                <p style="margin:0 0 4px;font-size:.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;">Descripci&oacute;n</p>
+                <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #e2e8f0;min-height:60px;">
+                    <p id="vd_desc" style="margin:0;white-space:pre-wrap;color:#334155;line-height:1.6;"></p>
+                </div>
+            </div>
+        </div>
+        <!-- Formulario editar (oculto por defecto) -->
+        <div id="vd_editar" style="display:none;">
+            <form method="POST" id="formVerDetalleEditar">
+                <?= csrfField() ?><input type="hidden" name="_accion" value="editar_evento">
+                <input type="hidden" name="evento_id" id="vd_ev_id">
+                <div class="agenda-modal-body">
+                    <div class="mb-16"><label class="ag-form-label">T&iacute;tulo *</label><input type="text" name="titulo" class="ag-form-control" id="vd_e_titulo" required></div>
+                    <div class="mb-16"><label class="ag-form-label">Descripci&oacute;n</label><textarea name="descripcion" class="ag-form-control" id="vd_e_desc" rows="3"></textarea></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="mb-16">
+                        <div><label class="ag-form-label">Desde *</label><input type="date" name="fecha_inicio" id="vd_e_fi" class="ag-form-control" required></div>
+                        <div><label class="ag-form-label">Hasta *</label><input type="date" name="fecha_fin" id="vd_e_ff" class="ag-form-control" required></div>
+                    </div>
+                    <div><label class="ag-form-label">Color</label><input type="color" name="color" id="vd_e_color" class="ag-form-control" style="height:44px;padding:4px;cursor:pointer;"></div>
+                </div>
+                <div class="agenda-modal-footer">
+                    <button type="button" onclick="agVdModo('ver')" class="btn btn-outline">Cancelar</button>
+                    <button type="submit" form="formVerDetalleEditar" class="btn btn-ag-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+        <!-- Footer del modo Ver -->
+        <div class="agenda-modal-footer" id="vd_footer_ver" style="justify-content:space-between;">
+            <button type="button" id="vd_btn_eliminar" onclick="agConfirmarEliminarEvento()" class="btn" style="background:#fef2f2;color:#ef4444;border:1px solid #fca5a5;"><i class="fa-solid fa-trash-can"></i> Eliminar</button>
+            <div style="display:flex;gap:8px;">
+                <button type="button" onclick="agCerrarModal('modalVerDetalle')" class="btn btn-outline">Cerrar</button>
+                <button type="button" onclick="agVdModo('editar')" class="btn btn-ag-primary"><i class="fa-solid fa-pen"></i> Editar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmar Eliminar Evento (reemplaza confirm()) -->
+<div class="agenda-modal-backdrop" id="modalConfirmarEliminar" style="display:none;" onclick="if(event.target===this)agCerrarModal('modalConfirmarEliminar')">
+    <div class="agenda-modal" style="max-width:400px;animation:agFadeIn .25s;">
+        <div class="agenda-modal-header" style="background:linear-gradient(135deg,#dc2626,#991b1b);">
+            <h3 class="agenda-modal-title"><i class="fa-solid fa-triangle-exclamation"></i> Confirmar eliminaci&oacute;n</h3>
+            <button class="agenda-modal-close" onclick="agCerrarModal('modalConfirmarEliminar')">&#x2715;</button>
+        </div>
+        <div class="agenda-modal-body" style="text-align:center;padding:2rem 1.5rem;">
+            <div style="width:70px;height:70px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                <i class="fa-solid fa-trash-can" style="font-size:1.8rem;color:#ef4444;"></i>
+            </div>
+            <h3 style="margin:0 0 .5rem;font-size:1.1rem;font-weight:700;color:#1e293b;">&#xBF;Eliminar este evento?</h3>
+            <p style="margin:0;color:#64748b;font-size:.9rem;">Esta acci&oacute;n es permanente y no se puede deshacer.</p>
+        </div>
+        <div class="agenda-modal-footer" style="justify-content:center;gap:16px;">
+            <button type="button" onclick="agCerrarModal('modalConfirmarEliminar')" class="btn btn-outline">Cancelar</button>
+            <button type="button" onclick="agEjecutarEliminarEvento()" class="btn" style="background:#dc2626;border-color:#dc2626;color:#fff;"><i class="fa-solid fa-trash-can"></i> S&iacute;, eliminar</button>
+        </div>
+    </div>
+</div>
+<form method="POST" id="formEliminarEvento" style="display:none;"><?= csrfField() ?><input type="hidden" name="_accion" value="eliminar_evento"><input type="hidden" name="evento_id" id="del_ev_id"></form>
 
 <!-- Modal Crear Evento -->
 <div class="agenda-modal-backdrop" id="modalCrearEvento" style="display:none;" onclick="if(event.target===this)agCerrarModal('modalCrearEvento')">
@@ -625,15 +697,59 @@ function agAbrirEditar(id, titulo, desc, fi, ff, color) {
     document.getElementById('e_color').value = color || '<?= $colorPrimary ?>';
     agAbrirModal('modalEditarEvento');
 }
+
+// Ver+Editar evento propio (clic en píldora del área)
+// data-id guardado en variable para el eliminar
+var _agEvId = null;
+function agVerDetalleEvento(id, titulo, desc, fi, ff, color) {
+    _agEvId = id;
+    // Poblar vista lectura
+    document.getElementById('vd_titulo').textContent = agDecode(titulo);
+    document.getElementById('vd_fi').textContent     = fi.replace(/-/g,'/');
+    document.getElementById('vd_ff').textContent     = ff.replace(/-/g,'/');
+    document.getElementById('vd_desc').textContent   = agDecode(desc) || 'Sin descripción.';
+    // Poblar formulario editar
+    document.getElementById('vd_ev_id').value    = id;
+    document.getElementById('vd_e_titulo').value  = agDecode(titulo);
+    document.getElementById('vd_e_desc').value   = agDecode(desc);
+    document.getElementById('vd_e_fi').value     = fi;
+    document.getElementById('vd_e_ff').value     = ff;
+    document.getElementById('vd_e_color').value  = color || '<?= $colorPrimary ?>';
+    agVdModo('ver');
+    agAbrirModal('modalVerDetalle');
+}
+// Cambiar entre modo Ver y Editar dentro del mismo modal
+function agVdModo(modo) {
+    var vista    = document.getElementById('vd_vista');
+    var editar   = document.getElementById('vd_editar');
+    var footer   = document.getElementById('vd_footer_ver');
+    var header   = document.getElementById('vd_header_titulo');
+    if (modo === 'editar') {
+        vista.style.display  = 'none';
+        editar.style.display = 'block';
+        footer.style.display = 'none';
+        header.innerHTML     = '<i class="fa-solid fa-pen-to-square"></i> Editar Evento';
+    } else {
+        vista.style.display  = 'block';
+        editar.style.display = 'none';
+        footer.style.display = 'flex';
+        header.innerHTML     = '<i class="fa-solid fa-calendar-check"></i> Detalle del Evento';
+    }
+}
+// Abrir modal de confirmación de eliminación (reemplaza confirm())
 function agConfirmarEliminarEvento(id) {
-    if (!confirm('¿Eliminar este evento permanentemente?')) return;
-    document.getElementById('del_ev_id').value = id;
+    if (id !== undefined) _agEvId = id; // Puede llamarse desde el modal de editar
+    agAbrirModal('modalConfirmarEliminar');
+}
+// Ejecutar la eliminación (llamado desde el botón del modal de confirmación)
+function agEjecutarEliminarEvento() {
+    document.getElementById('del_ev_id').value = _agEvId;
     document.getElementById('formEliminarEvento').submit();
 }
-// Ver evento (solo lectura - institucional o propio)
+// Ver evento (solo lectura - institucional)
 function agVerEvento(titulo, desc, fechaIni, fechaFin) {
     document.getElementById('ver_titulo').textContent = agDecode(titulo);
-    document.getElementById('ver_fecha').textContent  = fechaIni + (fechaFin !== fechaIni ? ' — ' + fechaFin : '');
+    document.getElementById('ver_fecha').textContent  = fechaIni + (fechaFin !== fechaIni ? ' \u2014 ' + fechaFin : '');
     document.getElementById('ver_desc').textContent   = agDecode(desc) || 'Sin descripción.';
     agAbrirModal('modalVerEvento');
 }
