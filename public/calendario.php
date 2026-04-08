@@ -374,7 +374,7 @@ require_once __DIR__ . '/../includes/header_user.php';
                         ?>
                         <div class="evento-pildora <?= $esCumple ? ' es-cumple' : '' ?>" 
                              style="<?= $styleAttr ?>"
-                             onclick="event.stopPropagation(); <?= $esCumple ? "abrirModalCumple('".esc(addslashes($ev['nombre_cumple']))."', '".esc($fotoUrl)."', '".$ev['edad']."', '".date('d/m', strtotime($ev['fecha_inicio']))."')" : "verDetalleEvento('".esc($ev['titulo'])."', '".esc($ev['descripcion']??'Sin detalles')."', '".date('H:i', strtotime($ev['fecha_inicio']))."', '".date('H:i', strtotime($ev['fecha_fin']))."')" ?>">
+                             onclick="event.stopPropagation(); <?= $esCumple ? "abrirModalCumple('".esc(addslashes($ev['nombre_cumple']))."', '".esc($fotoUrl)."', '".$ev['edad']."', '".date('d/m', strtotime($ev['fecha_inicio']))."')" : "verDetalleEvento('".esc($ev['titulo'])."', '".esc($ev['descripcion']??'Sin detalles')."', '".date('d/m/Y H:i', strtotime($ev['fecha_inicio']))."', '".date('d/m/Y H:i', strtotime($ev['fecha_fin']))."')" ?>">
                             <div class="evento-titulo">
                                 <?php if ($esCumple): ?>
                                     <?php if (!empty($fotoUrl)): ?>
@@ -481,7 +481,7 @@ function abrirModalSolicitudDesdeCelda(f) {
 }
 
 function verDetalleEvento(t, d, h1, h2) {
-    COMECyTUI.info(`${d}\n\nHorario: ${h1} - ${h2}`, t);
+    COMECyTUI.info(`${d}\n\nHorario: ${h1} a ${h2}`, t);
 }
 
 function abrirModalCumple(nombre, fotoUrl, edad, fecha) {

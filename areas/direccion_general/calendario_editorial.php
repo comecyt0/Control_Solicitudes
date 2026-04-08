@@ -350,7 +350,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                             <?php if($esCumple): ?>
                                 <button type="button" class="btn-evento-accion" onclick="abrirModalCumple('<?=esc(addslashes($ev['nombre_cumple']))?>','','<?=$ev['foto_perfil']?>','<?=$ev['edad']?>','<?=date('d/m', strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-cake-candles"></i></button>
                             <?php else: ?>
-                                <button type="button" class="btn-evento-accion" onclick="abrirModalVer('<?=esc(addslashes($ev['titulo']))?>','<?=esc(addslashes($ev['descripcion']))?>','<?=date('d/m/Y H:i',strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-eye"></i></button>
+                                <button type="button" class="btn-evento-accion" onclick="abrirModalVer('<?=esc(addslashes($ev['titulo']))?>','<?=esc(addslashes($ev['descripcion']))?>','<?=date('d/m/Y H:i',strtotime($ev['fecha_inicio'])) . ' a ' . date('d/m/Y H:i',strtotime($ev['fecha_fin']))?>')"><i class="fa-solid fa-eye"></i></button>
                                 <?php if($esPersonalAutorizado): ?>
                                 <button type="button" class="btn-evento-accion" onclick="abrirModalEditar(<?=$ev['id']?>,'<?=esc(addslashes($ev['titulo']))?>','<?=esc(addslashes($ev['descripcion']))?>','<?=date('Y-m-d\TH:i',strtotime($ev['fecha_inicio']))?>','<?=date('Y-m-d\TH:i',strtotime($ev['fecha_fin']))?>','<?=$ev['color']?>',<?=($ev['publico']?1:0)?>,<?=($ev['es_institucional']?1:0)?>)"><i class="fa-solid fa-pen"></i></button>
                                 <?php endif; ?>
