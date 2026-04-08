@@ -222,9 +222,10 @@ foreach ($eventosRaw as $ev) {
     $diaEv = (int)$dIni->format('d');
     if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
     $ev['hora_formateada'] = $dIni->format('H:i');
-    // Casteo inclusivo para PostgreSQL ('t', 'true', 1, true)
-    $valPub = $ev['publico'] ?? false;
-    $ev['publico'] = ($valPub === true || $valPub === 't' || $valPub === 'true' || $valPub === '1' || $valPub === 1);
+    // Casteo súper-inclusivo para descartar problemas de formato
+    $v = $ev['publico'];
+    $ev['publico_raw'] = var_export($v, true);
+    $ev['publico'] = ($v === true || $v === 't' || $v === 'true' || $v === 1 || $v === '1' || strtolower((string)$v) === 't' || strtolower((string)$v) === 'true');
     $calendarioEventos[$diaEv][] = $ev;
 }
 
@@ -334,15 +335,16 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     $colorNota = $esCumple ? 'nota-dorado' : '';
                     $cStyle = (!$esCumple&&!empty($ev['color'])) ? 'style="border-top-color:'.$ev['color'].'; background-color:'.$ev['color'].'1a;"' : '';
                 ?>
-                    <div class="evento-pildora <?= $colorNota ?>" <?= $cStyle ?> onclick="event.stopPropagation()">
+                    <div class="evento-pildora <?= $colorNota ?>" <?= $cStyle ?> onclick="event.stopPropagation()" data-pub-debug="<?= esc($ev['publico_raw']??'') ?>">
                         <div class="evento-titulo">
                             <?php if ($esCumple): ?>
                                 <?php if (!empty($ev['foto_perfil'])): ?><img src="<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar"><?php else: ?><span class="cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span><?php endif; ?>
                             <?php endif; ?>
-                            <span><?= esc($ev['titulo']) ?></span>
-                            <?php if (!$esCumple && !empty($ev['publico'])): ?>
-                                <i class="fa-solid fa-earth-americas" style="font-size:0.75rem; color:#3b82f6;" title="Visible al Público"></i>
+                            <?php if (!$esCumple && $ev['publico']): ?>
+                                <i class="fa-solid fa-earth-americas" style="color:#3b82f6; flex-shrink:0;" title="PÚBLICO"></i>
+                                <span style="font-size: 0.7rem; flex-shrink:0;">🌍</span>
                             <?php endif; ?>
+                            <span><?= esc($ev['titulo']) ?></span>
                         </div>
                         <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= $ev['hora_formateada'] ?></div>
                         <div class="evento-acciones">
