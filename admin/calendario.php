@@ -923,6 +923,9 @@ require_once __DIR__ . '/../includes/header_admin.php';
                                   <?php if ($ev['publico']): ?>
                                       <i class="fa-solid fa-eye text-primary" title="Visible en Calendario Público"></i>
                                   <?php endif; ?>
+                                  <?php if (!empty($ev['requiere_sala'])): ?>
+                                      <i class="fa-solid fa-person-chalkboard" style="color:#ca8a04;" title="Requiere Sala de Juntas"></i>
+                                  <?php endif; ?>
                                   <?= esc($ev['titulo']) ?>
                               </div>
                               <div class="evento-hora">
@@ -1152,6 +1155,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
             </button>
         </div>
         <div class="modal-body">
+            <div id="v_info_extra"></div>
             <div style="margin-bottom: 1rem;">
                 <p style="margin: 0; font-size: 0.85rem; color: #64748b; font-weight: 600;">Fecha y Hora</p>
                 <p style="margin: 0.2rem 0; font-weight: 500;"><i class="fa-regular fa-clock text-accent"></i> <span id="v_horario"></span></p>
@@ -1453,10 +1457,30 @@ function abrirModalCrearDesdeCelda(dInicio, dFin) {
     abrirModal('modalCrearEvento');
 }
 
-function abrirModalVer(titulo, desc, ini, fin) {
+function abrirModalVer(titulo, desc, ini, fin, requiereSala = 0, area = 'General', persona = 'Admin') {
     document.getElementById('v_titulo').textContent = titulo;
     document.getElementById('v_horario').textContent = ini + ' - ' + fin;
     document.getElementById('v_descripcion').textContent = desc || 'Sin detalles adicionales registrados.';
+    
+    const infoExtra = document.getElementById('v_info_extra');
+    if (infoExtra) {
+        if (parseInt(requiereSala)) {
+            infoExtra.innerHTML = `
+                <div style="background:#fffbeb; border:1px solid #fbbf24; padding:12px; border-radius:10px; display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                    <div style="width:36px; height:36px; background:#fbbf24; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                        <i class="fa-solid fa-person-chalkboard"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700; color:#92400e; font-size:0.9rem;">Sala de Juntas Reservada</div>
+                        <div style="font-size:0.75rem; color:#b45309;">Solicitado por: <strong>${persona}</strong> (${area})</div>
+                    </div>
+                </div>
+            `;
+            infoExtra.style.display = 'block';
+        } else {
+            infoExtra.style.display = 'none';
+        }
+    }
     abrirModal('modalVerEvento');
 }
 
@@ -1628,11 +1652,15 @@ function cargarSolicitudes() {
             let html = '<div style="display:flex; flex-direction:column; gap:12px;">';
             solicitudesCache.forEach(s => {
                 html += `
-                    <div style="padding:15px; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="padding:15px; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; display:flex; justify-content:space-between; align-items:center; position:relative;">
                         <div style="flex:1; min-width:0;">
-                            <div style="font-weight:700; color:#334155; margin-bottom:2px;">${escapeHtml(s.titulo)}</div>
+                            <div style="font-weight:700; color:#334155; margin-bottom:2px;">
+                                ${escapeHtml(s.titulo)}
+                                ${s.requiere_sala ? '<span class="badge badge-urgente" style="margin-left:8px; font-size:0.6rem; padding:2px 6px;"><i class="fa-solid fa-person-chalkboard"></i> SALA</span>' : ''}
+                            </div>
                             <div style="font-size:0.75rem; color:#64748b;">
                                 <i class="fa-solid fa-user"></i> ${escapeHtml(s.solicitante_nombre)} | 
+                                <i class="fa-solid fa-building"></i> ${escapeHtml(s.area_solicitante || 'General')} | 
                                 <i class="fa-solid fa-calendar"></i> ${formatFechaDisplay(s.fecha_inicio)}
                             </div>
                         </div>
@@ -1666,11 +1694,40 @@ function abrirDetalleSolicitud(id) {
     document.getElementById('ps_id').value = s.id;
     document.getElementById('ps_titulo').textContent = s.titulo;
     document.getElementById('ps_info').innerHTML = `
-        <p><strong>Solicitante:</strong> ${escapeHtml(s.solicitante_nombre)}</p>
-        <p><strong>Inicio:</strong> ${formatFechaDisplay(s.fecha_inicio)}</p>
-        <p><strong>Fin:</strong> ${formatFechaDisplay(s.fecha_fin)}</p>
-        <div style="background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:6px; margin-top:10px;">
-            <strong>Descripción:</strong><br>${escapeHtml(s.descripcion || 'Sin descripción')}
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+            <div style="background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:6px;">
+                <label style="display:block; font-size:0.65rem; text-transform:uppercase; color:#94a3b8; font-weight:700;">Persona Solicitante</label>
+                <div style="font-weight:600; font-size:0.85rem;">${escapeHtml(s.persona_solicitante || s.solicitante_nombre)}</div>
+            </div>
+            <div style="background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:6px;">
+                <label style="display:block; font-size:0.65rem; text-transform:uppercase; color:#94a3b8; font-weight:700;">Área</label>
+                <div style="font-weight:600; font-size:0.85rem;">${escapeHtml(s.area_solicitante || 'General')}</div>
+            </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+            <div style="background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:6px;">
+                <label style="display:block; font-size:0.65rem; text-transform:uppercase; color:#94a3b8; font-weight:700;">Inicio</label>
+                <div style="font-weight:600; font-size:0.85rem;">${formatFechaDisplay(s.fecha_inicio)}</div>
+            </div>
+            <div style="background:#fff; border:1px solid #e2e8f0; padding:10px; border-radius:6px;">
+                <label style="display:block; font-size:0.65rem; text-transform:uppercase; color:#94a3b8; font-weight:700;">Fin</label>
+                <div style="font-weight:600; font-size:0.85rem;">${formatFechaDisplay(s.fecha_fin)}</div>
+            </div>
+        </div>
+        ${s.requiere_sala ? `
+        <div style="background:#fffbeb; border:1px solid #fbbf24; padding:12px; border-radius:10px; display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+            <div style="width:36px; height:36px; background:#fbbf24; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
+                <i class="fa-solid fa-person-chalkboard"></i>
+            </div>
+            <div>
+                <div style="font-weight:700; color:#92400e; font-size:0.9rem;">Requiere Sala de Juntas</div>
+                <div style="font-size:0.7rem; color:#b45309;">Esta solicitud debe validarse contra la disponibilidad de la sala.</div>
+            </div>
+        </div>
+        ` : ''}
+        <div style="background:#fff; border:1px solid #e2e8f0; padding:12px; border-radius:8px;">
+            <label style="display:block; font-size:0.65rem; text-transform:uppercase; color:#94a3b8; font-weight:700; margin-bottom:4px;">Descripción del Evento</label>
+            <div style="font-size:0.85rem; line-height:1.5;">${escapeHtml(s.descripcion || 'Sin descripción adicional.')}</div>
         </div>
     `;
     document.getElementById('ps_motivo').value = '';

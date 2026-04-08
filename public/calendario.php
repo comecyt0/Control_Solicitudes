@@ -37,9 +37,9 @@ $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
 $sqlEventos = "
-    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, TRUE as es_institucional FROM eventos WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
+    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, TRUE as es_institucional, requiere_sala, area_solicitante, persona_solicitante FROM eventos WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
     UNION ALL
-    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, FALSE as es_institucional FROM df_eventos_editoriales WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
+    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, FALSE as es_institucional, FALSE as requiere_sala, '' as area_solicitante, '' as persona_solicitante FROM df_eventos_editoriales WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
     ORDER BY fecha_inicio ASC
 ";
 $stmt = $pdo->prepare($sqlEventos);
@@ -416,15 +416,23 @@ require_once __DIR__ . '/../includes/header_user.php';
                     <label class="form-label">Descripción</label>
                     <textarea name="descripcion" class="form-control" rows="3"></textarea>
                 </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div class="form-group">
+                <!-- Layout Fix: Flex with gap for dates -->
+                <div style="display:flex; gap:12px;">
+                    <div class="form-group" style="flex:1; min-width:0;">
                         <label class="form-label">Inicio</label>
                         <input type="datetime-local" name="fecha_inicio" id="s_inicio" class="form-control" required>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="flex:1; min-width:0;">
                         <label class="form-label">Fin</label>
                         <input type="datetime-local" name="fecha_fin" id="s_fin" class="form-control" required>
                     </div>
+                </div>
+                <!-- Sala de Juntas Optimization -->
+                <div class="form-group" style="background: rgba(102, 35, 49, 0.03); padding: 12px; border-radius: 10px; border: 1px solid rgba(102, 35, 49, 0.1); display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="requiere_sala" id="requiere_sala" value="1" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--color-primary);">
+                    <label for="requiere_sala" class="form-label" style="margin-bottom: 0; cursor: pointer; color: var(--color-primary); font-weight: 700;">
+                        <i class="fa-solid fa-person-chalkboard"></i> ¿Requiere Sala de Juntas?
+                    </label>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Color Sugerido</label>
@@ -480,8 +488,12 @@ function abrirModalSolicitudDesdeCelda(f) {
     abrirModal('modalSolicitud');
 }
 
-function verDetalleEvento(t, d, h1, h2) {
-    COMECyTUI.info(`${d}\n\nHorario: ${h1} a ${h2}`, t);
+function verDetalleEvento(t, d, h1, h2, requiereSala = 0, area = '', persona = '') {
+    let msg = `${d}\n\nHorario: ${h1} a ${h2}`;
+    if (parseInt(requiereSala)) {
+        msg += `\n\n📌 Sala de Juntas Reservada\nSolicitado por: ${persona} (${area})`;
+    }
+    COMECyTUI.info(msg, t);
 }
 
 function abrirModalCumple(nombre, fotoUrl, edad, fecha) {

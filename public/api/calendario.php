@@ -49,8 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $descripcion = trim(postParam('descripcion'));
         $inicio = postParam('fecha_inicio');
         $fin = postParam('fecha_fin');
-        $color = postParam('color', '#B19A6D');
-        $usuario_id = $_SESSION['user_id'] ?? $_SESSION['admin_id'];
+        $requiere_sala = isset($_POST['requiere_sala']) ? 1 : 0;
+        
+        // Auto-extracción de área y persona
+        $persona = $_SESSION['user_nombre'] ?? $_SESSION['admin_nombre'] ?? $_SESSION['ss_nombre'] ?? 'Usuario';
+        $area    = $_SESSION['user_area']   ?? 'Área no especificada';
+
+        if (empty($_SESSION['user_area']) && !empty($_SESSION['admin_cve_area'])) {
+            // Si es admin y no tiene area_nombre en sesión, buscarla
+            $stmtA = $pdo->prepare("SELECT des_area FROM cat_areas WHERE cve_area = ?");
+            $stmtA->execute([$_SESSION['admin_cve_area']]);
+            $area = $stmtA->fetchColumn() ?: 'Administración';
+        }
 
         if (!$titulo || !$inicio || !$fin) {
             echo json_encode(['ok' => false, 'error' => 'Título y fechas son obligatorios']);
@@ -58,9 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         try {
-            $stmt = $pdo->prepare("INSERT INTO sb_calendario_solicitudes (usuario_id, titulo, descripcion, fecha_inicio, fecha_fin, color, estatus) 
-                                   VALUES (?, ?, ?, ?, ?, ?, 'pendiente')");
-            $stmt->execute([$usuario_id, $titulo, $descripcion, $inicio, $fin, $color]);
+            $stmt = $pdo->prepare("INSERT INTO sb_calendario_solicitudes (usuario_id, titulo, descripcion, fecha_inicio, fecha_fin, color, estatus, requiere_sala, area_solicitante, persona_solicitante) 
+                                   VALUES (?, ?, ?, ?, ?, ?, 'pendiente', ?, ?, ?)");
+            $stmt->execute([$usuario_id, $titulo, $descripcion, $inicio, $fin, $color, $requiere_sala, $area, $persona]);
             
             echo json_encode(['ok' => true, 'mensaje' => 'Solicitud enviada correctamente']);
         } catch (Exception $e) {
