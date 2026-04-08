@@ -119,7 +119,11 @@ $extraHead = '
 .calendar-header-nav .btn-outline:hover { background: #f8fafc; color: var(--color-primary); }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8fafc; gap: 1px; }
 .calendar-day-name { padding: 1rem 0.5rem; text-align: right; font-weight: 600; font-size: 0.8rem; color: #64748b; text-transform: uppercase; background: #ffffff; }
-.calendar-cell { min-height: 140px; padding: 0.5rem; background: #ffffff; cursor: pointer; transition: background 0.2s ease; display: flex; flex-direction: column; gap: 0.4rem; }
+.calendar-cell { 
+    min-height: 140px; padding: 0.5rem; background: #ffffff; cursor: pointer; 
+    transition: background 0.2s ease; display: flex; flex-direction: column; 
+    gap: 0.4rem; overflow: hidden; min-width: 0; width: 100%;
+}
 .calendar-cell:hover { background: #fdfdfd; }
 .calendar-cell.empty { background: #f8fafc; cursor: default; }
 .day-number { font-weight: 500; color: #334155; font-size: 1rem; align-self: flex-end; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
@@ -130,14 +134,17 @@ $extraHead = '
     font-size: 0.75rem; padding: 0.5rem 0.6rem; border-radius: 2px 2px 12px 2px;
     color: #1e293b; margin-bottom: 0.25rem; cursor: pointer; position: relative;
     box-shadow: 2px 2px 4px rgba(0,0,0,0.05), inset -10px -10px 20px rgba(0,0,0,0.03);
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; gap: 0.2rem;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    display: flex; flex-direction: column; gap: 0.2rem;
+    /* FIX OVERFLOW */
+    width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden;
 }
 .evento-pildora:hover { transform: scale(1.02) translateY(-2px); z-index: 10; box-shadow: 4px 6px 12px rgba(0,0,0,0.1); }
 .evento-pildora::after {
     content: ""; position: absolute; bottom: 0; right: 0; border-width: 0 0 12px 12px;
     border-style: solid; border-color: rgba(0,0,0,0.06) white; border-radius: 0 0 0 2px;
 }
-.evento-titulo { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.evento-titulo { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
 .evento-hora { font-size: 0.65rem; opacity: 0.75; font-weight: 500; display: flex; align-items: center; gap: 3px; }
 
 .nota-azul { background: #e0f2fe; border-top: 3px solid #0284c7; }
@@ -168,10 +175,14 @@ $extraHead = '
 .form-label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: #475569; }
 .form-control { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; }
 
+@media (max-width: 1024px) {
+    .calendar-grid { grid-template-columns: repeat(7, 1fr); }
+    .calendar-cell { min-height: 100px; }
+}
 @media (max-width: 768px) {
     .calendar-grid { display: block; padding: 1rem; }
     .calendar-day-name { display: none; }
-    .calendar-cell { min-height: auto; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; }
+    .calendar-cell { min-height: auto; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; width: auto; overflow: visible; }
     .calendar-cell.empty { display: none; }
 }
 
