@@ -17,7 +17,9 @@ $accion = $_REQUEST['accion'] ?? '';
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($accion === 'listar_pendientes') {
         $sql = "SELECT s.*, 
-                COALESCE(u.nombre, a.nombre, 'Usuario Externo') as solicitante_nombre
+                COALESCE(u.nombre, a.nombre, 'Usuario Externo') as solicitante_nombre,
+                COALESCE(s.persona_solicitante, u.nombre, a.nombre, 'N/A') as persona_solicitante_display,
+                COALESCE(s.area_solicitante, 'General') as area_solicitante_display
                 FROM sb_calendario_solicitudes s
                 LEFT JOIN cat_personal u ON s.usuario_id = u.cve_personal
                 LEFT JOIN administradores a ON s.usuario_id = a.id

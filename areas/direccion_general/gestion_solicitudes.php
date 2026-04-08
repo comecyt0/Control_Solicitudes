@@ -17,15 +17,23 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
 
 <div class="card">
-    <div class="card-header">
-        <h2 class="card-title"><i class="fa-solid fa-bell"></i> Solicitudes de Espacio Pendientes</h2>
-        <p style="color: #64748b; font-size: 0.9rem;">Revise, edite y oficialice las solicitudes ciudadanas para el calendario institucional.</p>
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: start; padding-bottom: 20px; border-bottom: 2px solid #f1f5f9;">
+        <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                <i class="fa-solid fa-bell text-accent" style="font-size: 1.4rem;"></i>
+                <h2 class="card-title" style="margin: 0; font-size: 1.5rem;">Solicitudes de Espacio Pendientes</h2>
+            </div>
+            <p class="text-muted fs-sm">Revise, edite y oficialice las solicitudes ciudadanas para el calendario institucional.</p>
+        </div>
+        <button class="btn btn-primary" onclick="cargarSolicitudes()">
+            <i class="fa-solid fa-rotate"></i> Actualizar
+        </button>
     </div>
     
-    <div id="listaSolicitudesPendientes" style="margin-top: 20px;">
-        <div style="text-align: center; padding: 50px;">
-            <i class="fa-solid fa-circle-notch fa-spin fa-2x" style="color: var(--color-primary);"></i>
-            <p style="margin-top: 10px; color: #64748b;">Cargando solicitudes...</p>
+    <div id="contenedorSolicitudes" style="max-height: 600px; overflow-y: auto; padding: 24px; background: #fafafa; border-radius: 0 0 16px 16px;">
+        <div id="zonasolicitudes" style="text-align: center; padding: 40px;">
+            <div class="spinner mb-16"></div>
+            <p class="text-muted">Cargando solicitudes...</p>
         </div>
     </div>
 </div>
@@ -84,7 +92,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 let solicitudesCache = [];
 
 function cargarSolicitudes() {
-    const zona = document.getElementById('listaSolicitudesPendientes');
+    const zona = document.getElementById('zonasolicitudes');
     fetch('api/solicitudes_dg.php?accion=listar_pendientes')
         .then(r => r.json())
         .then(d => {
@@ -104,18 +112,19 @@ function cargarSolicitudes() {
             let html = '<div style="display: flex; flex-direction: column; gap: 12px;">';
             solicitudesCache.forEach(s => {
                 html += `
-                    <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;">
+                    <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                         <div style="flex: 1; min-width: 0;">
                             <div style="font-weight: 700; color: var(--color-primary); font-size: 1.1rem; margin-bottom: 5px;">${escapeHtml(s.titulo)}</div>
-                            <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #64748b; align-items: center;">
-                                <span><i class="fa-solid fa-user"></i> ${escapeHtml(s.persona_solicitante || s.solicitante_nombre)}</span>
+                            <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #64748b; align-items: center; flex-wrap: wrap;">
+                                <span><i class="fa-solid fa-user"></i> ${escapeHtml(s.persona_solicitante_display)}</span>
+                                <span><i class="fa-solid fa-building"></i> ${escapeHtml(s.area_solicitante_display)}</span>
                                 <span><i class="fa-solid fa-calendar"></i> ${formatFechaDisplay(s.fecha_inicio)}</span>
-                                ${parseInt(s.requiere_sala) ? '<span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; border: 1px solid #f59e0b;"><i class="fa-solid fa-person-chalkboard"></i> SALA</span>' : ''}
+                                ${parseInt(s.requiere_sala) ? '<span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; border: 1px solid #f59e0b;"><i class="fa-solid fa-person-chalkboard"></i> REQUIERE SALA</span>' : ''}
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; flex-shrink: 0;">
                             <button class="btn btn-primary btn-sm" onclick="abrirRevision(${s.id})">
-                                <i class="fa-solid fa-pen-to-square"></i> Revisar y Procesar
+                                <i class="fa-solid fa-pen-to-square"></i> Revisar
                             </button>
                         </div>
                     </div>
@@ -149,13 +158,18 @@ function abrirRevision(id) {
                     <i class="fa-solid fa-person-chalkboard"></i> SOLICITUD DE SALA DE JUNTAS
                 </div>
                 <div style="font-size: 0.9rem; color: #475569;">
-                    Solicitado por: <strong>${escapeHtml(s.persona_solicitante || s.solicitante_nombre)}</strong><br>
-                    Área: <strong>${escapeHtml(s.area_solicitante || 'General')}</strong>
+                    Solicitado por: <strong>${escapeHtml(s.persona_solicitante_display)}</strong><br>
+                    Área: <strong>${escapeHtml(s.area_solicitante_display)}</strong>
                 </div>
             </div>
         `;
     } else {
-        infoSala.innerHTML = '';
+        infoSala.innerHTML = `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; margin-bottom: 16px; font-size: 0.85rem; color: #64748b;">
+                <i class="fa-solid fa-user-tag"></i> Solicitante: <strong>${escapeHtml(s.persona_solicitante_display)}</strong><br>
+                <i class="fa-solid fa-building"></i> Área: <strong>${escapeHtml(s.area_solicitante_display)}</strong>
+            </div>
+        `;
     }
 
     abrirModal('modalRevisionDG');
