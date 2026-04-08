@@ -222,8 +222,9 @@ foreach ($eventosRaw as $ev) {
     $diaEv = (int)$dIni->format('d');
     if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
     $ev['hora_formateada'] = $dIni->format('H:i');
-    // Casteo robusto de publico para evitar problemas con string 'f'/'t'/'true'/'1'
-    $ev['publico'] = filter_var($ev['publico'], FILTER_VALIDATE_BOOLEAN);
+    // Casteo inclusivo para PostgreSQL ('t', 'true', 1, true)
+    $valPub = $ev['publico'] ?? false;
+    $ev['publico'] = ($valPub === true || $valPub === 't' || $valPub === 'true' || $valPub === '1' || $valPub === 1);
     $calendarioEventos[$diaEv][] = $ev;
 }
 
@@ -329,22 +330,23 @@ require_once __DIR__ . '/../../includes/header_admin.php';
             <div class="calendar-cell <?= $esHoy ? 'today' : '' ?>" onclick="abrirModalCrearDesdeCelda('<?= $fIso ?>')">
                 <div class="day-number"><?= $dia ?></div>
                 <?php foreach ($calendarioEventos[$dia] ?? [] as $ev): 
-                    $colorNota = isset($ev['es_cumple']) ? 'nota-dorado' : '';
-                    $cStyle = (!isset($ev['es_cumple'])&&!empty($ev['color'])) ? 'style="border-top-color:'.$ev['color'].'; background-color:'.$ev['color'].'1a;"' : '';
+                    $esCumple = isset($ev['es_cumple']);
+                    $colorNota = $esCumple ? 'nota-dorado' : '';
+                    $cStyle = (!$esCumple&&!empty($ev['color'])) ? 'style="border-top-color:'.$ev['color'].'; background-color:'.$ev['color'].'1a;"' : '';
                 ?>
                     <div class="evento-pildora <?= $colorNota ?>" <?= $cStyle ?> onclick="event.stopPropagation()">
                         <div class="evento-titulo">
-                            <?php if(isset($ev['es_cumple'])): ?>
-                                <?php if($ev['foto_perfil']): ?><img src="<?= $ev['foto_perfil'] ?>" class="cumple-mini-avatar"><?php else: ?><span class="cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span><?php endif; ?>
+                            <?php if ($esCumple): ?>
+                                <?php if (!empty($ev['foto_perfil'])): ?><img src="<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar"><?php else: ?><span class="cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span><?php endif; ?>
                             <?php endif; ?>
                             <span><?= esc($ev['titulo']) ?></span>
-                            <?php if(isset($ev['publico']) && $ev['publico']): ?>
+                            <?php if (!$esCumple && !empty($ev['publico'])): ?>
                                 <i class="fa-solid fa-earth-americas" style="font-size:0.75rem; color:#3b82f6;" title="Visible al Público"></i>
                             <?php endif; ?>
                         </div>
                         <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= $ev['hora_formateada'] ?></div>
                         <div class="evento-acciones">
-                            <?php if(isset($ev['es_cumple'])): ?>
+                            <?php if($esCumple): ?>
                                 <button type="button" class="btn-evento-accion" onclick="abrirModalCumple('<?=esc(addslashes($ev['nombre_cumple']))?>','','<?=$ev['foto_perfil']?>','<?=$ev['edad']?>','<?=date('d/m', strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-cake-candles"></i></button>
                             <?php else: ?>
                                 <button type="button" class="btn-evento-accion" onclick="abrirModalVer('<?=esc(addslashes($ev['titulo']))?>','<?=esc(addslashes($ev['descripcion']))?>','<?=date('d/m/Y H:i',strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-eye"></i></button>

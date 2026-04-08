@@ -81,6 +81,11 @@ foreach ($eventosRaw as $ev) {
     $dIni = new DateTime($ev['fecha_inicio']);
     $dia = (int)$dIni->format('d');
     if (!isset($calendarioEventos[$dia])) $calendarioEventos[$dia] = [];
+    
+    // Casteo inclusivo para PostgreSQL ('t', 'true', 1, true)
+    $valPub = $ev['publico'] ?? false;
+    $ev['publico'] = ($valPub === true || $valPub === 't' || $valPub === 'true' || $valPub === '1' || $valPub === 1);
+    
     $calendarioEventos[$dia][] = $ev;
 }
 
@@ -379,8 +384,8 @@ require_once __DIR__ . '/../includes/header_user.php';
                                     <?php endif; ?>
                                 <?php endif; ?>
                                 <span><?= esc($ev['titulo']) ?></span>
-                                <?php if (!$esCumple): /* Si no es cumple, es un evento que puede ser público */ ?>
-                                    <i class="fa-solid fa-earth-americas" style="font-size:0.75rem;" title="Evento Público"></i>
+                                <?php if (!$esCumple && !empty($ev['publico'])): ?>
+                                    <i class="fa-solid fa-earth-americas" style="font-size:0.75rem; flex-shrink: 0; color: #3b82f6;" title="Evento Público"></i>
                                 <?php endif; ?>
                             </div>
                             <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?></div>
