@@ -50,10 +50,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $inicio = postParam('fecha_inicio');
         $fin = postParam('fecha_fin');
         $requiere_sala = isset($_POST['requiere_sala']) ? 1 : 0;
+        $color = postParam('color') ?: '#B19A6D';
+        $usuario_id = $_SESSION['user_id'] ?? $_SESSION['admin_id'];
         
         // Auto-extracción de área y persona
         $persona = $_SESSION['user_nombre'] ?? $_SESSION['admin_nombre'] ?? $_SESSION['ss_nombre'] ?? 'Usuario';
-        $area    = $_SESSION['user_area']   ?? 'Área no especificada';
+        $area    = $_SESSION['user_area']   ?? '';
 
         if (empty($_SESSION['user_area']) && !empty($_SESSION['admin_cve_area'])) {
             // Si es admin y no tiene area_nombre en sesión, buscarla
