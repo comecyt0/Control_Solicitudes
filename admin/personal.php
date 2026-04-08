@@ -244,7 +244,13 @@ if ($filtroEstatus === '1' || $filtroEstatus === '0') {
 $condicion = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
 // Obtener lista de personal con su area aplicando filtros
-$sql = "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.correo_personal, u.ext_telefonica, COALESCE(u.correo_institucional, u.correo_personal, 'Sin correo') as email, u.activo, u.cve_area, a.des_area, u.fecha_nacimiento, u.foto_perfil, u.rol_jefatura, u.nombre_jefatura
+$sql = "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat, u.correo_institucional, u.correo_personal, u.ext_telefonica, 
+               COALESCE(u.correo_institucional, u.correo_personal, 'Sin correo') as email, 
+               u.activo, u.cve_area, a.des_area, u.fecha_nacimiento, u.foto_perfil, u.rol_jefatura, u.nombre_jefatura,
+               (SELECT STRING_AGG(DISTINCT aa.des_area, ', ') 
+                FROM cat_personal pp 
+                JOIN cat_areas aa ON pp.cve_area = aa.cve_area 
+                WHERE pp.jefe_directo_id = u.cve_personal) as areas_gestionadas
         FROM cat_personal u
         LEFT JOIN cat_areas a ON u.cve_area = a.cve_area
         {$condicion}
@@ -632,6 +638,16 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         <?php endif; ?>
                     </span>
                 </div>
+
+                <?php if (!empty($usr['areas_gestionadas'])): ?>
+                <div class="user-info-row" title="Áreas Gestionadas" style="background: rgba(109, 40, 217, 0.05); padding: 8px; border-radius: 8px; border-left: 3px solid #6D28D9; margin-top: 5px;">
+                    <i class="fa-solid fa-users-rectangle" style="color: #6D28D9;"></i>
+                    <span style="font-size: 0.85rem; color: #4338CA;">
+                        <strong>Gestión de Áreas:</strong><br>
+                        <?= esc($usr['areas_gestionadas']) ?>
+                    </span>
+                </div>
+                <?php endif; ?>
             </div>
             
             <div class="user-card-footer">
