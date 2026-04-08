@@ -41,20 +41,23 @@ function dgBuscarEspejo(PDO $pdo, int $dfId): ?int {
     return $row ? (int)$row['id'] : null;
 }
 
-function dgSincronizarPublico(PDO $pdo, int $dfId, string $titulo, string $descripcion, string $fi, string $ff, string $color): void {
+function dgSincronizarPublico(PDO $pdo, int $dfId, string $titulo, string $descripcion, string $fi, string $ff, string $color, bool $requiereSala, string $areaSol, string $persSol): void {
     $marcador   = '[DG:' . $dfId . ']';
     $descEspejo = trim($descripcion . ' ' . $marcador);
     $espejoId   = dgBuscarEspejo($pdo, $dfId);
+    $reqSalaStr = $requiereSala ? 'true' : 'false';
+
     if ($espejoId) {
         // Actualizar espejo existente
         $pdo->prepare(
-            "UPDATE eventos SET titulo=?, descripcion=?, fecha_inicio=?, fecha_fin=?, color=?, publico=TRUE WHERE id=?"
-        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $espejoId]);
+            "UPDATE eventos SET titulo=?, descripcion=?, fecha_inicio=?, fecha_fin=?, color=?, publico=TRUE, requiere_sala=?, area_solicitante=?, persona_solicitante=? WHERE id=?"
+        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $reqSalaStr, $areaSol, $persSol, $espejoId]);
     } else {
         // Crear espejo nuevo
         $pdo->prepare(
-            "INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, publico) VALUES (?,?,?,?,?,TRUE)"
-        )->execute([$titulo, $descEspejo, $fi, $ff, $color]);
+            "INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante) 
+             VALUES (?,?,?,?,?,TRUE,?,?,?)"
+        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $reqSalaStr, $areaSol, $persSol]);
     }
 }
 
@@ -101,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
 
                 // Sincronizar con tabla `eventos` si es público
                 if ($publico && $nuevoId > 0) {
-                    dgSincronizarPublico($pdo, $nuevoId, $titulo, $descripcion, $fechaInicio, $fechaFin, $color);
+                    dgSincronizarPublico($pdo, $nuevoId, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol);
                 }
 
                 header('Location: calendario_editorial.php?flash=evento_creado');
@@ -125,7 +128,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
 
                     // Sincronizar con tabla `eventos` según el estado público
                     if ($publico) {
-                        dgSincronizarPublico($pdo, $id, $titulo, $descripcion, $fechaInicio, $fechaFin, $color);
+                        $areaSol = $_SESSION['admin_area_nombre'] ?? 'Dirección General';
+                        $persSol = $_SESSION['admin_nombre'] ?? 'Administrador';
+                        dgSincronizarPublico($pdo, $id, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol);
                     } else {
                         dgEliminarEspejo($pdo, $id); // Si se desmarca, quitar de calendarios de área
                     }
