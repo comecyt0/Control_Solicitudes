@@ -222,8 +222,8 @@ foreach ($eventosRaw as $ev) {
     $diaEv = (int)$dIni->format('d');
     if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
     $ev['hora_formateada'] = $dIni->format('H:i');
-    // Casteo de publico para evitar problemas con string 'f'/'t' de PostgreSQL
-    $ev['publico'] = ($ev['publico'] === true || $ev['publico'] === 't' || $ev['publico'] === 1 || $ev['publico'] === '1');
+    // Casteo robusto de publico para evitar problemas con string 'f'/'t'/'true'/'1'
+    $ev['publico'] = filter_var($ev['publico'], FILTER_VALIDATE_BOOLEAN);
     $calendarioEventos[$diaEv][] = $ev;
 }
 
@@ -267,7 +267,9 @@ $extraHead = '
 .evento-pildora { font-size: 0.75rem; padding: 0.5rem 0.6rem; border-radius: 2px 2px 12px 2px; color: #1e293b; margin-bottom: 0.25rem; position: relative; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05), inset -10px -10px 20px rgba(0,0,0,0.03); border-top: 3px solid var(--color-primary); width:100%; box-sizing:border-box; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; gap: 0.2rem; }
 .evento-pildora:hover { transform: scale(1.02) translateY(-2px) rotate(-1deg); box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.1); z-index: 10; }
 .evento-pildora::after { content: ""; position: absolute; bottom: 0; right: 0; border-width: 0 0 10px 10px; border-style: solid; border-color: rgba(0,0,0,0.06) white; border-radius: 0 0 0 2px; }
-.evento-titulo { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+.evento-titulo { font-weight: 700; display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; }
+.evento-titulo span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.evento-pildora .fa-earth-americas { flex-shrink: 0; }
 .evento-hora { font-size: 0.65rem; opacity: 0.75; font-weight: 500; display: flex; align-items: center; gap: 3px; }
 .evento-acciones { display: flex; gap: 4px; opacity: 0; max-height: 0; overflow: hidden; transition: all 0.2s; }
 .evento-pildora:hover .evento-acciones { opacity: 1; max-height: 30px; margin-top: 4px; }
@@ -335,7 +337,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                             <?php if(isset($ev['es_cumple'])): ?>
                                 <?php if($ev['foto_perfil']): ?><img src="<?= $ev['foto_perfil'] ?>" class="cumple-mini-avatar"><?php else: ?><span class="cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span><?php endif; ?>
                             <?php endif; ?>
-                            <?= esc($ev['titulo']) ?> 
+                            <span><?= esc($ev['titulo']) ?></span>
                             <?php if(isset($ev['publico']) && $ev['publico']): ?>
                                 <i class="fa-solid fa-earth-americas" style="font-size:0.75rem; color:#3b82f6;" title="Visible al Público"></i>
                             <?php endif; ?>

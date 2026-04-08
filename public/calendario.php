@@ -144,7 +144,9 @@ $extraHead = '
     content: ""; position: absolute; bottom: 0; right: 0; border-width: 0 0 12px 12px;
     border-style: solid; border-color: rgba(0,0,0,0.06) white; border-radius: 0 0 0 2px;
 }
-.evento-titulo { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+.evento-titulo { font-weight: 700; display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; }
+.evento-titulo span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.evento-pildora .fa-earth-americas { flex-shrink: 0; color: #3b82f6; }
 .evento-hora { font-size: 0.65rem; opacity: 0.75; font-weight: 500; display: flex; align-items: center; gap: 3px; }
 
 .nota-azul { background: #e0f2fe; border-top: 3px solid #0284c7; }
@@ -368,7 +370,7 @@ require_once __DIR__ . '/../includes/header_user.php';
                         <div class="evento-pildora <?= $esCumple ? ' es-cumple' : '' ?>" 
                              style="<?= $styleAttr ?>"
                              onclick="event.stopPropagation(); <?= $esCumple ? "abrirModalCumple('".esc(addslashes($ev['nombre_cumple']))."', '".esc($fotoUrl)."', '".$ev['edad']."', '".date('d/m', strtotime($ev['fecha_inicio']))."')" : "verDetalleEvento('".esc($ev['titulo'])."', '".esc($ev['descripcion']??'Sin detalles')."', '".date('H:i', strtotime($ev['fecha_inicio']))."', '".date('H:i', strtotime($ev['fecha_fin']))."')" ?>">
-                            <div class="evento-titulo" style="display:flex; align-items:center; gap:5px;">
+                            <div class="evento-titulo">
                                 <?php if ($esCumple): ?>
                                     <?php if (!empty($fotoUrl)): ?>
                                         <img src="<?= esc($fotoUrl) ?>" alt="" class="cumple-mini-avatar">
@@ -376,7 +378,10 @@ require_once __DIR__ . '/../includes/header_user.php';
                                         <span class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span>
                                     <?php endif; ?>
                                 <?php endif; ?>
-                                <?= esc($ev['titulo']) ?>
+                                <span><?= esc($ev['titulo']) ?></span>
+                                <?php if (!$esCumple): /* Si no es cumple, es un evento que puede ser público */ ?>
+                                    <i class="fa-solid fa-earth-americas" style="font-size:0.75rem;" title="Evento Público"></i>
+                                <?php endif; ?>
                             </div>
                             <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?></div>
                         </div>
