@@ -339,3 +339,63 @@
     text-overflow: ellipsis;
 }
 
+
+/* ==============================================================
+   ESTILOS PREMIUM: GLASSMORPHISM Y RESPONSIVIDAD GLOBAL
+   ============================================================== */
+
+/* Glassmorphism para Modales */
+.modal {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(12px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    margin: 20px !important; /* Margen preventivo para no pegar a bordes */
+}
+
+/* Ajuste de márgenes para el frame de solicitudes */
+#modalRevisionDG .modal-body,
+#modalSolicitud .modal-body {
+    padding: 24px !important;
+}
+
+/* Responsividad para Date Grid en Modales */
+.date-grid-responsive {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 16px !important;
+}
+
+.date-grid-responsive > div {
+    flex: 1 !important;
+    min-width: 200px !important;
+}
+
+/* Animaciones de entrada suaves */
+.modal-backdrop.active .modal {
+    animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Mobile Fixes for Management Interfaces */
+@media (max-width: 768px) {
+    .modal {
+        margin: 10px !important;
+        width: calc(100% - 20px) !important;
+        max-width: 100% !important;
+    }
+    
+    .date-grid-responsive > div {
+        min-width: 100% !important;
+    }
+    
+    .modal-header, .modal-footer {
+        padding: 16px !important;
+    }
+}

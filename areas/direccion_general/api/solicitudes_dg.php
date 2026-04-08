@@ -79,14 +79,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$estatus, $motivo, $adminId, $id]);
 
             if ($estatus === 'aceptado') {
-                $stmtSel = $pdo->prepare("SELECT titulo, descripcion, fecha_inicio, fecha_fin, color FROM sb_calendario_solicitudes WHERE id = ?");
+                $stmtSel = $pdo->prepare("SELECT titulo, descripcion, fecha_inicio, fecha_fin, color, requiere_sala, area_solicitante, persona_solicitante FROM sb_calendario_solicitudes WHERE id = ?");
                 $stmtSel->execute([$id]);
                 $s = $stmtSel->fetch();
 
                 if ($s) {
-                    $ins = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) 
-                                         VALUES (?, ?, ?, ?, ?, ?, TRUE)");
-                    $ins->execute([$s['titulo'], $s['descripcion'], $s['fecha_inicio'], $s['fecha_fin'], $s['color'], $adminId]);
+                    $ins = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, requiere_sala, area_solicitante, persona_solicitante) 
+                                         VALUES (?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?)");
+                    $ins->execute([$s['titulo'], $s['descripcion'], $s['fecha_inicio'], $s['fecha_fin'], $s['color'], $adminId, $s['requiere_sala'], $s['area_solicitante'], $s['persona_solicitante']]);
                 }
             }
 

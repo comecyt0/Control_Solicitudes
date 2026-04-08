@@ -48,7 +48,8 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     <label class="form-label">Descripción / Detalles</label>
                     <textarea id="ed_descripcion" name="descripcion" class="form-control" rows="4"></textarea>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;" class="mb-16">
+                <div id="infoSalaRevision"></div>
+                <div class="date-grid-responsive mb-16">
                     <div class="form-group">
                         <label class="form-label">Fecha Inicio</label>
                         <input type="datetime-local" id="ed_fecha_inicio" name="fecha_inicio" class="form-control" required>
@@ -106,9 +107,10 @@ function cargarSolicitudes() {
                     <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;">
                         <div style="flex: 1; min-width: 0;">
                             <div style="font-weight: 700; color: var(--color-primary); font-size: 1.1rem; margin-bottom: 5px;">${escapeHtml(s.titulo)}</div>
-                            <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #64748b;">
-                                <span><i class="fa-solid fa-user"></i> ${escapeHtml(s.solicitante_nombre)}</span>
+                            <div style="display: flex; gap: 15px; font-size: 0.85rem; color: #64748b; align-items: center;">
+                                <span><i class="fa-solid fa-user"></i> ${escapeHtml(s.persona_solicitante || s.solicitante_nombre)}</span>
                                 <span><i class="fa-solid fa-calendar"></i> ${formatFechaDisplay(s.fecha_inicio)}</span>
+                                ${parseInt(s.requiere_sala) ? '<span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; border: 1px solid #f59e0b;"><i class="fa-solid fa-person-chalkboard"></i> SALA</span>' : ''}
                             </div>
                         </div>
                         <div style="display: flex; gap: 10px;">
@@ -127,10 +129,6 @@ function cargarSolicitudes() {
         });
 }
 
-function abrirRevision(id) {
-    const s = solicitudesCache.find(x => parseInt(x.id) === id);
-    if (!s) return;
-
     document.getElementById('ed_id').value = s.id;
     document.getElementById('ed_titulo').value = s.titulo;
     document.getElementById('ed_descripcion').value = s.descripcion || '';
@@ -138,6 +136,24 @@ function abrirRevision(id) {
     document.getElementById('ed_fecha_fin').value = s.fecha_fin.substring(0, 16);
     document.getElementById('ed_color').value = s.color || '#662331';
     document.getElementById('ed_motivo').value = '';
+
+    // Mostrar info de sala si existe
+    const infoSala = document.getElementById('infoSalaRevision');
+    if (parseInt(s.requiere_sala)) {
+        infoSala.innerHTML = `
+            <div style="background: rgba(177, 154, 109, 0.15); border: 1px solid #B19A6D; padding: 15px; border-radius: 12px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px; color: #662331; font-weight: 700; margin-bottom: 5px;">
+                    <i class="fa-solid fa-person-chalkboard"></i> SOLICITUD DE SALA DE JUNTAS
+                </div>
+                <div style="font-size: 0.9rem; color: #475569;">
+                    Solicitado por: <strong>${escapeHtml(s.persona_solicitante || s.solicitante_nombre)}</strong><br>
+                    Área: <strong>${escapeHtml(s.area_solicitante || 'General')}</strong>
+                </div>
+            </div>
+        `;
+    } else {
+        infoSala.innerHTML = '';
+    }
 
     abrirModal('modalRevisionDG');
 }
