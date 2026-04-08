@@ -91,6 +91,7 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
     - Botones `.btn-evento-accion` con fondo blanco semitransparente (`rgba(255,255,255,.7)`).
     - Clic en la píldora abre el modal de detalle automáticamente.
 - **Regla de Permisos Calendarios**: Áreas solo editan `df_eventos_editoriales` donde `cve_area = {suya}`. Los eventos de la tabla `eventos` (publicos=TRUE) son **solo lectura** para todas las áreas. Solo **Dirección General** y **Sistemas** pueden escribir en `eventos`.
+- **🚨 Bug: Eventos Públicos de DG invisibles (Falta de Sincronización) 🚨**: Al marcar un evento como "Hacer público" en el calendario editorial de DG, este se guardaba solo en `df_eventos_editoriales`. Como las agendas de área solo consultan la tabla `eventos`, los registros de DG nunca aparecían fuera de su propio módulo. **Solución**: Se implementó una lógica de "espejo" en `calendario_editorial.php`. Ahora, cada vez que DG crea/edita un evento público, se genera/víncula un registro espejo en la tabla `eventos` mediante el marcador `[DG:ID]` en la descripción. Si el evento se desmarca como público o se elimina, el espejo se borra automáticamente.
 
 ---
 
