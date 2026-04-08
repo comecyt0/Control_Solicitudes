@@ -128,6 +128,9 @@ function cargarSolicitudes() {
             zona.innerHTML = `<p style="color: var(--color-danger); text-align: center; padding: 20px;">Error: ${err.message}</p>`;
         });
 }
+function abrirRevision(id) {
+    const s = solicitudesCache.find(x => parseInt(x.id) === id);
+    if (!s) return;
 
     document.getElementById('ed_id').value = s.id;
     document.getElementById('ed_titulo').value = s.titulo;
