@@ -29,9 +29,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $color = postParam('color', '#3788d8');
         
         if ($titulo && $fechaInicio && $fechaFin) {
-            $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-            $stmt = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area) VALUES (?, ?, ?, ?, ?, ?, $publico, ?)");
-            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id'], $_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0]);
+            $requiereSala = isset($_POST['requiere_sala']) ? 'TRUE' : 'FALSE';
+            $areaSol = $_SESSION['admin_area_nombre'] ?? 'Administración Central';
+            $persSol = $_SESSION['admin_nombre'] ?? 'Administrador';
+
+            $stmt = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area, requiere_sala, area_solicitante, persona_solicitante) VALUES (?, ?, ?, ?, ?, ?, $publico, ?, $requiereSala, ?, ?)");
+            $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id'], $_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0, $areaSol, $persSol]);
             header('Location: ' . BASE_URL . 'admin/calendario.php?flash=evento_creado');
             exit;
         } else {
@@ -47,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         $color = postParam('color', '#3788d8');
         
         if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
-            $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-            $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
+            $requiereSala = isset($_POST['requiere_sala']) ? 'TRUE' : 'FALSE';
+            $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico, requiere_sala = $requiereSala WHERE id = ?");
             $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
             header('Location: ' . BASE_URL . 'admin/calendario.php?flash=evento_editado');
             exit;
@@ -888,73 +891,41 @@ require_once __DIR__ . '/../includes/header_admin.php';
                             $colorBase = $ev['color'] ?? '#3788d8';
                             $styleAttr = "background-color: {$colorBase}1a; border-top: 3px solid {$colorBase};";
                             $esCumple  = !empty($ev['es_cumple']);
-                            // Construir URL de foto para el modal
                             $fotoUrl   = '';
                             if ($esCumple && !empty($ev['foto_perfil'])) {
                                 $fotoUrl = BASE_URL . 'public/uploads/avatares/' . $ev['foto_perfil'];
                             }
                         ?>
-                         <div class="evento-pildora<?= $esCumple ? ' es-cumple' : '' ?>" style="<?= $styleAttr ?>" title="<?= esc($ev['titulo']) ?>">
-                              <?php if ($esCumple): ?>
-                              <!-- Fila de Cumpleaños con miniavatar -->
-                              <div class="evento-titulo cumple-titulo" style="display:flex;align-items:center;gap:6px;">
-                                  <?php if (!empty($fotoUrl)): ?>
-                                      <img src="<?= esc($fotoUrl) ?>" alt="" class="cumple-mini-avatar">
-                                  <?php else: ?>
-                                      <span class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span>
-                                  <?php endif; ?>
-                                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🎂 <?= esc($ev['nombre_cumple']) ?></span>
-                              </div>
-                              <div class="evento-acciones">
-                                 <button type="button" class="btn-evento-accion" title="Ver Cumpleañero"
-                                         onclick="event.stopPropagation(); abrirModalCumple(
-                                             '<?= esc(addslashes($ev['nombre_cumple'] ?? '')) ?>',
-                                             '<?= esc(addslashes($ev['descripcion'] ?? '')) ?>',
-                                             '<?= esc($fotoUrl) ?>',
-                                             '<?= $ev['edad'] ?? 0 ?>',
-                                             '<?= date('d/m', strtotime($ev['fecha_inicio'])) ?>'
-                                         )">
-                                     <i class="fa-solid fa-eye"></i>
-                                 </button>
-                              </div>
-                              <?php else: ?>
-                              <!-- Nota de evento normal -->
-                              <div class="evento-titulo">
-                                  <?php if ($ev['publico']): ?>
-                                      <i class="fa-solid fa-eye text-primary" title="Visible en Calendario Público"></i>
-                                  <?php endif; ?>
-                                  <?php if (!empty($ev['requiere_sala'])): ?>
-                                      <i class="fa-solid fa-person-chalkboard" style="color:#ca8a04;" title="Requiere Sala de Juntas"></i>
-                                  <?php endif; ?>
-                                  <?= esc($ev['titulo']) ?>
-                              </div>
-                              <div class="evento-hora">
-                                  <i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?>
-                              </div>
-                             <div class="evento-acciones">
-                                 <button type="button" class="btn-evento-accion" title="Ver Nota"
-                                         onclick="event.stopPropagation(); abrirModalVer(
-                                             '<?= esc(addslashes($ev['titulo'])) ?>', 
-                                             '<?= esc(addslashes($ev['descripcion'] ?? '')) ?>', 
-                                             '<?= date('d/m/Y H:i', strtotime($ev['fecha_inicio'])) ?>', 
-                                             '<?= date('d/m/Y H:i', strtotime($ev['fecha_fin'])) ?>'
-                                         )">
-                                     <i class="fa-solid fa-eye"></i>
-                                 </button>
-                                 <button type="button" class="btn-evento-accion" title="Editar Nota"
-                                         onclick="event.stopPropagation(); abrirModalEditar(
-                                             <?= $ev['id'] ?>, 
-                                             '<?= esc(addslashes($ev['titulo'])) ?>', 
-                                             '<?= esc(addslashes($ev['descripcion'] ?? '')) ?>', 
-                                             '<?= date('Y-m-d\TH:i', strtotime($ev['fecha_inicio'])) ?>', 
-                                             '<?= date('Y-m-d\TH:i', strtotime($ev['fecha_fin'])) ?>', 
-                                             '<?= esc($ev['color']) ?>',
-                                             <?= $ev['publico'] ? 1 : 0 ?>
-                                         )">
-                                     <i class="fa-solid fa-pen"></i>
-                                 </button>
-                             </div>
-                             <?php endif; ?>
+                        <div class="evento-pildora<?= $esCumple ? ' es-cumple' : '' ?>" style="<?= $styleAttr ?>" title="<?= esc($ev['titulo']) ?>">
+                            <div class="evento-titulo">
+                                <?php if ($esCumple): ?>
+                                    <?php if (!empty($fotoUrl)): ?>
+                                        <img src="<?= esc($fotoUrl) ?>" alt="" class="cumple-mini-avatar">
+                                    <?php else: ?>
+                                        <span class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span>
+                                    <?php endif; ?>
+                                <?php elseif (isset($ev['requiere_sala']) && ($ev['requiere_sala'] === true || $ev['requiere_sala'] === 't' || $ev['requiere_sala'] === 'true' || $ev['requiere_sala'] === 1 || $ev['requiere_sala'] === '1')): ?>
+                                    <i class="fa-solid fa-person-chalkboard" title="Requiere Sala" style="color:var(--color-primary); margin-right:4px;"></i>
+                                <?php endif; ?>
+
+                                <span><?= esc($ev['titulo']) ?></span>
+                                <?php if (!$esCumple && !empty($ev['publico'])): ?>
+                                    <i class="fa-solid fa-earth-americas" style="font-size:0.75rem; flex-shrink: 0; color: #3b82f6;" title="Evento Público"></i>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="evento-hora">
+                                <i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?>
+                            </div>
+
+                            <div class="evento-acciones">
+                                <?php if ($esCumple): ?>
+                                    <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalCumple('<?=esc(addslashes($ev['nombre_cumple']??''))?>', '', '<?=esc($fotoUrl)?>', '<?=$ev['edad']??0?>', '<?=date('d/m', strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-eye"></i></button>
+                                <?php else: ?>
+                                    <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalVer('<?=esc(addslashes($ev['titulo']))?>', '<?=esc(addslashes($ev['descripcion']??''))?>', '<?=date('d/m/Y H:i', strtotime($ev['fecha_inicio']))?>', '<?=date('d/m/Y H:i', strtotime($ev['fecha_fin']))?>', <?= ($ev['requiere_sala']?1:0) ?>, '<?=esc(addslashes($ev['area_solicitante']??'N/A'))?>', '<?=esc(addslashes($ev['persona_solicitante']??'N/A'))?>')"><i class="fa-solid fa-eye"></i></button>
+                                    <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalEditar(<?= $ev['id'] ?>, '<?=esc(addslashes($ev['titulo']))?>', '<?=esc(addslashes($ev['descripcion']??''))?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_inicio']))?>', '<?=date('Y-m-d\TH:i', strtotime($ev['fecha_fin']))?>', '<?=$ev['color']?>', <?= ($ev['publico']?1:0) ?>, <?= ($ev['requiere_sala']?1:0) ?>)"><i class="fa-solid fa-pen"></i></button>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -1127,11 +1098,19 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         </label>
                     </div>
                 </div>
-                <div class="form-group" style="margin-top: 1rem; padding: 12px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" name="publico" id="c_publico" style="width: 18px; height: 18px; cursor: pointer;">
-                    <label for="c_publico" style="margin: 0; cursor: pointer; font-weight: 600; color: #0369a1; font-size: 0.9rem;">
-                        <i class="fa-solid fa-earth-americas"></i> Mostrar en Calendario Público
-                    </label>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <div class="form-group" style="flex: 1; padding: 12px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" name="publico" id="c_publico" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="c_publico" style="margin: 0; cursor: pointer; font-weight: 600; color: #0369a1; font-size: 0.9rem;">
+                            <i class="fa-solid fa-earth-americas"></i> Público
+                        </label>
+                    </div>
+                    <div class="form-group" style="flex: 1; padding: 12px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #fde68a;">
+                        <input type="checkbox" name="requiere_sala" id="c_requiere_sala" style="width: 18px; height: 18px; cursor: pointer; accent-color: #92400e;">
+                        <label for="c_requiere_sala" style="margin: 0; cursor: pointer; font-weight: 600; color: #92400e; font-size: 0.9rem;">
+                            <i class="fa-solid fa-person-chalkboard"></i> ¿Requiere Sala?
+                        </label>
+                    </div>
                 </div>
 
             </div>
@@ -1233,11 +1212,19 @@ require_once __DIR__ . '/../includes/header_admin.php';
                         </label>
                     </div>
                 </div>
-                <div class="form-group" style="margin-top: 1rem; padding: 12px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" name="publico" id="e_publico" style="width: 18px; height: 18px; cursor: pointer;">
-                    <label for="e_publico" style="margin: 0; cursor: pointer; font-weight: 600; color: #0369a1; font-size: 0.9rem;">
-                        <i class="fa-solid fa-earth-americas"></i> Mostrar en Calendario Público
-                    </label>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <div class="form-group" style="flex: 1; padding: 12px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" name="publico" id="e_publico" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="e_publico" style="margin: 0; cursor: pointer; font-weight: 600; color: #0369a1; font-size: 0.9rem;">
+                            <i class="fa-solid fa-earth-americas"></i> Público
+                        </label>
+                    </div>
+                    <div class="form-group" style="flex: 1; padding: 12px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #fde68a;">
+                        <input type="checkbox" name="requiere_sala" id="e_requiere_sala" style="width: 18px; height: 18px; cursor: pointer; accent-color: #92400e;">
+                        <label for="e_requiere_sala" style="margin: 0; cursor: pointer; font-weight: 600; color: #92400e; font-size: 0.9rem;">
+                            <i class="fa-solid fa-person-chalkboard"></i> ¿Requiere Sala?
+                        </label>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer" style="display: flex; justify-content: space-between;">
@@ -1505,7 +1492,7 @@ function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
     abrirModal('modalVerCumple');
 }
 
-function abrirModalEditar(id, titulo, desc, ini, fin, color, publico) {
+function abrirModalEditar(id, titulo, desc, ini, fin, color, publico, requiereSala = 0) {
     document.getElementById('e_evento_id').value = id;
     document.getElementById('e_titulo').value = titulo;
     document.getElementById('e_descripcion').value = desc;
@@ -1513,6 +1500,7 @@ function abrirModalEditar(id, titulo, desc, ini, fin, color, publico) {
     document.getElementById('e_fecha_fin').value = fin;
     document.getElementById('e_accion').value = 'editar_evento';
     document.getElementById('e_publico').checked = (publico == 1);
+    document.getElementById('e_requiere_sala').checked = (requiereSala == 1);
     
     let colorRadios = document.querySelectorAll('#formEditarEvento input[name="color"]');
     colorRadios.forEach(radio => {

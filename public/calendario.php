@@ -374,7 +374,7 @@ require_once __DIR__ . '/../includes/header_user.php';
                         ?>
                         <div class="evento-pildora <?= $esCumple ? ' es-cumple' : '' ?>" 
                              style="<?= $styleAttr ?>"
-                             onclick="event.stopPropagation(); <?= $esCumple ? "abrirModalCumple('".esc(addslashes($ev['nombre_cumple']))."', '".esc($fotoUrl)."', '".$ev['edad']."', '".date('d/m', strtotime($ev['fecha_inicio']))."')" : "verDetalleEvento('".esc($ev['titulo'])."', '".esc($ev['descripcion']??'Sin detalles')."', '".date('d/m/Y H:i', strtotime($ev['fecha_inicio']))."', '".date('d/m/Y H:i', strtotime($ev['fecha_fin']))."')" ?>">
+                             onclick="event.stopPropagation(); <?= $esCumple ? "abrirModalCumple('".esc(addslashes($ev['nombre_cumple']))."', '".esc($fotoUrl)."', '".$ev['edad']."', '".date('d/m', strtotime($ev['fecha_inicio']))."')" : "verDetalleEvento('".esc($ev['titulo'])."', '".esc($ev['descripcion']??'Sin detalles')."', '".date('d/m/Y H:i', strtotime($ev['fecha_inicio']))."', '".date('d/m/Y H:i', strtotime($ev['fecha_fin']))."', ".($ev['requiere_sala']?1:0).", '".esc(addslashes($ev['area_solicitante'] ?? ''))."', '".esc(addslashes($ev['persona_solicitante'] ?? ''))."')" ?>">
                             <div class="evento-titulo">
                                 <?php if ($esCumple): ?>
                                     <?php if (!empty($fotoUrl)): ?>
@@ -382,6 +382,8 @@ require_once __DIR__ . '/../includes/header_user.php';
                                     <?php else: ?>
                                         <span class="cumple-mini-avatar cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span>
                                     <?php endif; ?>
+                                <?php elseif (isset($ev['requiere_sala']) && ($ev['requiere_sala'] === true || $ev['requiere_sala'] === 't' || $ev['requiere_sala'] === 'true' || $ev['requiere_sala'] === 1 || $ev['requiere_sala'] === '1')): ?>
+                                    <i class="fa-solid fa-person-chalkboard" title="Requiere Sala de Juntas" style="color: var(--color-primary); margin-right: 4px;"></i>
                                 <?php endif; ?>
                                 <span><?= esc($ev['titulo']) ?></span>
                                 <?php if (!$esCumple && !empty($ev['publico'])): ?>

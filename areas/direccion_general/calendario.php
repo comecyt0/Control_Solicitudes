@@ -30,9 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         
         if ($titulo && $fechaInicio && $fechaFin) {
             $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-            $stmt = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area) VALUES (?, ?, ?, ?, ?, ?, $publico, ?)");
+            $stmt = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area, requiere_sala, area_solicitante, persona_solicitante) VALUES (?, ?, ?, ?, ?, ?, $publico, ?, $requiereSala, ?, ?)");
             $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $_SESSION['admin_id'], $_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0]);
-            header('Location: ' . BASE_URL . 'admin/calendario.php?flash=evento_creado');
+            header('Location: ' . BASE_URL . 'areas/direccion_general/calendario.php?flash=evento_creado');
             exit;
         } else {
             $mensajeFlash = "El título y las fechas son obligatorias.";
@@ -48,9 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         
         if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
             $publico = isset($_POST['publico']) ? 'TRUE' : 'FALSE';
-            $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = $publico, requiere_sala = $requiereSala WHERE id = ?");
             $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $id]);
-            header('Location: ' . BASE_URL . 'admin/calendario.php?flash=evento_editado');
+            header('Location: ' . BASE_URL . 'areas/direccion_general/calendario.php?flash=evento_editado');
             exit;
         } else {
             $mensajeFlash = "Faltan datos obligatorios para editar.";
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         if ($id > 0) {
             $stmt = $pdo->prepare("DELETE FROM eventos WHERE id = ?");
             $stmt->execute([$id]);
-            header('Location: ' . BASE_URL . 'admin/calendario.php?flash=evento_eliminado');
+            header('Location: ' . BASE_URL . 'areas/direccion_general/calendario.php?flash=evento_eliminado');
             exit;
         }
     } elseif ($accion === 'crear_tarea') {
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         if ($titulo) {
             $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
             $stmt->execute([$titulo, $descripcion, $color, $_SESSION['admin_id'], $asignado_a, $_SESSION['admin_cve_area'] ?? $_SESSION['user_cve_area'] ?? 0]);
-            header('Location: ' . BASE_URL . 'admin/calendario.php?flash=tarea_creada#kanban');
+            header('Location: ' . BASE_URL . 'areas/direccion_general/calendario.php?flash=tarea_creada#kanban');
             exit;
         }
     } elseif ($accion === 'editar_tarea') {
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         if ($id > 0 && $titulo) {
             $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET titulo = ?, descripcion = ?, color = ?, asignado_a = ? WHERE id = ?");
             $stmt->execute([$titulo, $descripcion, $color, $asignado_a, $id]);
-            header('Location: ' . BASE_URL . 'admin/calendario.php?flash=tarea_editada#kanban');
+            header('Location: ' . BASE_URL . 'areas/direccion_general/calendario.php?flash=tarea_editada#kanban');
             exit;
         }
     } elseif ($accion === 'mover_tarea') {
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         if ($id > 0 && in_array($nuevoEstatus, ['pendiente', 'en_proceso', 'completada'])) {
             $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET estatus = ? WHERE id = ?");
             $stmt->execute([$nuevoEstatus, $id]);
-            header('Location: ' . BASE_URL . 'admin/calendario.php?flash=tarea_movida#kanban');
+            header('Location: ' . BASE_URL . 'areas/direccion_general/calendario.php?flash=tarea_movida#kanban');
             exit;
         }
     } elseif ($accion === 'eliminar_tarea') {
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         if ($id > 0) {
             $stmt = $pdo->prepare("DELETE FROM sb_kanban_tareas WHERE id = ?");
             $stmt->execute([$id]);
-            header('Location: ' . BASE_URL . 'admin/calendario.php?flash=tarea_eliminada#kanban');
+            header('Location: ' . BASE_URL . 'areas/direccion_general/calendario.php?flash=tarea_eliminada#kanban');
             exit;
         }
     }
@@ -1030,11 +1030,19 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         </label>
                     </div>
                 </div>
-                <div class="form-group" style="margin-top: 1rem; padding: 12px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" name="publico" id="c_publico" style="width: 18px; height: 18px; cursor: pointer;">
-                    <label for="c_publico" style="margin: 0; cursor: pointer; font-weight: 600; color: #0369a1; font-size: 0.9rem;">
-                        <i class="fa-solid fa-earth-americas"></i> Mostrar en Calendario Público
-                    </label>
+                                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <div class="form-group" style="flex: 1; padding: 12px; background: #e0f2fe; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" name="publico" id="c_publico" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="c_publico" style="margin: 0; cursor: pointer; font-weight: 600; color: #0369a1; font-size: 0.9rem;">
+                            <i class="fa-solid fa-earth-americas"></i> Público
+                        </label>
+                    </div>
+                    <div class="form-group" style="flex: 1; padding: 12px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #fde68a;">
+                        <input type="checkbox" name="requiere_sala" id="c_requiere_sala" style="width: 18px; height: 18px; cursor: pointer; accent-color: #92400e;">
+                        <label for="c_requiere_sala" style="margin: 0; cursor: pointer; font-weight: 600; color: #92400e; font-size: 0.9rem;">
+                            <i class="fa-solid fa-person-chalkboard"></i> ¿Requiere Sala?
+                        </label>
+                    </div>
                 </div>
 
             </div>
@@ -1356,14 +1364,14 @@ function abrirModalCrearDesdeCelda(dInicio, dFin) {
     abrirModal('modalCrearEvento');
 }
 
-function abrirModalVer(titulo, desc, ini, fin) {
+function abrirModalVer(titulo, desc, ini, fin, requiereSala = 0, area = 'General', persona = 'Admin') {
     document.getElementById('v_titulo').textContent = titulo;
     document.getElementById('v_horario').textContent = ini + ' - ' + fin;
     document.getElementById('v_descripcion').textContent = desc || 'Sin detalles adicionales registrados.';
     abrirModal('modalVerEvento');
 }
 
-function abrirModalEditar(id, titulo, desc, ini, fin, color, publico) {
+function abrirModalEditar(id, titulo, desc, ini, fin, color, publico, requiereSala = 0) {
     document.getElementById('e_evento_id').value = id;
     document.getElementById('e_titulo').value = titulo;
     document.getElementById('e_descripcion').value = desc;

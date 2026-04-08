@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $chk = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
             $chk->execute([$adminId]);
             $idAutor = $chk->fetch() ? $adminId : null;
-            $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area) VALUES (?,?,?,?,?,?,FALSE,?)")
+            $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area, requiere_sala, area_solicitante, persona_solicitante) VALUES (?,?,?,?,?,?,FALSE,?)")
                 ->execute([$titulo, $desc, $fi, $ff, $color, $idAutor, $cveArea]);
             header('Location: agenda.php?flash=evento_creado'); exit;
         }

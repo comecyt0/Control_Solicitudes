@@ -1,40 +1,25 @@
 ---
-name: Sala de Juntas Rollout
-description: Instructions for extending the "Sala de Juntas" feature to departmental modules.
+description: Skill for propagating Meeting Room (Sala de Juntas) UI across multiple calendars.
 ---
-
 # Sala de Juntas Rollout Skill
 
-This skill provides a systematic approach to updating departmental calendar modules to support room reservations.
+This skill documents how to propagate the "Sala de Juntas" reservation UI and logic across multiple departmental calendars in the Intranet system.
 
-## ⚙️ Backend: `api/calendario_solicitudes.php`
+## UI Requirements
+Each calendar pildora (sticky note) must:
+1.  Display the `fa-person-chalkboard` icon if `requiere_sala` is true.
+2.  Pass 7 arguments to `abrirModalVer` (tile, desc, ini, fin, requiereSala, area, persona).
+3.  Pass 8 arguments to `abrirModalEditar` (id, titulo, desc, ini, fin, color, publico, requiereSala).
 
-Update the `gestionar` action (case `aceptado`) to copy the new columns:
+## Backend Requirements
+1.  SQL INSERT/UPDATE must include the `requiere_sala` column.
+2.  The area and requester name should be automatically pulled from the session (`$_SESSION['admin_nombre']`, etc.).
 
-```php
-// Existing: SELECT titulo, descripcion, fecha_inicio, fecha_fin, color FROM sb_calendario_solicitudes WHERE id = ?
-// Updated:
-$stmtSel = $pdo->prepare("SELECT titulo, descripcion, fecha_inicio, fecha_fin, color, requiere_sala, area_solicitante, persona_solicitante FROM sb_calendario_solicitudes WHERE id = ?");
-
-// Existing: INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico) VALUES (?, ?, ?, ?, ?, ?, TRUE)
-// Updated:
-$ins = $pdo->prepare("INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, requiere_sala, area_solicitante, persona_solicitante) 
-                      VALUES (?, ?, ?, ?, ?, ?, TRUE, ?, ?, ?)");
+## Rollout Script logic (PowerShell)
+To safely update files without mangling, use a line-by-line reading approach:
+```powershell
+$files = Get-ChildItem -Path "areas" -Filter "calendario.php" -Recurse
+foreach ($f in $files) {
+    # Read, process line by line, write back
+}
 ```
-
-## 📅 Frontend: `calendario.php`
-
-1. **Grid Icon:** Add the room icon in the event pill loop.
-```php
-<?php if (!empty($ev['requiere_sala'])): ?>
-    <i class="fa-solid fa-person-chalkboard" style="font-size:0.75rem; flex-shrink: 0; color: #ca8a04;" title="Sala de Juntas Reservada"></i>
-<?php endif; ?>
-```
-
-2. **Detail Modal:** Update `abrirModalVer` call to pass new parameters and update the JS function to display them.
-
-3. **Solicitudes List:** Update the list render to show a "SALA" badge and the solicitor area.
-
-## 🎨 Aesthetics & Responsiveness
-
-Apply the `glass-modal` class and ensure `flexbox` is used for date ranges instead of fixed grids.
