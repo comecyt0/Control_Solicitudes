@@ -47,7 +47,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
         </div>
         <form id="formEditorialDG" onsubmit="guardarYProcesar(event)">
             <input type="hidden" id="ed_id" name="id">
-            <div class="modal-body">
+            <div class="modal-body" style="overflow-y: auto; max-height: 70vh; padding: 24px;">
                 <div class="form-group mb-16">
                     <label class="form-label">Título del Evento (Editable)</label>
                     <input type="text" id="ed_titulo" name="titulo" class="form-control" required>

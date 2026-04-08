@@ -291,14 +291,14 @@ $extraHead = '
 
 .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
 .modal-backdrop.active { display: flex; }
-.modal { background: #fff; width: 100%; max-width: 550px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05); overflow: hidden; animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; border: none; }
+.modal { background: #fff; width: 100%; max-width: 550px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05); overflow: hidden; animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; border: none; max-height: 90vh; display: flex; flex-direction: column; }
 @keyframes modalPop { from { transform: scale(0.95); opacity:0; } to { transform: scale(1); opacity:1; } }
-.modal-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; position: relative; border: none; }
+.modal-header { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; position: relative; border: none; flex-shrink: 0; }
 .modal-header h3 { margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
 .modal-close { position: absolute; top: 1.25rem; right: 1.25rem; background: rgba(255,255,255,0.15); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; backdrop-filter: blur(4px); }
 .modal-close:hover { background: rgba(255,255,255,0.25); transform: rotate(90deg); }
-.modal-body { padding: 1.5rem; }
-.modal-footer { padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 0.75rem; }
+.modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; gap: 0.75rem; flex-shrink: 0; }
 .nota-dorado { background: #fef08a !important; border-top-color: #ca8a04 !important; }
 .cumple-mini-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ca8a04; }
 .cumple-mini-placeholder { background: #fef08a; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #ca8a04; border: 1.5px solid #ca8a04; }
