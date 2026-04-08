@@ -340,8 +340,8 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                             <?php if ($esCumple): ?>
                                 <?php if (!empty($ev['foto_perfil'])): ?><img src="<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar"><?php else: ?><span class="cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span><?php endif; ?>
                             <?php endif; ?>
-                            <?php if (!$esCumple && $ev['publico']): ?>
-                                <i class="fa-solid fa-earth-americas" style="color:#3b82f6; flex-shrink:0;" title="PÚBLICO"></i>
+                            <?php if (!$esCumple): ?>
+                                <i class="fa-solid fa-earth-americas" style="color:#3b82f6; flex-shrink:0;" title="DEBUG: SIEMPRE ON"></i>
                                 <span style="font-size: 0.7rem; flex-shrink:0;">🌍</span>
                             <?php endif; ?>
                             <span><?= esc($ev['titulo']) ?></span>
