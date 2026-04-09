@@ -213,9 +213,9 @@ require_once __DIR__ . '/../../includes/header_admin.php';
         <i class="fa-solid fa-folder-open"></i>
         <span>Archivo Digital</span>
     </a>
-    <a href="../../admin/personal.php?filtro_area=18" class="action-card">
-        <i class="fa-solid fa-user-gear"></i>
-        <span>Gestión de Personal</span>
+    <a href="#" class="action-card" style="opacity: 0.7; cursor: not-allowed;" title="Módulo en desarrollo">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <span>Recursos Materiales</span>
     </a>
 </div>
 

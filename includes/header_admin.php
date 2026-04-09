@@ -30,7 +30,7 @@ if (isset($_SESSION['area_slug_activa'])) {
         // BLOQUEO DE ÁREAS EN DESARROLLO:
         // Si el área NO es Difusión (ya funcional) y el usuario está en /areas/
         // Solo puede ver el dashboard.php. Cualquier otro archivo redirecciona al dashboard.
-        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento', 'apoyo_investigacion', 'formacion_rrhh', 'desarrollo_tecnologico', 'juridico'];
+        $areas_funcionales = ['sistemas', 'difusion', 'direccion_general', 'juridico_igualdad', 'financiamiento', 'apoyo_investigacion', 'formacion_rrhh', 'desarrollo_tecnologico', 'juridico', 'administrativo'];
         if (!in_array($slug_esperado, $areas_funcionales)) {
             $current_file = basename($script_path);
             if ($current_file !== 'dashboard.php') {
@@ -354,6 +354,21 @@ if (isset($_SESSION['user_area'])) {
             </a>
             <a href="<?= BASE_URL ?>areas/juridico/reportes.php" class="nav-link <?= $activeMenu === 'reportes' ? 'active' : '' ?>">
                 <i class="fa-solid fa-chart-bar nav-icon"></i><span>Reportes</span>
+            </a>
+        </div>
+
+        <?php elseif ($slug_menu === 'administrativo'): ?>
+        <!-- Menu Exclusivo Departamento Administrativo -->
+        <div class="nav-group">
+            <span class="nav-group-label">Módulos Administrativos</span>
+            <a href="<?= BASE_URL ?>areas/administrativo/calendario_editorial.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
+                <i class="fa-solid fa-calendar-check nav-icon"></i><span>Agenda Operativa</span>
+            </a>
+            <a href="<?= BASE_URL ?>areas/administrativo/repositorio.php" class="nav-link <?= $activeMenu === 'repositorio' ? 'active' : '' ?>">
+                <i class="fa-solid fa-folder-open nav-icon"></i><span>Archivo Digital</span>
+            </a>
+            <a href="<?= BASE_URL ?>admin/personal.php?filtro_area=18" class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
+                <i class="fa-solid fa-user-gear nav-icon"></i><span>Gestión de Personal</span>
             </a>
         </div>
 

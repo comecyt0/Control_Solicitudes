@@ -169,16 +169,53 @@ $stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, 
 $stmt->execute([$cveAreaContexto, $finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// 2. Consultar eventos INSTITUCIONALES (Globales/Públicos)
+$stmtG = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, TRUE as es_institucional FROM eventos WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+$stmtG->execute([$finMesBusqueda, $inicioMesBusqueda]);
+$eventosGlobales = $stmtG->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($eventosGlobales as $eg) {
+    // Evitar duplicados de mirrors (si el marcador [ADM:id] está en la descripción)
+    if (strpos($eg['descripcion'] ?? '', '[ADM:') !== false) continue;
+    $eventosRaw[] = $eg;
+}
+
+// 3. Consultar y Añadir CUMPLEAÑOS
+if ($mes > 0 && $mes <= 12) {
+    $stmtB = $pdo->prepare("SELECT nombre, appat, apmat, fecha_nacimiento, foto_perfil FROM cat_personal WHERE activo = TRUE AND fecha_nacimiento IS NOT NULL AND EXTRACT(MONTH FROM fecha_nacimiento) = ?");
+    $stmtB->execute([$mes]);
+    $cumpleaneros = $stmtB->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($cumpleaneros as $cp) {
+        $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
+        $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
+        $eventosRaw[] = [
+            'id' => null, 
+            'titulo' => "🎂 " . $nombreCompleto, 
+            'descripcion' => 'Cumpleaños institucional',
+            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00', $anio, $mes, $diaCumple), 
+            'fecha_fin' => sprintf('%04d-%02d-%02d 23:59:59', $anio, $mes, $diaCumple),
+            'color' => '#B19A6D', 
+            'publico' => false, 
+            'es_cumple' => true,
+            'es_institucional' => true,
+            'nombre_cumple'=> $nombreCompleto, 
+        ];
+    }
+}
+
 $calendarioEventos = [];
 foreach ($eventosRaw as $ev) {
     $dIni = new DateTime($ev['fecha_inicio']);
     $diaEv = (int)$dIni->format('d');
     if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
     $ev['hora_formateada'] = $dIni->format('H:i');
-    $v = $ev['publico'];
+    
+    // Casting de booleanos robusto
+    $v = $ev['publico'] ?? false;
     $ev['publico'] = ($v === true || $v === 't' || $v === 'true' || $v === 1 || $v === '1');
     $vs = $ev['requiere_sala'] ?? false;
     $ev['requiere_sala'] = ($vs === true || $vs === 't' || $vs === 'true' || $vs === 1 || $vs === '1');
+    
     $calendarioEventos[$diaEv][] = $ev;
 }
 
@@ -205,7 +242,7 @@ $extraHead = '
 .calendar-cell { min-height: 140px; padding: 0.5rem; background: #ffffff; cursor: pointer; display: flex; flex-direction: column; gap: 0.4rem; overflow: hidden; border:none; border-right: 1px solid rgba(0,0,0,0.03); border-bottom: 1px solid rgba(0,0,0,0.03); }
 .day-number { font-weight: 700; color: #334155; align-self: flex-end; }
 .calendar-cell.today .day-number { color: #fff; background: var(--color-primary); border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; }
-.evento-pildora { font-size: 0.75rem; padding: 0.5rem 0.6rem; border-radius: 2px 2px 12px 2px; color: #1e293b; margin-bottom: 0.25rem; position: relative; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05), inset -10px -10px 20px rgba(0,0,0,0.03); border-top: 3px solid var(--color-primary); width:100%; box-sizing:border-box; transition: all 0.2s; display: flex; flex-direction: column; gap: 0.2rem; }
+.evento-pildora { font-size: 0.75rem; padding: 0.5rem 0.6rem; border-radius: 2px 2px 12px 2px; color: #1e293b; margin-bottom: 0.25rem; position: relative; box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.05), inset -10px -10px 20px rgba(0,0,0,0.03); border-top: 6px solid var(--color-primary); width:100%; box-sizing:border-box; transition: all 0.2s; display: flex; flex-direction: column; gap: 0.2rem; }
 .evento-pildora:hover { transform: scale(1.02); z-index: 10; }
 .evento-titulo { font-weight: 700; display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; }
 .evento-titulo span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
@@ -216,7 +253,8 @@ $extraHead = '
 .kanban-col { background: #f1f5f9; border-radius: 12px; min-height: 500px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; }
 .kanban-col-header { padding: 1.25rem; font-weight: 800; color: white; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; }
 .bg-pendiente { background-color: #3b82f6; } .bg-en-proceso { background-color: #f59e0b; } .bg-completada { background-color: #10b981; }
-.tarea-card { background: #fff; border-radius: 10px; padding: 1.25rem; margin: 10px; border: 1px solid #e2e8f0; border-top: 5px solid var(--color-primary); cursor: pointer; }
+.tarea-card { background: #fff; border-radius: 10px; padding: 1.25rem; margin: 10px; border: 1px solid #e2e8f0; border-top: 8px solid var(--color-primary); cursor: pointer; transition: transform 0.2s; }
+.tarea-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
 .modal-backdrop.active { display: flex; }
 .modal { background: #fff; width: 100%; max-width: 550px; border-radius: 24px; overflow: hidden; border: none; max-height: 90vh; display: flex; flex-direction: column; }
@@ -265,7 +303,9 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <div class="evento-hora"><?= $ev['hora_formateada'] ?></div>
                         <div class="evento-acciones">
                             <button type="button" class="btn-evento-accion" onclick="abrirModalVer('<?=esc(addslashes($ev['titulo']))?>','<?=esc(addslashes($ev['descripcion']))?>','<?=date('d/m/Y H:i',strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-eye"></i></button>
+                            <?php if (!$ev['es_institucional'] || $cveAreaUsuario === 1): ?>
                             <button type="button" class="btn-evento-accion" onclick="abrirModalEditar(<?=$ev['id']?>,'<?=esc(addslashes($ev['titulo']))?>','<?=esc(addslashes($ev['descripcion']))?>','<?=date('Y-m-d\TH:i',strtotime($ev['fecha_inicio']))?>','<?=date('Y-m-d\TH:i',strtotime($ev['fecha_fin']))?>','<?=$ev['color']?>',<?=($ev['publico']?1:0)?>,<?=($ev['requiere_sala']?1:0)?>)"><i class="fa-solid fa-pen"></i></button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -285,10 +325,13 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <div class="kanban-col-header bg-<?= str_replace('_','-',$idCol) ?>"><span><?= strtoupper($lblCol) ?></span></div>
                 <div class="kanban-col-body">
                     <?php foreach ($listaTareas[$idCol] as $t): ?>
-                        <div class="tarea-card" draggable="true" ondragstart="drag(event, <?= $t['id'] ?>)" onclick="abrirModalEditarTarea(<?= $t['id'] ?>, '<?= esc(addslashes($t['titulo'])) ?>', '<?= esc(addslashes($t['descripcion'])) ?>', '<?= $t['color'] ?>', <?= (int)$t['asignado_a'] ?>)">
+                        <div class="tarea-card" draggable="true" ondragstart="drag(event, <?= $t['id'] ?>)" onclick="abrirModalEditarTarea(<?= $t['id'] ?>, '<?= esc(addslashes($t['titulo'])) ?>', '<?= esc(addslashes($t['descripcion'])) ?>', '<?= $t['color'] ?>', <?= (int)$t['asignado_a'] ?>)" style="border-top-color: <?= $t['color'] ?>;">
                             <h4 style="margin:0 0 5px; font-size:1rem;"><?= esc($t['titulo']) ?></h4>
                             <p style="font-size:0.8rem; color:#64748b;"><?= esc(mb_strimwidth($t['descripcion'], 0, 80, '...')) ?></p>
-                            <div style="margin-top:10px; font-size:0.7rem; color:#94a3b8;"><i class="fa-solid fa-user-tag"></i> <?= esc($t['asignado_nombre'] ?: 'Sin asignar') ?></div>
+                            <div style="margin-top:10px; font-size:0.7rem; color:#94a3b8; display:flex; align-items:center; gap:5px;">
+                                <i class="fa-solid fa-user-tag"></i> <?= esc($t['asignado_nombre'] ?: 'Sin asignar') ?>
+                                <span style="margin-left:auto; width:12px; height:12px; border-radius:50%; background:<?= $t['color'] ?>; border:1px solid rgba(0,0,0,0.1);"></span>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -330,7 +373,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <div class="mb-3"><label class="form-label">Título</label><input type="text" name="titulo" id="e_titulo" class="form-control" required></div>
                 <div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="e_descripcion" class="form-control" rows="2"></textarea></div>
                 <div class="row mb-3"><div class="col"><input type="datetime-local" name="fecha_inicio" id="e_inicio" class="form-control"></div><div class="col"><input type="datetime-local" name="fecha_fin" id="e_fin" class="form-control"></div></div>
-                <div class="mb-3"><input type="color" name="color" id="e_color" class="form-control"></div>
+                <div class="mb-3"><label class="form-label">Color del Evento</label><input type="color" name="color" id="e_color" class="form-control" style="height:50px; cursor:pointer;"></div>
                 <div class="mb-3"><input type="checkbox" name="publico" id="e_pub"> Público | <input type="checkbox" name="requiere_sala" id="e_sala"> Sala Juntas</div>
             </div>
             <div class="modal-footer"><button type="submit" class="btn btn-primary" style="flex:1;">Guardar</button><button type="submit" name="_accion" value="eliminar_evento" class="btn btn-danger">Eliminar</button></div>
@@ -346,7 +389,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <input type="text" name="titulo" class="form-control mb-3" placeholder="Título" required>
                 <textarea name="descripcion" class="form-control mb-3" placeholder="Descripción"></textarea>
                 <select name="asignado_a" class="form-control mb-3"><option value="">-- Sin Asignar --</option><?php foreach ($adminsDisponibles as $adm): ?><option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option><?php endforeach; ?></select>
-                <input type="color" name="color" value="#334155" class="form-control">
+                <div class="mb-3"><label class="form-label">Color de Etiqueta</label><input type="color" name="color" value="#334155" class="form-control" style="height:50px; cursor:pointer;"></div>
             </div>
             <div class="modal-footer"><button type="submit" class="btn btn-primary w-100" style="background:#3b82f6;">Crear</button></div>
         </form>
@@ -361,7 +404,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <input type="text" name="titulo" id="et_titulo" class="form-control mb-3">
                 <textarea name="descripcion" id="et_descripcion" class="form-control mb-3"></textarea>
                 <select name="asignado_a" id="et_asignado_a" class="form-control mb-3"><option value="">-- Sin Asignar --</option><?php foreach ($adminsDisponibles as $adm): ?><option value="<?= $adm['id'] ?>"><?= esc($adm['nombre']) ?></option><?php endforeach; ?></select>
-                <input type="color" name="color" id="et_color" class="form-control">
+                <div class="mb-3"><label class="form-label">Color de Etiqueta</label><input type="color" name="color" id="et_color" class="form-control" style="height:50px; cursor:pointer;"></div>
             </div>
             <div class="modal-footer"><button type="submit" class="btn btn-primary" style="background:#3b82f6;flex:1;">Actualizar</button><button type="submit" name="_accion" value="eliminar_tarea" class="btn btn-danger">Eliminar</button></div>
         </form>
