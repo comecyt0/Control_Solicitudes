@@ -140,6 +140,25 @@ function verificarSesionAdmin(): void
     }
 
     $_SESSION['ultimo_acceso'] = time();
+
+    // Auto-reparación de sesión (Fase 3): Asegurar flag de director para sesiones activas
+    if (!isset($_SESSION['is_director']) && !empty($_SESSION['admin_email'])) {
+        $pdoD = getConnection();
+        $rolAdmin = $_SESSION['admin_rol'] ?? '';
+        if ($rolAdmin === 'superadmin') {
+            $_SESSION['is_director'] = true;
+        } else {
+            $stmtD = $pdoD->prepare("SELECT rol_jefatura FROM cat_personal WHERE (correo_institucional = ? OR correo_personal = ?) AND activo = true LIMIT 1");
+            $stmtD->execute([$_SESSION['admin_email'], $_SESSION['admin_email']]);
+            $p = $stmtD->fetch();
+            if ($p && !empty($p['rol_jefatura'])) {
+                $rolLower = mb_strtolower($p['rol_jefatura']);
+                if (strpos($rolLower, 'director') !== false || strpos($rolLower, 'jefe') !== false || strpos($rolLower, 'coordinador') !== false) {
+                    $_SESSION['is_director'] = true;
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -180,12 +199,21 @@ function iniciarSesion(string $email, string $password): bool
     $_SESSION['ultimo_acceso'] = time();
 
     // Identificar si es Director para el Hub de Jurisdicción (Fase 3)
+    // Se considera director si tiene un rol de jefatura O si es superadmin fiscalizador
     $_SESSION['is_director'] = false;
-    $stmtD = $pdo->prepare("SELECT rol_jefatura FROM cat_personal WHERE (correo_institucional = :e OR correo_personal = :e) AND activo = true LIMIT 1");
-    $stmtD->execute([':e' => $admin['email']]);
-    $p = $stmtD->fetch();
-    if ($p && !empty($p['rol_jefatura'])) {
+    if (($admin['rol'] ?? '') === 'superadmin') {
         $_SESSION['is_director'] = true;
+    } else {
+        $stmtD = $pdo->prepare("SELECT rol_jefatura FROM cat_personal WHERE (correo_institucional = :e OR correo_personal = :e) AND activo = true LIMIT 1");
+        $stmtD->execute([':e' => $admin['email']]);
+        $p = $stmtD->fetch();
+        if ($p && !empty($p['rol_jefatura'])) {
+            $rolLower = mb_strtolower($p['rol_jefatura']);
+            // Incluimos directores, jefes de departamento y coordinadores de alto nivel
+            if (strpos($rolLower, 'director') !== false || strpos($rolLower, 'jefe') !== false || strpos($rolLower, 'coordinador') !== false) {
+                $_SESSION['is_director'] = true;
+            }
+        }
     }
 
     return true;

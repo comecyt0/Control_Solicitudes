@@ -41,9 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Por favor, complete todos los campos.';
         } elseif (iniciarSesion($email, $password)) {
             reiniciarIntentosLogin();
-            // Si el admin pertenece a un área específica, mandarlo al router
-            $cveAreaAdmin = (int) ($_SESSION['admin_cve_area'] ?? 1);
-            $destLogin = ($cveAreaAdmin > 1) ? BASE_URL . 'public/router.php' : BASE_URL . 'public/index.php';
+            // PRIORIDAD (Fase 3): Si el usuario es Director, mandarlo al Hub de Jurisdicción
+            if ($_SESSION['is_director'] ?? false) {
+                $destLogin = BASE_URL . 'admin/jurisdiccion.php';
+            } else {
+                // Si el admin pertenece a un área específica, mandarlo al router
+                $cveAreaAdmin = (int) ($_SESSION['admin_cve_area'] ?? 1);
+                $destLogin = ($cveAreaAdmin > 1) ? BASE_URL . 'public/router.php' : BASE_URL . 'public/index.php';
+            }
             echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=' . $destLogin . '"></head><body>Autenticado. <a href="' . $destLogin . '">Click aquí</a></body></html>'; exit;
 
         } elseif (iniciarSesionUsuario($email, $password)) {

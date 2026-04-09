@@ -18,6 +18,12 @@ if (empty($_SESSION['admin_id']) && empty($_SESSION['ss_id']) && empty($_SESSION
     redirigir('admin/login.php');
 }
 
+// Fase 3: Los directores van al Hub de Jurisdicción por defecto, a menos que sea modo demo
+if (($_SESSION['is_director'] ?? false) && !isset($_GET['demo_area'])) {
+    header('Location: ' . BASE_URL . 'admin/jurisdiccion.php');
+    exit;
+}
+
 $pdo = getConnection();
 $cve_area = 0;
 $rol = null;

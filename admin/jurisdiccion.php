@@ -36,14 +36,22 @@ $adscripcionLeader = $leader['adscipcion'] ?? '';
 
 // 2. Obtener Áreas bajo su Jurisdicción
 if ($isDG) {
-    // El Director General ve TODO (excepto áreas técnicas si se desea, por ahora todo)
+    // El Director General ve TODO
     $stmtA = $pdo->query("SELECT * FROM cat_areas ORDER BY cve_area ASC");
     $jurisdiccion = $stmtA->fetchAll(PDO::FETCH_ASSOC);
     $tituloHub = "Jurisdicción Global — Dirección General";
 } else {
-    // Directores de Área ven su propia adscripción
-    $stmtA = $pdo->prepare("SELECT * FROM cat_areas WHERE adscipcion = ? ORDER BY cve_area ASC");
-    $stmtA->execute([$adscripcionLeader]);
+    // Para directores de área: áreas en su misma adscripción O donde tengan subordinados directos
+    $idLeader = $leader['cve_personal'];
+    $stmtA = $pdo->prepare("
+        SELECT DISTINCT a.* 
+        FROM cat_areas a
+        LEFT JOIN cat_personal p ON p.cve_area = a.cve_area
+        WHERE a.adscipcion = ? 
+           OR p.jefe_directo_id = ?
+        ORDER BY a.cve_area ASC
+    ");
+    $stmtA->execute([$adscripcionLeader, $idLeader]);
     $jurisdiccion = $stmtA->fetchAll(PDO::FETCH_ASSOC);
     $tituloHub = "Mi Jurisdicción — " . ($adscripcionLeader ?: 'Departamento');
 }
