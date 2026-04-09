@@ -78,8 +78,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                 $areaSol = $_SESSION['admin_area_nombre'] ?? 'Departamento Administrativo';
                 $persSol = $_SESSION['admin_nombre'] ?? 'Administrador';
 
+                // SEGURIDAD: Validar si el creador existe en administradores
+                $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
+                $checkAdmin->execute([$adminId]);
+                $idAutorValido = $checkAdmin->fetch() ? $adminId : null;
+
                 $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area, requiere_sala, area_solicitante, persona_solicitante) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $adminId, $publico ? 'true' : 'false', $cveAreaContexto, $requiereSala ? 'true' : 'false', $areaSol, $persSol]);
+                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $idAutorValido, $publico ? 'true' : 'false', $cveAreaContexto, $requiereSala ? 'true' : 'false', $areaSol, $persSol]);
                 $nuevoId = (int) $pdo->lastInsertId();
 
                 if ($publico && $nuevoId > 0) {
@@ -133,8 +138,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $asignado_a = !empty($_POST['asignado_a']) ? (int)$_POST['asignado_a'] : null;
             if ($titulo) {
                 if ($accion === 'crear_tarea') {
+                    // Validar adminId para tareas también
+                    $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
+                    $checkAdmin->execute([$adminId]);
+                    $idAutorValido = $checkAdmin->fetch() ? $adminId : null;
+
                     $stmt = $pdo->prepare("INSERT INTO sb_kanban_tareas (titulo, descripcion, color, estatus, creado_por, asignado_a, cve_area) VALUES (?, ?, ?, 'pendiente', ?, ?, ?)");
-                    $stmt->execute([$titulo, $descripcion, $color, $adminId, $asignado_a, $cveAreaContexto]);
+                    $stmt->execute([$titulo, $descripcion, $color, $idAutorValido, $asignado_a, $cveAreaContexto]);
                 } else {
                     $id = (int) postParam('tarea_id');
                     $stmt = $pdo->prepare("UPDATE sb_kanban_tareas SET titulo = ?, descripcion = ?, color = ?, asignado_a = ? WHERE id = ? AND cve_area = ?");
