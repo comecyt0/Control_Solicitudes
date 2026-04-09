@@ -32,21 +32,23 @@ function admBuscarEspejo(PDO $pdo, int $dfId): ?int {
     return $row ? (int)$row['id'] : null;
 }
 
-function admSincronizarPublico(PDO $pdo, int $dfId, string $titulo, string $descripcion, string $fi, string $ff, string $color, bool $requiereSala, string $areaSol, string $persSol): void {
+function admSincronizarPublico(PDO $pdo, int $dfId, string $titulo, string $descripcion, string $fi, string $ff, string $color, bool $requiereSala, string $areaSol, string $persSol, ?int $creadoPor): void {
     $marcador   = '[ADM:' . $dfId . ']';
     $descEspejo = trim($descripcion . ' ' . $marcador);
     $espejoId   = admBuscarEspejo($pdo, $dfId);
     $reqSalaStr = $requiereSala ? 'true' : 'false';
+    // ID fallaback (Sistemas/Admin) si el usuario actual no está en la tabla administradores
+    $idAutorSync = $creadoPor ?? 4; 
 
     if ($espejoId) {
         $pdo->prepare(
-            "UPDATE eventos SET titulo=?, descripcion=?, fecha_inicio=?, fecha_fin=?, color=?, publico=TRUE, requiere_sala=?, area_solicitante=?, persona_solicitante=? WHERE id=?"
-        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $reqSalaStr, $areaSol, $persSol, $espejoId]);
+            "UPDATE eventos SET titulo=?, descripcion=?, fecha_inicio=?, fecha_fin=?, color=?, publico=TRUE, requiere_sala=?, area_solicitante=?, persona_solicitante=?, creado_por=? WHERE id=?"
+        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $reqSalaStr, $areaSol, $persSol, $idAutorSync, $espejoId]);
     } else {
         $pdo->prepare(
-            "INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante) 
-             VALUES (?,?,?,?,?,TRUE,?,?,?)"
-        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $reqSalaStr, $areaSol, $persSol]);
+            "INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, creado_por) 
+             VALUES (?,?,?,?,?,TRUE,?,?,?,?)"
+        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $reqSalaStr, $areaSol, $persSol, $idAutorSync]);
     }
 }
 
@@ -88,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                 $nuevoId = (int) $pdo->lastInsertId();
 
                 if ($publico && $nuevoId > 0) {
-                    admSincronizarPublico($pdo, $nuevoId, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol);
+                    admSincronizarPublico($pdo, $nuevoId, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol, $idAutorValido);
                 }
                 header('Location: calendario_editorial.php?flash=evento_creado'); exit;
             }
@@ -109,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                 if ($publico) {
                     $areaSol = $_SESSION['admin_area_nombre'] ?? 'Departamento Administrativo';
                     $persSol = $_SESSION['admin_nombre'] ?? 'Administrador';
-                    admSincronizarPublico($pdo, $id, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol);
+                    admSincronizarPublico($pdo, $id, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol, $idAutorValido);
                 } else {
                     admEliminarEspejo($pdo, $id);
                 }
