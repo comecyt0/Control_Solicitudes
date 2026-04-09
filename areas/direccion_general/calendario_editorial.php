@@ -236,6 +236,10 @@ foreach ($eventosRaw as $ev) {
     $v = $ev['publico'];
     $ev['publico_raw'] = var_export($v, true);
     $ev['publico'] = ($v === true || $v === 't' || $v === 'true' || $v === 1 || $v === '1' || strtolower((string)$v) === 't' || strtolower((string)$v) === 'true');
+    
+    $vs = $ev['requiere_sala'] ?? false;
+    $ev['requiere_sala'] = ($vs === true || $vs === 't' || $vs === 'true' || $vs === 1 || $vs === '1' || strtolower((string)$vs) === 't' || strtolower((string)$vs) === 'true');
+    
     $calendarioEventos[$diaEv][] = $ev;
 }
 

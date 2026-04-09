@@ -37,9 +37,13 @@ $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
 $sqlEventos = "
-    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, TRUE as es_institucional, requiere_sala, area_solicitante, persona_solicitante FROM eventos WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
+    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, TRUE as es_institucional, requiere_sala, area_solicitante, persona_solicitante 
+    FROM eventos 
+    WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
     UNION ALL
-    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, FALSE as es_institucional, FALSE as requiere_sala, '' as area_solicitante, '' as persona_solicitante FROM df_eventos_editoriales WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
+    SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, FALSE as es_institucional, requiere_sala, area_solicitante, persona_solicitante 
+    FROM df_eventos_editoriales 
+    WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
     ORDER BY fecha_inicio ASC
 ";
 $stmt = $pdo->prepare($sqlEventos);
@@ -85,6 +89,9 @@ foreach ($eventosRaw as $ev) {
     // Casteo inclusivo para PostgreSQL ('t', 'true', 1, true)
     $valPub = $ev['publico'] ?? false;
     $ev['publico'] = ($valPub === true || $valPub === 't' || $valPub === 'true' || $valPub === '1' || $valPub === 1);
+    
+    $valSala = $ev['requiere_sala'] ?? false;
+    $ev['requiere_sala'] = ($valSala === true || $valSala === 't' || $valSala === 'true' || $valSala === '1' || $valSala === 1);
     
     $calendarioEventos[$dia][] = $ev;
 }
