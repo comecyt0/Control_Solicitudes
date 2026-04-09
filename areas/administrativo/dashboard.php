@@ -171,7 +171,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 <div class="hero-adm">
     <div class="hero-adm-content">
         <h1>Centro de Control Administrativo</h1>
-        <p>Gestión eficiente de recursos humanos, materiales y flujos de trabajo internos del Consejo.</p>
+        <p>Coordinación operativa de servicios generales, archivo digital y flujos de trabajo internos del Consejo.</p>
     </div>
     <div style="font-size: 7rem; opacity: 0.15; color: var(--adm-accent);">
         <i class="fa-solid fa-briefcase"></i>
@@ -214,8 +214,8 @@ require_once __DIR__ . '/../../includes/header_admin.php';
         <span>Archivo Digital</span>
     </a>
     <a href="#" class="action-card" style="opacity: 0.7; cursor: not-allowed;" title="Módulo en desarrollo">
-        <i class="fa-solid fa-boxes-stacked"></i>
-        <span>Recursos Materiales</span>
+        <i class="fa-solid fa-screwdriver-wrench"></i>
+        <span>Servicios Generales</span>
     </a>
 </div>
 

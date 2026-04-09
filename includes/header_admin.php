@@ -364,11 +364,11 @@ if (isset($_SESSION['user_area'])) {
             <a href="<?= BASE_URL ?>areas/administrativo/calendario_editorial.php" class="nav-link <?= $activeMenu === 'calendario' ? 'active' : '' ?>">
                 <i class="fa-solid fa-calendar-check nav-icon"></i><span>Agenda Operativa</span>
             </a>
-            <a href="<?= BASE_URL ?>areas/administrativo/repositorio.php" class="nav-link <?= $activeMenu === 'repositorio' ? 'active' : '' ?>">
+            <a href="repositorio.php" class="nav-link <?= $activeMenu === 'repositorio' ? 'active' : '' ?>">
                 <i class="fa-solid fa-folder-open nav-icon"></i><span>Archivo Digital</span>
             </a>
-            <a href="<?= BASE_URL ?>admin/personal.php?filtro_area=18" class="nav-link <?= $activeMenu === 'personal' ? 'active' : '' ?>">
-                <i class="fa-solid fa-user-gear nav-icon"></i><span>Gestión de Personal</span>
+            <a href="#" class="nav-link" style="opacity: 0.7; cursor: not-allowed;" title="Módulo en desarrollo">
+                <i class="fa-solid fa-screwdriver-wrench nav-icon"></i><span>Servicios Generales</span>
             </a>
         </div>
 
