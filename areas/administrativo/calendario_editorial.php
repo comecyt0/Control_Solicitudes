@@ -416,7 +416,8 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                 <div class="mb-3"><label class="form-label">Descripción</label><textarea name="descripcion" id="e_descripcion" class="form-control" rows="2"></textarea></div>
                 <div class="row mb-3"><div class="col"><input type="datetime-local" name="fecha_inicio" id="e_inicio" class="form-control"></div><div class="col"><input type="datetime-local" name="fecha_fin" id="e_fin" class="form-control"></div></div>
                 <div class="mb-3"><label class="form-label">Color del Evento</label><input type="color" name="color" id="e_color" class="form-control" style="height:50px; cursor:pointer;"></div>
-                <div class="mb-3"><input type="checkbox" name="publico" id="e_pub"> Público | <input type="checkbox" name="requiere_sala" id="e_sala"> Sala Juntas</div>
+                <input type="hidden" name="publico" value="0">
+                <input type="hidden" name="requiere_sala" value="0">
             </div>
             <div class="modal-footer"><button type="submit" class="btn btn-primary" style="flex:1;">Guardar</button><button type="submit" name="_accion" value="eliminar_evento" class="btn btn-danger">Eliminar</button></div>
         </form>
@@ -482,7 +483,7 @@ function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
     abrirModal('modalVerCumple');
 }
 function abrirModalEditar(id,t,d,i,f,c,p,sala) {
-    document.getElementById('e_id').value = id; document.getElementById('e_titulo').value = t; document.getElementById('e_descripcion').value = d; document.getElementById('e_inicio').value = i; document.getElementById('e_fin').value = f; document.getElementById('e_color').value = c; document.getElementById('e_pub').checked = (p == 1); document.getElementById('e_sala').checked = (sala == 1);
+    document.getElementById('e_id').value = id; document.getElementById('e_titulo').value = t; document.getElementById('e_descripcion').value = d; document.getElementById('e_inicio').value = i; document.getElementById('e_fin').value = f; document.getElementById('e_color').value = c;
     abrirModal('modalEditarEvento');
 }
 function allowDrop(ev) { ev.preventDefault(); }
