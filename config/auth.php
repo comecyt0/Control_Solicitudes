@@ -179,6 +179,15 @@ function iniciarSesion(string $email, string $password): bool
     $_SESSION['admin_foto']     = $admin['foto_perfil'] ?? null;
     $_SESSION['ultimo_acceso'] = time();
 
+    // Identificar si es Director para el Hub de Jurisdicción (Fase 3)
+    $_SESSION['is_director'] = false;
+    $stmtD = $pdo->prepare("SELECT rol_jefatura FROM cat_personal WHERE (correo_institucional = :e OR correo_personal = :e) AND activo = true LIMIT 1");
+    $stmtD->execute([':e' => $admin['email']]);
+    $p = $stmtD->fetch();
+    if ($p && !empty($p['rol_jefatura'])) {
+        $_SESSION['is_director'] = true;
+    }
+
     return true;
 }
 

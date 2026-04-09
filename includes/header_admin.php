@@ -41,13 +41,20 @@ if (isset($_SESSION['area_slug_activa'])) {
 
     } else if (strpos($script_path, '/admin/') !== false) {
         // O si intenta acceder al admin de sistemas puro pero su slug NO es sistemas
-        if ($slug_esperado !== 'sistemas') {
+        $allowed_admin_files = ['jurisdiccion.php', 'perfil.php'];
+        $current_admin_file = basename($script_path);
+        
+        if ($slug_esperado !== 'sistemas' && !in_array($current_admin_file, $allowed_admin_files)) {
             header("Location: " . BASE_URL . "public/router.php");
             exit;
         }
     }
 }
 // -------------------------------------------------------------
+
+// --- Identificación de Perfil de Líder (Fase 3) ---
+$isDirector = $_SESSION['is_director'] ?? false;
+// --------------------------------------------------
 
 // Cargar preferencia de dark mode del admin
 $darkMode = (int) ($_SESSION['admin_dark_mode'] ?? 0);
@@ -131,6 +138,16 @@ if (isset($_SESSION['user_area'])) {
                 <span>Asistente IA</span>
             </a>
         </div>
+
+        <?php if ($isDirector || $_SESSION['admin_rol'] === 'superadmin'): ?>
+        <div class="nav-group">
+            <span class="nav-group-label">Jurisdicción</span>
+            <a href="<?= BASE_URL ?>admin/jurisdiccion.php" class="nav-link <?= $activeMenu === 'jurisdiccion' ? 'active' : '' ?>">
+                <i class="fa-solid fa-sitemap nav-icon" style="color: #b19a6d;"></i>
+                <span style="font-weight: 700;">Mi Jurisdicción</span>
+            </a>
+        </div>
+        <?php endif; ?>
 
         <?php if ($slug_menu === 'sistemas'): ?>
         <!-- Menu Exclusivo Unidad de Sistemas -->
