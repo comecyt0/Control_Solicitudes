@@ -43,11 +43,6 @@ if (!empty($_SESSION['admin_id'])) {
     $cve_area = (int)$stmt->fetchColumn();
     // Si no tiene cve_area, forzamos sistemas (1)
     if (!$cve_area) $cve_area = 1;
-    
-    // MODO DEMO: Permitir al admin navegar a otras áreas para verificarlas
-    if (isset($_GET['demo_area']) && is_numeric($_GET['demo_area'])) {
-        $cve_area = (int)$_GET['demo_area'];
-    }
 
 } elseif (!empty($_SESSION['ss_id'])) {
     $rol = 'servicio_social';
@@ -59,6 +54,13 @@ if (!empty($_SESSION['admin_id'])) {
 } elseif (!empty($_SESSION['user_id'])) {
     $rol = 'usuario';
     $cve_area = (int)($_SESSION['user_cve_area'] ?? 1);
+}
+
+// MODO DEMO / HUB (v5.5): Los directores (admin o user) pueden navegar entre áreas usando demo_area
+if (isset($_GET['demo_area']) && (($_SESSION['is_director'] ?? false) || !empty($_SESSION['admin_id']))) {
+    if (is_numeric($_GET['demo_area'])) {
+        $cve_area = (int)$_GET['demo_area'];
+    }
 }
 
 // Convertir Clave de Área a Slug de Carpeta (Mapa Estricto según Fase 2)
