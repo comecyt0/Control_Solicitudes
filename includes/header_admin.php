@@ -128,26 +128,23 @@ if (isset($_SESSION['user_area'])) {
         
         <div class="nav-group">
             <span class="nav-group-label">Principal</span>
+            <?php if ($isDirector): ?>
+            <a href="<?= BASE_URL ?>admin/jurisdiccion.php" class="nav-link <?= $activeMenu === 'jurisdiccion' ? 'active' : '' ?>">
+                <i class="fa-solid fa-sitemap nav-icon" style="color: #b19a6d;"></i>
+                <span style="font-weight: 700;">Mi Jurisdicción</span>
+            </a>
+            <?php else: ?>
             <a href="<?= BASE_URL ?><?= $slug_menu === 'sistemas' ? 'admin' : 'areas/'.$slug_menu ?>/dashboard.php"
                class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
                 <i class="fa-solid fa-chart-pie nav-icon"></i>
                 <span>Dashboard</span>
             </a>
+            <?php endif; ?>
             <a href="#" onclick="toggleAsistenteIA(); return false;" class="nav-link">
                 <i class="fa-solid fa-robot nav-icon"></i>
                 <span>Asistente IA</span>
             </a>
         </div>
-
-        <?php if ($isDirector || $_SESSION['admin_rol'] === 'superadmin'): ?>
-        <div class="nav-group">
-            <span class="nav-group-label">Jurisdicción</span>
-            <a href="<?= BASE_URL ?>admin/jurisdiccion.php" class="nav-link <?= $activeMenu === 'jurisdiccion' ? 'active' : '' ?>">
-                <i class="fa-solid fa-sitemap nav-icon" style="color: #b19a6d;"></i>
-                <span style="font-weight: 700;">Mi Jurisdicción</span>
-            </a>
-        </div>
-        <?php endif; ?>
 
         <?php if ($slug_menu === 'sistemas'): ?>
         <!-- Menu Exclusivo Unidad de Sistemas -->
