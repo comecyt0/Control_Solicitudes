@@ -142,16 +142,24 @@ function verificarSesionAdmin(): void
     $_SESSION['ultimo_acceso'] = time();
 
     // Auto-reparación de sesión (Fase 3): Asegurar flag de director para sesiones activas
-    if (empty($_SESSION['is_director']) && !empty($_SESSION['admin_email'])) {
+    if (empty($_SESSION['is_director']) && !empty($_SESSION['admin_id'])) {
         $pdoD = getConnection();
         $rolAdmin = $_SESSION['admin_rol'] ?? '';
+        
         if ($rolAdmin === 'superadmin') {
             $_SESSION['is_director'] = true;
         } else {
-            $stmtD = $pdoD->prepare("SELECT rol_jefatura FROM cat_personal WHERE (correo_institucional = ? OR correo_personal = ?) AND activo = true LIMIT 1");
-            $stmtD->execute([$_SESSION['admin_email'], $_SESSION['admin_email']]);
-            $p = $stmtD->fetch();
-            if ($p && !empty($p['rol_jefatura'])) {
+            // Recargamos is_director desde cat_personal si el flag está vacío
+            $stmtD = $pdoD->prepare("
+                SELECT p.rol_jefatura 
+                FROM cat_personal p
+                LEFT JOIN administradores a ON p.correo_institucional = a.email OR p.correo_personal = a.email
+                WHERE a.id = ? AND p.activo = true
+                LIMIT 1
+            ");
+            $stmtD->execute([$_SESSION['admin_id']]);
+            $res = $stmtD->fetch();
+            if ($res && !empty($res['rol_jefatura'])) {
                 $_SESSION['is_director'] = true;
             }
         }
@@ -167,7 +175,7 @@ function iniciarSesion(string $email, string $password): bool
 
     $pdo  = getConnection();
     $stmt = $pdo->prepare(
-        "SELECT a.id, a.nombre, a.email, a.password_hash, a.rol, p.cve_area, p.foto_perfil
+        "SELECT a.id, a.nombre, a.email, a.password_hash, a.rol, p.cve_area, p.foto_perfil, p.rol_jefatura
          FROM administradores a
          LEFT JOIN cat_personal p ON p.correo_institucional = a.email OR p.correo_personal = a.email
          WHERE a.email = :email AND a.activo = true
@@ -196,21 +204,10 @@ function iniciarSesion(string $email, string $password): bool
     $_SESSION['ultimo_acceso'] = time();
 
     // Identificar si es Director para el Hub de Jurisdicción (Fase 3)
-    // Se considera director si tiene un rol de jefatura O si es superadmin fiscalizador
+    // Se considera director si tiene algún rol de jefatura asignado O si es superadmin
     $_SESSION['is_director'] = false;
-    if (($admin['rol'] ?? '') === 'superadmin') {
+    if ($_SESSION['admin_rol'] === 'superadmin' || !empty($admin['rol_jefatura'])) {
         $_SESSION['is_director'] = true;
-    } else {
-        $stmtD = $pdo->prepare("SELECT rol_jefatura FROM cat_personal WHERE (correo_institucional = :e OR correo_personal = :e) AND activo = true LIMIT 1");
-        $stmtD->execute([':e' => $admin['email']]);
-        $p = $stmtD->fetch();
-        if ($p && !empty($p['rol_jefatura'])) {
-            $rolLower = mb_strtolower($p['rol_jefatura']);
-            // Incluimos directores, jefes de departamento y coordinadores de alto nivel
-            if (strpos($rolLower, 'director') !== false || strpos($rolLower, 'jefe') !== false || strpos($rolLower, 'coordinador') !== false) {
-                $_SESSION['is_director'] = true;
-            }
-        }
     }
 
     return true;
