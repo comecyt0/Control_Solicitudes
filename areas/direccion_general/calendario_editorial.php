@@ -123,8 +123,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             if ($id > 0 && $titulo && $fechaInicio && $fechaFin) {
                 if ($esInstitucionalManual === 0) {
                     $requiereSala = isset($_POST['requiere_sala']);
-                    $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ?, requiere_sala = ? WHERE id = ? AND cve_area = ?");
-                    $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 'true' : 'false'), ($requiereSala ? 'true' : 'false'), $id, $cveAreaContexto]);
+                    // v10.9.1: Dirección General puede editar cualquier evento editorial sin importar el área
+                    $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ?, requiere_sala = ? WHERE id = ?");
+                    $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 'true' : 'false'), ($requiereSala ? 'true' : 'false'), $id]);
 
                     // Sincronizar con tabla `eventos` según el estado público
                     if ($publico) {
@@ -148,8 +149,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                 if ($esInstitucionalManual === 0) {
                     // Eliminar espejo en `eventos` ANTES de borrar el evento de DG
                     dgEliminarEspejo($pdo, $id);
-                    $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ? AND cve_area = ?");
-                    $stmt->execute([$id, $cveAreaContexto]);
+                    // v10.9.1: Dirección General puede eliminar cualquier evento editorial
+                    $stmt = $pdo->prepare("DELETE FROM df_eventos_editoriales WHERE id = ?");
+                    $stmt->execute([$id]);
                 } else {
                     $stmt = $pdo->prepare("DELETE FROM eventos WHERE id = ?");
                     $stmt->execute([$id]);
@@ -215,8 +217,9 @@ $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
 // Consultas
-$stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, FALSE as es_institucional FROM df_eventos_editoriales WHERE cve_area = ? AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
-$stmt->execute([$cveAreaContexto, $finMesBusqueda, $inicioMesBusqueda]);
+// v10.9.1: Consultar TODOS los eventos editoriales (DG actúa como Administrador Editorial Global)
+$stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, FALSE as es_institucional FROM df_eventos_editoriales WHERE fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+$stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $stmtG = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, TRUE as es_institucional FROM eventos WHERE (publico = TRUE) AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
