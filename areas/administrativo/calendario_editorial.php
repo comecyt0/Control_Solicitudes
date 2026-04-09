@@ -73,8 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $fechaInicio = postParam('fecha_inicio');
             $fechaFin = postParam('fecha_fin');
             $color = postParam('color', '#334155'); 
-            $publico = isset($_POST['publico']);
-            $requiereSala = isset($_POST['requiere_sala']);
+            $publico = false; // Forzado según requerimiento: No Publicar
+            $requiereSala = false; // Forzado según requerimiento: No Sala
             
             if ($titulo && $fechaInicio && $fechaFin) {
                 $areaSol = $_SESSION['admin_area_nombre'] ?? 'Departamento Administrativo';
@@ -101,8 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $fechaInicio = postParam('fecha_inicio');
             $fechaFin    = postParam('fecha_fin');
             $color       = postParam('color', '#334155');
-            $publico     = isset($_POST['publico']);
-            $requiereSala = isset($_POST['requiere_sala']);
+            $publico     = false; // Forzado: Solo Interno
+            $requiereSala = false; // Forzado: Solo Interno
+
+            // SEGURIDAD: Validar si el creador existe en administradores
+            $checkAdmin = $pdo->prepare("SELECT 1 FROM administradores WHERE id = ?");
+            $checkAdmin->execute([$adminId]);
+            $idAutorValido = $checkAdmin->fetch() ? $adminId : null;
             
             if ($id > 0 && $titulo) {
                 $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ?, requiere_sala = ? WHERE id = ? AND cve_area = ?");
