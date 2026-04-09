@@ -141,23 +141,33 @@ function verificarSesionAdmin(): void
 
     $_SESSION['ultimo_acceso'] = time();
 
-    // Auto-reparación de sesión (Fase 3): Asegurar flag de director para sesiones activas
-    if (empty($_SESSION['is_director']) && !empty($_SESSION['admin_id'])) {
+    // Auto-reparación de sesión (Fase 3): Asegurar flag de director para sesiones activas (Admin o Usuario)
+    if (empty($_SESSION['is_director'])) {
         $pdoD = getConnection();
+        $adminId = $_SESSION['admin_id'] ?? null;
+        $userId  = $_SESSION['user_id'] ?? null;
         $rolAdmin = $_SESSION['admin_rol'] ?? '';
-        
+
         if ($rolAdmin === 'superadmin') {
             $_SESSION['is_director'] = true;
-        } else {
-            // Recargamos is_director desde cat_personal si el flag está vacío
+        } elseif ($adminId) {
+            // Caso Admin: buscar por admin_id vinculado
             $stmtD = $pdoD->prepare("
                 SELECT p.rol_jefatura 
                 FROM cat_personal p
-                LEFT JOIN administradores a ON p.correo_institucional = a.email OR p.correo_personal = a.email
+                JOIN administradores a ON p.correo_institucional = a.email OR p.correo_personal = a.email
                 WHERE a.id = ? AND p.activo = true
                 LIMIT 1
             ");
-            $stmtD->execute([$_SESSION['admin_id']]);
+            $stmtD->execute([$adminId]);
+            $res = $stmtD->fetch();
+            if ($res && !empty($res['rol_jefatura'])) {
+                $_SESSION['is_director'] = true;
+            }
+        } elseif ($userId) {
+            // Caso Usuario: buscar directamente por cve_personal
+            $stmtD = $pdoD->prepare("SELECT rol_jefatura FROM cat_personal WHERE cve_personal = ? AND activo = true LIMIT 1");
+            $stmtD->execute([$userId]);
             $res = $stmtD->fetch();
             if ($res && !empty($res['rol_jefatura'])) {
                 $_SESSION['is_director'] = true;
@@ -224,7 +234,7 @@ function iniciarSesionUsuario(string $email, string $password): bool
     $stmt = $pdo->prepare(
         "SELECT u.cve_personal as id, u.nombre, u.appat, u.apmat,
                 COALESCE(u.correo_institucional, u.correo_personal) as email,
-                u.password_hash, u.cve_area, a.des_area, u.foto_perfil
+                u.password_hash, u.cve_area, a.des_area, u.foto_perfil, u.rol_jefatura
          FROM cat_personal u
          LEFT JOIN cat_areas a ON u.cve_area = a.cve_area
          WHERE (u.correo_institucional = :email1 OR u.correo_personal = :email2) AND u.activo = true
@@ -277,6 +287,9 @@ function iniciarSesionUsuario(string $email, string $password): bool
     $_SESSION['user_area']     = $user['des_area'] ?? 'General';
     $_SESSION['user_foto']     = $user['foto_perfil'] ?? null;
     $_SESSION['ultimo_acceso'] = time();
+
+    // Identificar si es Director para el Hub de Jurisdicción (Fase 3)
+    $_SESSION['is_director'] = !empty($user['rol_jefatura']);
 
     return true;
 }
