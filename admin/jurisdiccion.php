@@ -15,19 +15,36 @@ $adminEmail = $_SESSION['admin_email'] ?? '';
 $adminRol   = $_SESSION['admin_rol']   ?? '';
 
 // 1. Identificar al Líder y su Jurisdicción
-$stmtL = $pdo->prepare("
-    SELECT p.cve_personal, p.nombre, p.rol_jefatura, a.adscipcion, a.cve_area as area_base_id
-    FROM cat_personal p
-    LEFT JOIN cat_areas a ON p.cve_area = a.cve_area
-    WHERE p.correo_institucional = ? OR p.correo_personal = ?
-    LIMIT 1
-");
-$stmtL->execute([$adminEmail, $adminEmail]);
-$leader = $stmtL->fetch(PDO::FETCH_ASSOC);
+$adminId = $_SESSION['admin_id'] ?? null;
+$userId  = $_SESSION['user_id']  ?? null;
+$leader  = null;
+
+if ($adminId) {
+    $stmtL = $pdo->prepare("
+        SELECT p.cve_personal, p.nombre, p.rol_jefatura, a.adscipcion, a.cve_area as area_base_id
+        FROM cat_personal p
+        JOIN administradores adm ON p.correo_institucional = adm.email OR p.correo_personal = adm.email
+        LEFT JOIN cat_areas a ON p.cve_area = a.cve_area
+        WHERE adm.id = ? AND p.activo = true
+        LIMIT 1
+    ");
+    $stmtL->execute([$adminId]);
+    $leader = $stmtL->fetch(PDO::FETCH_ASSOC);
+} elseif ($userId) {
+    $stmtL = $pdo->prepare("
+        SELECT p.cve_personal, p.nombre, p.rol_jefatura, a.adscipcion, a.cve_area as area_base_id
+        FROM cat_personal p
+        LEFT JOIN cat_areas a ON p.cve_area = a.cve_area
+        WHERE p.cve_personal = ? AND p.activo = true
+        LIMIT 1
+    ");
+    $stmtL->execute([$userId]);
+    $leader = $stmtL->fetch(PDO::FETCH_ASSOC);
+}
 
 if (!$leader || (empty($leader['rol_jefatura']) && $adminRol !== 'superadmin')) {
     // Si no es un líder identificado ni superadmin, no tiene nada que hacer aquí
-    header('Location: ' . BASE_URL . 'admin/dashboard.php');
+    header('Location: ' . BASE_URL . 'public/index.php');
     exit;
 }
 
