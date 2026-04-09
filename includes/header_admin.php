@@ -128,18 +128,34 @@ if (isset($_SESSION['user_area'])) {
         
         <div class="nav-group">
             <span class="nav-group-label">Principal</span>
-            <?php if ($isDirector): ?>
-            <a href="<?= BASE_URL ?>admin/jurisdiccion.php" class="nav-link <?= $activeMenu === 'jurisdiccion' ? 'active' : '' ?>">
-                <i class="fa-solid fa-sitemap nav-icon" style="color: #b19a6d;"></i>
-                <span style="font-weight: 700;">Mi Jurisdicción</span>
-            </a>
+            <?php 
+            $current_file = basename($_SERVER['SCRIPT_NAME']);
+            if ($isDirector): 
+            ?>
+                <!-- Siempre mostrar Mi Jurisdicción para líderes -->
+                <a href="<?= BASE_URL ?>admin/jurisdiccion.php" class="nav-link <?= $activeMenu === 'jurisdiccion' ? 'active' : '' ?>">
+                    <i class="fa-solid fa-sitemap nav-icon" style="color: #b19a6d;"></i>
+                    <span style="font-weight: 700;">Mi Jurisdicción</span>
+                </a>
+                
+                <?php if ($current_file !== 'jurisdiccion.php'): ?>
+                <!-- Solo mostrar Dashboard si NO estamos en el Hub -->
+                <a href="<?= BASE_URL ?><?= $slug_menu === 'sistemas' ? 'admin' : 'areas/'.$slug_menu ?>/dashboard.php"
+                   class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
+                    <i class="fa-solid fa-chart-pie nav-icon"></i>
+                    <span>Dashboard de Área</span>
+                </a>
+                <?php endif; ?>
+
             <?php else: ?>
-            <a href="<?= BASE_URL ?><?= $slug_menu === 'sistemas' ? 'admin' : 'areas/'.$slug_menu ?>/dashboard.php"
-               class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
-                <i class="fa-solid fa-chart-pie nav-icon"></i>
-                <span>Dashboard</span>
-            </a>
+                <!-- Usuario Regular -->
+                <a href="<?= BASE_URL ?><?= $slug_menu === 'sistemas' ? 'admin' : 'areas/'.$slug_menu ?>/dashboard.php"
+                   class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
+                    <i class="fa-solid fa-chart-pie nav-icon"></i>
+                    <span>Dashboard</span>
+                </a>
             <?php endif; ?>
+            
             <a href="#" onclick="toggleAsistenteIA(); return false;" class="nav-link">
                 <i class="fa-solid fa-robot nav-icon"></i>
                 <span>Asistente IA</span>
