@@ -352,7 +352,20 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     $colorNota = $esCumple ? 'nota-dorado' : '';
                     $cStyle = (!$esCumple&&!empty($ev['color'])) ? 'style="border-top-color:'.$ev['color'].'; background-color:'.$ev['color'].'1a;"' : '';
                 ?>
-                    <div class="evento-pildora <?= $colorNota ?>" <?= $cStyle ?> onclick="event.stopPropagation()" data-pub-debug="<?= esc($ev['publico_raw']??'') ?>">
+                    <div class="evento-pildora <?= $colorNota ?>" <?= $cStyle ?> onclick="abrirModalVerSeguro(this)" 
+                         data-titulo="<?= esc($ev['titulo']) ?>"
+                         data-descripcion="<?= esc($ev['descripcion'] ?? '') ?>"
+                         data-horario="<?= date('d/m/Y H:i',strtotime($ev['fecha_inicio'])) . ' a ' . date('d/m/Y H:i',strtotime($ev['fecha_fin'])) ?>"
+                         data-sala="<?= $ev['requiere_sala'] ? 1 : 0 ?>"
+                         data-area="<?= esc($ev['area_solicitante'] ?? 'General') ?>"
+                         data-persona="<?= esc($ev['persona_solicitante'] ?? 'Admin') ?>"
+                         data-id="<?= $ev['id'] ?>"
+                         data-inicio="<?= date('Y-m-d\TH:i',strtotime($ev['fecha_inicio'])) ?>"
+                         data-fin="<?= date('Y-m-d\TH:i',strtotime($ev['fecha_fin'])) ?>"
+                         data-color="<?= $ev['color'] ?>"
+                         data-pub="<?= ($ev['publico']?1:0) ?>"
+                         data-inst="<?= ($ev['es_institucional']?1:0) ?>"
+                         event-stop="true">
                         <div class="evento-titulo">
                             <?php if ($esCumple): ?>
                                 <?php if (!empty($ev['foto_perfil'])): ?><img src="<?= esc($ev['foto_perfil']) ?>" class="cumple-mini-avatar"><?php else: ?><span class="cumple-mini-placeholder"><i class="fa-solid fa-user"></i></span><?php endif; ?>
@@ -368,11 +381,11 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= $ev['hora_formateada'] ?></div>
                         <div class="evento-acciones">
                             <?php if($esCumple): ?>
-                                <button type="button" class="btn-evento-accion" onclick="abrirModalCumple('<?=esc(addslashes($ev['nombre_cumple']))?>','','<?=$ev['foto_perfil']?>','<?=$ev['edad']?>','<?=date('d/m', strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-cake-candles"></i></button>
+                                <button type="button" class="btn-evento-accion" onclick="event.stopPropagation(); abrirModalCumple('<?=esc(addslashes($ev['nombre_cumple']))?>','','<?=$ev['foto_perfil']?>','<?=$ev['edad']?>','<?=date('d/m', strtotime($ev['fecha_inicio']))?>')"><i class="fa-solid fa-cake-candles"></i></button>
                             <?php else: ?>
-                                <button type="button" class="btn-evento-accion" onclick="abrirModalVer('<?=esc(addslashes($ev['titulo']))?>','<?=esc(addslashes($ev['descripcion']))?>','<?=date('d/m/Y H:i',strtotime($ev['fecha_inicio'])) . ' a ' . date('d/m/Y H:i',strtotime($ev['fecha_fin']))?>', '<?= $ev['requiere_sala'] ? 1 : 0 ?>', '<?= esc(addslashes($ev['area_solicitante'] ?? 'General')) ?>', '<?= esc(addslashes($ev['persona_solicitante'] ?? 'Admin')) ?>')"><i class="fa-solid fa-eye"></i></button>
+                                <button type="button" class="btn-evento-accion" title="Ver Detalle" onclick="event.stopPropagation(); abrirModalVerSeguro(this.closest('.evento-pildora'))"><i class="fa-solid fa-eye"></i></button>
                                 <?php if($esPersonalAutorizado): ?>
-                                <button type="button" class="btn-evento-accion" onclick="abrirModalEditar(<?=$ev['id']?>,'<?=esc(addslashes($ev['titulo']))?>','<?=esc(addslashes($ev['descripcion']))?>','<?=date('Y-m-d\TH:i',strtotime($ev['fecha_inicio']))?>','<?=date('Y-m-d\TH:i',strtotime($ev['fecha_fin']))?>','<?=$ev['color']?>',<?=($ev['publico']?1:0)?>,<?=($ev['es_institucional']?1:0)?>, <?=($ev['requiere_sala']?1:0)?>)"><i class="fa-solid fa-pen"></i></button>
+                                <button type="button" class="btn-evento-accion" title="Editar" onclick="event.stopPropagation(); abrirModalEditarSeguro(this.closest('.evento-pildora'))"><i class="fa-solid fa-pen"></i></button>
                                 <?php endif; ?>
                             <?php endif; ?>
                         </div>
@@ -563,37 +576,38 @@ function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 function abrirModalCrear() { abrirModal('modalCrearEvento'); }
 function abrirModalCrearDesdeCelda(f) { document.getElementById('c_fecha_inicio').value = f+'T09:00'; document.getElementById('c_fecha_fin').value = f+'T10:00'; abrirModal('modalCrearEvento'); }
-function abrirModalVer(t,d,h,sala,area,solicitante) { 
-    document.getElementById('v_horario').textContent = h; 
-    
-    let descHtml = d || 'Sin descripción.';
-    if (parseInt(sala)) {
+function abrirModalVerSeguro(btn) {
+    if (btn.getAttribute('event-stop')) event.stopPropagation();
+    const d = btn.dataset;
+    document.getElementById('v_horario').textContent = d.horario; 
+    let descHtml = d.descripcion || 'Sin descripción.';
+    if (parseInt(d.sala)) {
         descHtml = `
             <div style="background: rgba(177, 154, 109, 0.1); border: 1px solid #B19A6D; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem;">
                 <div style="color: #662331; font-weight: 700; margin-bottom: 4px;">
                     <i class="fa-solid fa-person-chalkboard"></i> REQUIERE SALA DE JUNTAS
                 </div>
-                <div>Solicitante: <strong>${solicitante}</strong></div>
-                <div>Área: <strong>${area}</strong></div>
+                <div>Solicitante: <strong>${d.persona}</strong></div>
+                <div>Área: <strong>${d.area}</strong></div>
             </div>
             ${descHtml}
         `;
     }
-    
     document.getElementById('v_descripcion').innerHTML = descHtml; 
     abrirModal('modalVerEvento'); 
 }
-function abrirModalEditar(id,t,d,i,f,c,p,inst,sala) {
-    document.getElementById('e_id').value = id; 
-    document.getElementById('e_titulo').value = t; 
-    document.getElementById('e_descripcion').value = d; 
-    document.getElementById('e_inicio').value = i; 
-    document.getElementById('e_fin').value = f; 
-    document.getElementById('e_color').value = c; 
-    document.getElementById('e_pub').checked = (p === 1 || p === true); 
-    document.getElementById('e_es_inst').value = inst;
-    document.getElementById('e_sala').checked = (sala === 1 || sala === true);
-    
+function abrirModalEditarSeguro(btn) {
+    if (btn.getAttribute('event-stop')) event.stopPropagation();
+    const d = btn.dataset;
+    document.getElementById('e_id').value = d.id; 
+    document.getElementById('e_titulo').value = d.titulo; 
+    document.getElementById('e_descripcion').value = d.descripcion; 
+    document.getElementById('e_inicio').value = d.inicio; 
+    document.getElementById('e_fin').value = d.fin; 
+    document.getElementById('e_color').value = d.color; 
+    document.getElementById('e_pub').checked = (d.pub == 1); 
+    document.getElementById('e_es_inst').value = d.inst;
+    document.getElementById('e_sala').checked = (d.sala == 1);
     abrirModal('modalEditarEvento');
 }
 function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
