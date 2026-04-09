@@ -142,7 +142,7 @@ function verificarSesionAdmin(): void
     $_SESSION['ultimo_acceso'] = time();
 
     // Auto-reparación de sesión (Fase 3): Asegurar flag de director para sesiones activas
-    if (!isset($_SESSION['is_director']) && !empty($_SESSION['admin_email'])) {
+    if (empty($_SESSION['is_director']) && !empty($_SESSION['admin_email'])) {
         $pdoD = getConnection();
         $rolAdmin = $_SESSION['admin_rol'] ?? '';
         if ($rolAdmin === 'superadmin') {
@@ -152,10 +152,7 @@ function verificarSesionAdmin(): void
             $stmtD->execute([$_SESSION['admin_email'], $_SESSION['admin_email']]);
             $p = $stmtD->fetch();
             if ($p && !empty($p['rol_jefatura'])) {
-                $rolLower = mb_strtolower($p['rol_jefatura']);
-                if (strpos($rolLower, 'director') !== false || strpos($rolLower, 'jefe') !== false || strpos($rolLower, 'coordinador') !== false) {
-                    $_SESSION['is_director'] = true;
-                }
+                $_SESSION['is_director'] = true;
             }
         }
     }
