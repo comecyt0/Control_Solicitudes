@@ -39,6 +39,7 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 - **Animaciones**: Máximo respeto a la fluidez. Usar `IntersectionObserver` para reveals (`.reveal-up`). Prohibido: Rotaciones de 360° o pulsos agresivos.
 - **Branding**: Títulos de pestaña con sufijo `| COMECyT Intranet`. Favicon institucional obligatorio (`assets/MARCA.png`).
 - **Calendarios**: Todos los eventos deben mostrar el rango horario completo (`Inicio - Fin`) en formato `HH:MM - HH:MM` (ej. `11:00 - 13:00`).
+- **Alertas y Confirmaciones**: **PROHIBIDO** el uso de `alert()`, `confirm()` o `prompt()` nativos. Se debe utilizar exclusivamente `COMECyTUI.alert()`, `COMECyTUI.confirm()` o `COMECyTUI.toast()` para garantizar la coherencia visual e institucional.
 
 ---
 

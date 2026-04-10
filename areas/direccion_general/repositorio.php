@@ -871,7 +871,7 @@ async function subirArchivos(files) {
             const res  = await fetch(API_REPO, {method: 'POST', body: fd});
             const data = await res.json();
             if (data.ok) ok++;
-            else { fail++; alert('Error: ' + data.error); }
+            else { fail++; COMECyTUI.alert('Error: ' + data.error); }
         } catch {
             fail++;
         }
@@ -880,8 +880,8 @@ async function subirArchivos(files) {
     prog.style.display = 'none';
     document.getElementById('fileInput').value = '';
     cargarArchivos();
-    if (ok) mostrarToast(ok + ' archivo(s) subido(s) correctamente', 'success');
-    if (fail) mostrarToast(fail + ' archivo(s) fallaron', 'error');
+    if (ok) COMECyTUI.toast(ok + ' archivo(s) subido(s) correctamente', 'success');
+    if (fail) COMECyTUI.toast(fail + ' archivo(s) fallaron', 'error');
 }
 
 // ── Drag & Drop ───────────────────────────────────────────────
@@ -918,43 +918,45 @@ async function guardarCarpeta() {
     const data = await res.json();
     cerrarModalCarpeta();
     if (data.ok) {
-        mostrarToast('Carpeta creada', 'success');
+        COMECyTUI.toast('Carpeta creada', 'success');
         await recargarCarpetas();
     } else {
-        alert('Error: ' + data.error);
+        COMECyTUI.alert('Error: ' + data.error);
     }
 }
 
 // ── Eliminar carpeta ──────────────────────────────────────────
 async function eliminarCarpeta(id, nombre) {
-    if (!confirm(`¿Eliminar la carpeta "${nombre}" y todo su contenido? Esta acción no se puede deshacer.`)) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF);
-    fd.append('accion', 'eliminar_carpeta');
-    fd.append('id', id);
-    const res  = await fetch(API_REPO, {method: 'POST', body: fd});
-    const data = await res.json();
-    if (data.ok) {
-        mostrarToast('Carpeta eliminada', 'success');
-        if (carpetaActual == id) { carpetaActual = 1; carpetaActualNombre = 'General'; carpetasBreadcrumb = [{id:1, nombre:'General'}]; renderBreadcrumb(); }
-        await recargarCarpetas();
-        cargarArchivos();
-    } else {
-        alert('Error: ' + data.error);
-    }
+    COMECyTUI.confirm(`¿Eliminar la carpeta "${nombre}" y todo su contenido? Esta acción no se puede deshacer.`, async () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF);
+        fd.append('accion', 'eliminar_carpeta');
+        fd.append('id', id);
+        const res  = await fetch(API_REPO, {method: 'POST', body: fd});
+        const data = await res.json();
+        if (data.ok) {
+            COMECyTUI.toast('Carpeta eliminada', 'success');
+            if (carpetaActual == id) { carpetaActual = 1; carpetaActualNombre = 'General'; carpetasBreadcrumb = [{id:1, nombre:'General'}]; renderBreadcrumb(); }
+            await recargarCarpetas();
+            cargarArchivos();
+        } else {
+            COMECyTUI.alert('Error: ' + data.error);
+        }
+    });
 }
 
 // ── Eliminar archivo ──────────────────────────────────────────
 async function eliminarArchivo(id, nombre) {
-    if (!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF);
-    fd.append('accion', 'eliminar_archivo');
-    fd.append('id', id);
-    const res  = await fetch(API_REPO, {method: 'POST', body: fd});
-    const data = await res.json();
-    if (data.ok) { mostrarToast('Archivo eliminado', 'success'); cargarArchivos(); }
-    else alert('Error: ' + data.error);
+    COMECyTUI.confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`, async () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF);
+        fd.append('accion', 'eliminar_archivo');
+        fd.append('id', id);
+        const res  = await fetch(API_REPO, {method: 'POST', body: fd});
+        const data = await res.json();
+        if (data.ok) { COMECyTUI.toast('Archivo eliminado', 'success'); cargarArchivos(); }
+        else COMECyTUI.alert('Error: ' + data.error);
+    });
 }
 
 // ── Renombrar ─────────────────────────────────────────────────
@@ -983,11 +985,11 @@ async function guardarRenombre() {
     const data = await res.json();
     cerrarRenombrar();
     if (data.ok) {
-        mostrarToast('Renombrado correctamente', 'success');
+        COMECyTUI.toast('Renombrado correctamente', 'success');
         if (renombrarTipo === 'carpeta') await recargarCarpetas();
         cargarArchivos();
     } else {
-        alert('Error: ' + data.error);
+        COMECyTUI.alert('Error: ' + data.error);
     }
 }
 
@@ -1045,12 +1047,12 @@ async function cambiarMarcador(id, valor) {
         const data = await res.json();
         if (data.ok) {
             cargarArchivos(); // Recargar para mostrar el nuevo marcador
-            mostrarToast('Marcador actualizado: ' + valor, 'success');
+            COMECyTUI.toast('Marcador actualizado: ' + valor, 'success');
         } else {
-            alert(data.error || 'Error actualizando marcador');
+            COMECyTUI.alert(data.error || 'Error actualizando marcador');
         }
     } catch (e) {
-        alert('Error de conexión al actualizar marcador');
+        COMECyTUI.alert('Error de conexión al actualizar marcador');
     }
 }
 

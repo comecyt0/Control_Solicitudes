@@ -167,8 +167,28 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 }
 
 .folder-item:hover .folder-delete { opacity: 1; }
+.folder-item .folder-rename {
+    margin-left: 6px;
+    font-size: 0.7rem;
+    opacity: 0;
+    color: var(--adm-accent);
+    flex-shrink: 0;
+}
+.folder-item:hover .folder-rename { opacity: 1; }
 
-.folder-children { padding-left: 18px; }
+.folder-toggle {
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+.folder-toggle:hover { color: var(--adm-primary); }
+
+.folder-children { padding-left: 18px; display: block; }
+.folder-children.collapsed { display: none; }
 
 /* ── Zona de archivos ────────────────────────────────────────── */
 .repo-content {
@@ -644,10 +664,10 @@ function renderArbol(carpetas) {
     const buildTree = (parentId) => carpetas
         .filter(c => (c.padre_id == parentId) || (parentId === null && c.padre_id === null))
         .map(c => {
-            const hasChildren = carpetas.some(child => child.padre_id == c.id);
+            const hasChildren = carpetas.some(child => Number(child.padre_id) == Number(c.id));
             const children = buildTree(c.id);
-            const isActive = c.id == carpetaActual;
-            const isOpen = openFolders.has(c.id);
+            const isActive = Number(c.id) == Number(carpetaActual);
+            const isOpen = openFolders.has(Number(c.id));
             
             return `
             <div class="folder-node">
@@ -670,6 +690,7 @@ function renderArbol(carpetas) {
 }
 
 function toggleFolder(id) {
+    id = Number(id);
     if (openFolders.has(id)) openFolders.delete(id);
     else openFolders.add(id);
     renderArbol(window.__carpetasCache || []);
@@ -759,29 +780,31 @@ async function guardarCarpeta() {
 }
 
 async function eliminarArchivo(id, nombre) {
-    if (!confirm(`¿Eliminar ${nombre}?`)) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF);
-    fd.append('accion', 'eliminar_archivo');
-    fd.append('id', id);
-    await fetch(API_REPO, {method: 'POST', body: fd});
-    cargarArchivos();
+    COMECyTUI.confirm(`¿Eliminar ${nombre}?`, async () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF);
+        fd.append('accion', 'eliminar_archivo');
+        fd.append('id', id);
+        await fetch(API_REPO, {method: 'POST', body: fd});
+        cargarArchivos();
+    });
 }
 
 async function eliminarCarpeta(id, nombre) {
-    if (!confirm(`¿Eliminar la carpeta "${nombre}" y todo su contenido?`)) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF);
-    fd.append('accion', 'eliminar_carpeta');
-    fd.append('id', id);
-    const res = await fetch(API_REPO, {method: 'POST', body: fd});
-    const data = await res.json();
-    if (data.ok) {
-        if (carpetaActual == id) navegarCarpeta(1, 'General');
-        await cargarCarpetas();
-    } else {
-        alert("Error: " + data.error);
-    }
+    COMECyTUI.confirm(`¿Eliminar la carpeta "${nombre}" y todo su contenido?`, async () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF);
+        fd.append('accion', 'eliminar_carpeta');
+        fd.append('id', id);
+        const res = await fetch(API_REPO, {method: 'POST', body: fd});
+        const data = await res.json();
+        if (data.ok) {
+            if (carpetaActual == id) navegarCarpeta(1, 'General');
+            await cargarCarpetas();
+        } else {
+            COMECyTUI.alert("Error: " + data.error);
+        }
+    });
 }
 
 function abrirRenombrar(tipo, id, nombre) {
