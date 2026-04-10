@@ -225,8 +225,8 @@ $inicioMesBusqueda = $dtMes->format('Y-m-01 00:00:00');
 $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 
 // Consultas
-// v10.9.1: Consultar TODOS los eventos editoriales (DG actúa como Administrador Editorial Global)
-$stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, FALSE as es_institucional FROM df_eventos_editoriales WHERE fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+// v10.9.1: Consultar eventos editoriales de DG + todos los Institucionales (Publicos)
+$stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, FALSE as es_institucional FROM df_eventos_editoriales WHERE cve_area = 2 AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
