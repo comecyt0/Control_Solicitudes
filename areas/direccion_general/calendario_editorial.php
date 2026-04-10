@@ -51,13 +51,13 @@ function dgSincronizarPublico(PDO $pdo, int $dfId, string $titulo, string $descr
         // Actualizar espejo existente
         $pdo->prepare(
             "UPDATE eventos SET titulo=?, descripcion=?, fecha_inicio=?, fecha_fin=?, color=?, publico=TRUE, requiere_sala=?, area_solicitante=?, persona_solicitante=? WHERE id=?"
-        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $reqSalaStr, $areaSol, $persSol, $espejoId]);
+        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $requiereSala ? 1 : 0, $areaSol, $persSol, $espejoId]);
     } else {
         // Crear espejo nuevo
         $pdo->prepare(
             "INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante) 
              VALUES (?,?,?,?,?,TRUE,?,?,?)"
-        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $reqSalaStr, $areaSol, $persSol]);
+        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $requiereSala ? 1 : 0, $areaSol, $persSol]);
     }
 }
 
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                 $persSol = $_SESSION['admin_nombre'] ?? 'Administrador';
 
                 $stmt = $pdo->prepare("INSERT INTO df_eventos_editoriales (titulo, descripcion, fecha_inicio, fecha_fin, color, creado_por, publico, cve_area, requiere_sala, area_solicitante, persona_solicitante) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $idAutor, $publico ? 'true' : 'false', $cveAreaContexto, $requiereSala ? 'true' : 'false', $areaSol, $persSol]);
+                $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, $idAutor, $publico ? 1 : 0, $cveAreaContexto, $requiereSala ? 1 : 0, $areaSol, $persSol]);
                 $nuevoId = (int) $pdo->lastInsertId();
 
                 // Sincronizar con tabla `eventos` si es público
@@ -125,19 +125,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                     $requiereSala = isset($_POST['requiere_sala']);
                     // v10.9.1: Dirección General puede editar cualquier evento editorial sin importar el área
                     $stmt = $pdo->prepare("UPDATE df_eventos_editoriales SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ?, requiere_sala = ? WHERE id = ?");
-                    $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 'true' : 'false'), ($requiereSala ? 'true' : 'false'), $id]);
+                    $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 1 : 0), ($requiereSala ? 1 : 0), $id]);
 
                     // Sincronizar con tabla `eventos` según el estado público
                     if ($publico) {
                         $areaSol = $_SESSION['admin_area_nombre'] ?? 'Dirección General';
                         $persSol = $_SESSION['admin_nombre'] ?? 'Administrador';
-                        dgSincronizarPublico($pdo, $id, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol);
+                        dgSincronizarPublico($pdo, $id, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, (bool)$requiereSala, $areaSol, $persSol);
                     } else {
                         dgEliminarEspejo($pdo, $id); // Si se desmarca, quitar de calendarios de área
                     }
                 } else {
-                    $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ? WHERE id = ?");
-                    $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 'true' : 'false'), $id]);
+                    $requiereSala = isset($_POST['requiere_sala']);
+                    $stmt = $pdo->prepare("UPDATE eventos SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, color = ?, publico = ?, requiere_sala = ? WHERE id = ?");
+                    $stmt->execute([$titulo, $descripcion, $fechaInicio, $fechaFin, $color, ($publico ? 1 : 0), ($requiereSala ? 1 : 0), $id]);
                 }
                 header('Location: calendario_editorial.php?flash=evento_editado');
                 exit;
