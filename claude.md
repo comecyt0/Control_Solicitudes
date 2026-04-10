@@ -38,6 +38,7 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 - **Iconografía**: FontAwesome 6 (Sólidos y Regulares).
 - **Animaciones**: Máximo respeto a la fluidez. Usar `IntersectionObserver` para reveals (`.reveal-up`). Prohibido: Rotaciones de 360° o pulsos agresivos.
 - **Branding**: Títulos de pestaña con sufijo `| COMECyT Intranet`. Favicon institucional obligatorio (`assets/MARCA.png`).
+- **Calendarios**: Todos los eventos deben mostrar el rango horario completo (`Inicio - Fin`) en formato `HH:MM - HH:MM` (ej. `11:00 - 13:00`).
 
 ---
 
@@ -112,6 +113,11 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
 - **🚨 Bug: Icono de Mundo (Público) invisible en DG con títulos largos 🚨**: El icono de visibilidad se ocultaba cuando el título del evento era muy extenso debido a la elipsis del contenedor. Además, algunos valores booleanos de PostgreSQL no se casteaban correctamente en PHP. **Solución**: Se reestructuró el HTML para envolver el título en un `<span>` con flex-grow, mientras los iconos tienen `flex-shrink: 0`, forzando su visibilidad permanente. Se implementó `filter_var(..., FILTER_VALIDATE_BOOLEAN)` para un casteo robusto de datos.
 - **🚨 Aislamiento de Repositorios Departamentales (Área 18) 🚨**: Se implementó una arquitectura de repositorio aislado para el Departamento Administrativo para evitar la saturación de las tablas de Dirección General y garantizar la confidencialidad. **Solución**: Creación de tablas clónicas `adm_repo_carpetas` y `adm_repo_archivos` (siguiendo el esquema de `dg_repo_*`) y endpoints API dedicados que operan estrictamente sobre el prefijo `public/uploads/adm_repo/`.
 - **🚨 Sincronización de Agenda Administrativa (Fase 2) 🚨**: El calendario del área 18 ahora integra eventos institucionales colectivos y onomásticos sin duplicar la información propia del área. **Solución**: Se actualizó la lógica de consulta en `calendario_editorial.php` para incluir la unión de `eventos` (publico=true) y `cat_personal` (mes actual), aplicando una restricción de solo lectura en el frontend para estos registros externos mediante la bandera `es_institucional`.
+- **🚨 Restauración de Navegación en Jurisdicción 🚨**: El Dashboard de Área se ocultaba erróneamente en el Hub de Jurisdicción. **Solución**: Se eliminó la condición restrictiva en `header_admin.php` para que los Directivos siempre tengan acceso bidireccional entre su Hub de visualización y su área base.
+- **✨ Estándar de Visualización Horaria (Marzo 2024) ✨**: Se aplicó un cambio global en 26 archivos para mostrar el rango horario completo en los calendarios. **Implementación**:
+    - En `calendario.php`: Concatenar `date('H:i', strtotime($ev['fecha_inicio']))` y `date('H:i', strtotime($ev['fecha_fin']))`.
+    - En `agenda.php`: Actualizar la variable `$horaDisplay`.
+    - En `calendario_editorial.php`: Modificar la lógica de `hora_formateada`.
 
 ---
 

@@ -138,14 +138,12 @@ if (isset($_SESSION['user_area'])) {
                     <span style="font-weight: 700;">Mi Jurisdicción</span>
                 </a>
                 
-                <?php if ($current_file !== 'jurisdiccion.php'): ?>
-                <!-- Solo mostrar Dashboard si NO estamos en el Hub -->
+                <!-- Mostrar siempre Dashboard de Área para líderes -->
                 <a href="<?= BASE_URL ?><?= $slug_menu === 'sistemas' ? 'admin' : 'areas/'.$slug_menu ?>/dashboard.php"
                    class="nav-link <?= $activeMenu === 'dashboard' ? 'active' : '' ?>">
                     <i class="fa-solid fa-chart-pie nav-icon"></i>
                     <span>Dashboard de Área</span>
                 </a>
-                <?php endif; ?>
 
             <?php else: ?>
                 <!-- Usuario Regular -->
