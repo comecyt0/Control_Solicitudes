@@ -397,7 +397,7 @@ require_once __DIR__ . '/../includes/header_user.php';
                                     <i class="fa-solid fa-earth-americas" style="font-size:0.75rem; flex-shrink: 0; color: #3b82f6;" title="Evento Público"></i>
                                 <?php endif; ?>
                             </div>
-                            <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?></div>
+                            <div class="evento-hora"><i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?> - <?= date('H:i', strtotime($ev['fecha_fin'])) ?></div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>

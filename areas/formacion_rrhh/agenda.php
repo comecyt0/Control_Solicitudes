@@ -311,7 +311,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                         $fotoUrl = BASE_URL.'public/uploads/avatares/'.$ev['foto_perfil'];
                     }
                     $fechaDisplay = date('d/m/Y', strtotime($ev['fecha_inicio']));
-                    $horaDisplay  = date('H:i', strtotime($ev['fecha_inicio']));
+                    $horaDisplay  = date('H:i', strtotime($ev['fecha_inicio'])) . ' - ' . date('H:i', strtotime($ev['fecha_fin']));
                     $pillTipo     = $esCumple ? 'cumple' : ($esInstitucional ? 'institucional' : 'area');
                 ?>
                     <div class="evento-pildora <?= $claseNota ?>"

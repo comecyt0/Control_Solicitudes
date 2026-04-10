@@ -243,7 +243,7 @@ foreach ($eventosRaw as $ev) {
     $dIni = new DateTime($ev['fecha_inicio']);
     $diaEv = (int)$dIni->format('d');
     if (!isset($calendarioEventos[$diaEv])) $calendarioEventos[$diaEv] = [];
-    $ev['hora_formateada'] = $dIni->format('H:i');
+    $ev['hora_formateada'] = $dIni->format('H:i') . ' - ' . (new DateTime($ev['fecha_fin']))->format('H:i');
     // Casteo súper-inclusivo para descartar problemas de formato
     $v = $ev['publico'];
     $ev['publico_raw'] = var_export($v, true);

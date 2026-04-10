@@ -915,7 +915,7 @@ require_once __DIR__ . '/../includes/header_admin.php';
                             </div>
                             
                             <div class="evento-hora">
-                                <i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?>
+                                <i class="fa-regular fa-clock"></i> <?= date('H:i', strtotime($ev['fecha_inicio'])) ?> - <?= date('H:i', strtotime($ev['fecha_fin'])) ?>
                             </div>
 
                             <div class="evento-acciones">
