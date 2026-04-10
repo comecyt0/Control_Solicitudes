@@ -993,17 +993,7 @@ async function guardarRenombre() {
     }
 }
 
-// ── Toast de notificación ─────────────────────────────────────
-function mostrarToast(msg, tipo = 'success') {
-    const t = document.createElement('div');
-    t.style.cssText = `position:fixed;bottom:28px;right:28px;z-index:99999;
-        background:${tipo==='success'?'#22c55e':'#ef4444'};color:#fff;
-        padding:12px 22px;border-radius:10px;font-size:.87rem;font-weight:600;
-        box-shadow:0 8px 24px rgba(0,0,0,.2);animation:modalIn .2s ease;`;
-    t.innerHTML = `<i class="fa-solid fa-${tipo==='success'?'check':'circle-exclamation'}"></i> ${escHtml(msg)}`;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-}
+// Local toast removed in favor of global COMECyTUI.toast (see app.js)
 
 // ── Marcadores ────────────────────────────────────────────────
 let marcadorArchivoId = 0;

@@ -523,15 +523,16 @@ function escapeHtml(t) {
 }
 
 function eliminarComentario(id) {
-    if (!confirm('¿Eliminar esta nota?')) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
-    fd.append('accion', 'eliminar');
-    fd.append('comentario_id', id);
-    fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php', { method:'POST', body:fd })
-        .then(r => r.json())
-        .then(d => { if (d.ok) cargarComentarios(); })
-        .catch(() => {});
+    COMECyTUI.confirm('¿Eliminar esta nota?', () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF_TOKEN_COMENTARIOS);
+        fd.append('accion', 'eliminar');
+        fd.append('comentario_id', id);
+        fetch(BASE_URL_COMENTARIOS + 'admin/api/comentarios.php', { method:'POST', body:fd })
+            .then(r => r.json())
+            .then(d => { if (d.ok) cargarComentarios(); })
+            .catch(() => {});
+    });
 }
 
 document.getElementById('formComentario').addEventListener('submit', function(e) {
@@ -556,10 +557,10 @@ document.getElementById('formComentario').addEventListener('submit', function(e)
                 textarea.value = '';
                 cargarComentarios();
             } else {
-                alert('Error: ' + (d.error || 'No se pudo enviar'));
+                COMECyTUI.alert('Error: ' + (d.error || 'No se pudo enviar'));
             }
         })
-        .catch(() => alert('Error de red'))
+        .catch(() => COMECyTUI.alert('Error de red'))
         .finally(() => {
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar';

@@ -580,21 +580,7 @@ require_once __DIR__ . '/../../includes/header_admin.php';
 
 <form id="formAccionTarea" method="POST" style="display:none;"><?= csrfField() ?><input type="hidden" name="_accion" id="t_accion"><input type="hidden" name="tarea_id" id="t_tarea_id"><input type="hidden" name="nuevo_estatus" id="t_nuevo_estatus"></form>
 
-<div class="modal-backdrop" id="modalConfirmar" style="z-index: 3000;">
-    <div class="modal" style="max-width:380px;">
-        <div class="modal-body text-center p-5">
-            <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                <i class="fa-solid fa-trash-can text-danger" style="font-size:2.5rem;"></i>
-            </div>
-            <h3 style="font-weight: 800; color: #1e293b; margin-bottom: 0.5rem;">¿Estás seguro?</h3>
-            <p style="color: #64748b; line-height: 1.5;">Esta acción eliminará el registro de forma permanente. No podrás deshacer este cambio.</p>
-            <div class="d-flex gap-2 justify-content-center mt-4">
-                <button class="btn btn-outline" style="flex:1; border-radius: 12px;" onclick="cerrarModal('modalConfirmar')">Cancelar</button>
-                <button class="btn btn-danger" id="btnConfirmarAccion" style="flex:1; border-radius: 12px; font-weight: 700;">Sí, Eliminar</button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Modal Confirmar eliminado en favor de COMECyTUI.confirm -->
 
 <?php require_once __DIR__ . '/../../admin/modales/modal_cumple.php'; ?>
 
@@ -648,11 +634,10 @@ function abrirModalCumple(nombre, desc, fotoUrl, edad, fecha) {
     abrirModal('modalVerCumple');
 }
 function confirmarEliminar() {
-    document.getElementById('btnConfirmarAccion').onclick = function() {
+    COMECyTUI.confirm('¿Estás seguro de eliminar este evento de forma permanente? No podrás deshacer este cambio.', () => {
         document.getElementById('e_accion').value = 'eliminar_evento';
         document.getElementById('formEditarEvento').submit();
-    };
-    abrirModal('modalConfirmar');
+    });
 }
 function allowDrop(ev) { ev.preventDefault(); }
 function drag(ev, id) { ev.dataTransfer.setData("text", id); }
@@ -674,12 +659,11 @@ function abrirModalEditarTarea(id, t, d, c, a) {
     abrirModal('modalEditarTarea');
 }
 function eliminarTareaDesdeModal() {
-    document.getElementById('btnConfirmarAccion').onclick = function() {
+    COMECyTUI.confirm('¿Estás seguro de eliminar este compromiso de forma permanente?', () => {
         document.getElementById('t_accion').value = 'eliminar_tarea';
         document.getElementById('t_tarea_id').value = document.getElementById('et_id').value;
         document.getElementById('formAccionTarea').submit();
-    };
-    abrirModal('modalConfirmar');
+    });
 }
 </script>
 

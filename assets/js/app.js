@@ -102,96 +102,30 @@ document.addEventListener('keydown', (e) => {
    ============================================================== */
 /**
  * Mostrar una notificacion toast.
- *
- * @param {string} mensaje  Texto a mostrar.
- * @param {'success'|'error'|'info'} tipo  Variante visual.
- * @param {number} duracion  Milisegundos antes de ocultarse (default 3500).
+ * Reemplazado por COMECyTUI.toast para consistencia global.
  */
 function mostrarToast(mensaje, tipo = 'success', duracion = 3500) {
-    let contenedor = document.querySelector('.toast-container');
-    if (!contenedor) {
-        contenedor = document.createElement('div');
-        contenedor.className = 'toast-container';
-        document.body.appendChild(contenedor);
+    if (window.COMECyTUI) {
+        window.COMECyTUI.toast(mensaje, tipo, { duration: duracion });
+    } else {
+        // Fallback básico si no carga la librería
+        console.log(`[Toast ${tipo}] ${mensaje}`);
     }
-
-    const iconos = {
-        success: 'fa-circle-check',
-        error: 'fa-circle-xmark',
-        info: 'fa-circle-info',
-    };
-
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${tipo}`;
-    toast.innerHTML = `
-        <i class="fa-solid ${iconos[tipo] || iconos.info}"></i>
-        <span>${mensaje}</span>
-    `;
-
-    contenedor.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.transition = 'opacity 300ms ease, transform 300ms ease';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(20px)';
-        setTimeout(() => toast.remove(), 300);
-    }, duracion);
 }
 
 /* ==============================================================
    Confirmaciones Globales Personalizadas (Custom Modal UI)
    ============================================================== */
-let confirmCallback = null;
-
+/**
+ * Reemplazado por COMECyTUI.confirm para consistencia global.
+ */
 function mostrarConfirmacionPersonalizada(titulo, mensaje, onConfirmCallback, isDanger = true) {
-    const modal = document.getElementById('modalConfirmacionGlobal');
-    if (!modal) return;
-
-    document.getElementById('confirmTitle').textContent = titulo;
-    document.getElementById('confirmMessage').textContent = mensaje;
-
-    const icon = document.getElementById('confirmIcon');
-    const btnAccept = document.getElementById('btnConfirmAccept');
-
-    if (isDanger) {
-        icon.className = 'fa-solid fa-triangle-exclamation';
-        icon.parentElement.style.color = '#DC2626';
-        btnAccept.style.backgroundColor = '#DC2626';
-        btnAccept.style.borderColor = '#DC2626';
-        btnAccept.innerHTML = 'Sí, continuar';
+    if (window.COMECyTUI) {
+        window.COMECyTUI.confirm(mensaje, onConfirmCallback, null, { titulo: titulo });
     } else {
-        icon.className = 'fa-solid fa-circle-question';
-        icon.parentElement.style.color = 'var(--color-primary)';
-        btnAccept.style.backgroundColor = 'var(--color-primary)';
-        btnAccept.style.borderColor = 'var(--color-primary)';
-        btnAccept.innerHTML = 'Confirmar';
+        if (confirm(mensaje)) onConfirmCallback();
     }
-
-    confirmCallback = onConfirmCallback;
-    abrirModal('modalConfirmacionGlobal');
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const btnCancel = document.getElementById('btnConfirmCancel');
-    const btnAccept = document.getElementById('btnConfirmAccept');
-
-    if (btnCancel) {
-        btnCancel.addEventListener('click', () => {
-            cerrarModal('modalConfirmacionGlobal');
-            confirmCallback = null;
-        });
-    }
-
-    if (btnAccept) {
-        btnAccept.addEventListener('click', () => {
-            cerrarModal('modalConfirmacionGlobal');
-            if (typeof confirmCallback === 'function') {
-                confirmCallback();
-            }
-            confirmCallback = null;
-        });
-    }
-});
 
 /* ==============================================================
    Interceptar data-confirm
@@ -210,12 +144,20 @@ document.addEventListener('click', (e) => {
     e.stopPropagation();
 
     const msj = btn.getAttribute('data-confirm');
-    const dngr = btn.classList.contains('btn-danger') || btn.innerHTML.includes('fa-trash') || btn.innerHTML.includes('fa-xmark');
-
-    mostrarConfirmacionPersonalizada("Confirmación Requerida", msj, () => {
-        btn.dataset.confirmed = "true";
-        btn.click();
-    }, dngr);
+    
+    // Usar el framework institucional COMECyTUI
+    if (window.COMECyTUI) {
+        window.COMECyTUI.confirm(msj, () => {
+            btn.dataset.confirmed = "true";
+            btn.click();
+        });
+    } else {
+        // Fallback nativo si la librería no está
+        if (confirm(msj)) {
+            btn.dataset.confirmed = "true";
+            btn.click();
+        }
+    }
 });
 
 /* ==============================================================

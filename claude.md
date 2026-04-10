@@ -123,6 +123,8 @@ Para garantizar la estabilidad del entorno Docker en Windows (sin Bind-Mount din
     - En `calendario.php`: Concatenar `date('H:i', strtotime($ev['fecha_inicio']))` y `date('H:i', strtotime($ev['fecha_fin']))`.
     - En `agenda.php`: Actualizar la variable `$horaDisplay`.
     - En `calendario_editorial.php`: Modificar la lógica de `hora_formateada`.
+- **Estandarización UI Frames (Abril 2024)**: Se completó la migración masiva de alertas nativas (`alert`, `confirm`) al framework `COMECyTUI` en los 18 módulos de `detalle.php`, así como en los módulos de `Personal`, `Equipos`, `Servicio Social` y `Anuncios`. Se eliminaron funciones locales legacy (`mostrarToast`) para asegurar el uso del framework institucional centralizado en `assets/js/app.js`.
+- **Corrección de Duplicidad en Calendarios**: Se homologó la lógica de exclusión de eventos institucionales/espejo en los calendarios de `Dirección General` y `Difusión`. Ahora se filtran proactivamente las descripciones que contienen los marcadores `[DG:]` y `[ADM:]`, evitando que los usuarios vean registros duplicados al marcar eventos como públicos.
 
 ---
 

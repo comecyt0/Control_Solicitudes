@@ -59,7 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         
         // SEGURIDAD: Validar si el usuario intenta editar un institucional sin ser de Sistemas
         if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1) {
-             die("Acceso denegado: Solo Sistemas puede editar eventos institucionales principales.");
+             header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=error_permisos');
+             exit;
         }
 
         // Adicionalmente, verificar en DB para evitar manipulaciones del POST
@@ -68,7 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
             $stmtCheck->execute([$id]);
             if (!$stmtCheck->fetch()) {
                 // Si dijo que era editorial pero no existe, probablemente es un intento de spoofing de ID institucional
-                if ($cveAreaUsuario !== 1) die("Error de validación de registro.");
+                if ($cveAreaUsuario !== 1) {
+                    header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=error_validacion');
+                    exit;
+                }
             }
         }
 
@@ -98,7 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
         if ($id > 0) {
             // SEGURIDAD: Solo Sistemas borra institucionales
             if ($esInstitucionalManual === 1 && $cveAreaUsuario !== 1) {
-                die("Acceso denegado.");
+                header('Location: ' . BASE_URL . 'areas/difusion/calendario_editorial.php?flash=error_permisos');
+                exit;
             }
 
             if ($esInstitucionalManual === 0) {
@@ -200,8 +205,9 @@ $stmtG->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosGlobales = $stmtG->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($eventosGlobales as $eg) {
-    // Evitar duplicados si el título indica que es una réplica editorial
+    // Evitar duplicados si el título indica que es una réplica editorial o tiene etiquetas de otros calendarios
     if (strpos($eg['titulo'], '(Editorial)') === 0) continue;
+    if ($eg['descripcion'] && (strpos($eg['descripcion'], '[DG:') !== false || strpos($eg['descripcion'], '[ADM:') !== false)) continue;
     
     $eg['es_institucional'] = true;
     if (empty($eg['color'])) $eg['color'] = '#64748b'; 
