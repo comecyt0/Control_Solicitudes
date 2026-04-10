@@ -39,7 +39,7 @@ $finMesBusqueda    = $mesSiguiente->format('Y-m-01 00:00:00');
 $sqlEventos = "
     SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, TRUE as es_institucional, requiere_sala, area_solicitante, persona_solicitante 
     FROM eventos 
-    WHERE publico = TRUE AND fecha_inicio < ? AND fecha_fin > ?
+    WHERE publico = TRUE AND (descripcion NOT LIKE '%[DG:%') AND fecha_inicio < ? AND fecha_fin > ?
     UNION ALL
     SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, FALSE as es_institucional, requiere_sala, area_solicitante, persona_solicitante 
     FROM df_eventos_editoriales 
