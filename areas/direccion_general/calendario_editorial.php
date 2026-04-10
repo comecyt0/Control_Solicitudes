@@ -230,7 +230,8 @@ $stmt = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, 
 $stmt->execute([$finMesBusqueda, $inicioMesBusqueda]);
 $eventosRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$stmtG = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, TRUE as es_institucional FROM eventos WHERE (publico = TRUE) AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
+// v10.9.1: Consultar eventos PUBLICOS de otras áreas (excluir espejos de DG para evitar duplicados)
+$stmtG = $pdo->prepare("SELECT id, titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante, TRUE as es_institucional FROM eventos WHERE (publico = TRUE) AND (cve_area != 2 OR cve_area IS NULL) AND (descripcion NOT LIKE '%[DG:%') AND fecha_inicio < ? AND fecha_fin > ? ORDER BY fecha_inicio ASC");
 $stmtG->execute([$finMesBusqueda, $inicioMesBusqueda]);
 foreach ($stmtG->fetchAll(PDO::FETCH_ASSOC) as $eg) {
     if (strpos($eg['titulo'], '(Editorial)') === 0) continue;
