@@ -606,6 +606,7 @@ let carpetaActualNombre = 'General';
 let carpetasBreadcrumb = [{id: 1, nombre: 'General'}];
 let renombrarTipo = '';
 let renombrarId   = 0;
+let openFolders   = new Set([1]); // IDs de carpetas expandidas
 
 function iconoPorMime(mime) {
     const m = mime || '';
@@ -643,20 +644,35 @@ function renderArbol(carpetas) {
     const buildTree = (parentId) => carpetas
         .filter(c => (c.padre_id == parentId) || (parentId === null && c.padre_id === null))
         .map(c => {
+            const hasChildren = carpetas.some(child => child.padre_id == c.id);
             const children = buildTree(c.id);
             const isActive = c.id == carpetaActual;
+            const isOpen = openFolders.has(c.id);
+            
             return `
-            <div>
+            <div class="folder-node">
                 <div class="folder-item ${isActive ? 'active' : ''}"
                      onclick="navegarCarpeta(${c.id}, '${escHtml(c.nombre).replace(/'/g,"\\\'")}')">
+                    <div class="folder-toggle" onclick="event.stopPropagation(); toggleFolder(${c.id})">
+                        ${hasChildren ? `<i class="fa-solid ${isOpen ? 'fa-chevron-down' : 'fa-chevron-right'}"></i>` : ''}
+                    </div>
                     <i class="fa-solid ${isActive ? 'fa-folder-open' : 'fa-folder'}"></i>
                     <span style="flex:1;overflow:hidden;text-overflow:ellipsis;">${escHtml(c.nombre)}</span>
-                    ${c.id > 1 ? `<button class="folder-delete" onclick="event.stopPropagation();eliminarCarpeta(${c.id},'${escHtml(c.nombre).replace(/'/g,"\\\'")}')" ><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                    ${c.id > 1 ? `
+                        <button class="folder-rename" onclick="event.stopPropagation(); abrirRenombrar('carpeta', ${c.id}, '${escHtml(c.nombre).replace(/'/g,"\\\'")}')"><i class="fa-solid fa-pencil"></i></button>
+                        <button class="folder-delete" onclick="event.stopPropagation(); eliminarCarpeta(${c.id},'${escHtml(c.nombre).replace(/'/g,"\\\'")}')"><i class="fa-solid fa-trash-can"></i></button>
+                    ` : ''}
                 </div>
-                ${children ? `<div class="folder-children">${children}</div>` : ''}
+                ${children ? `<div class="folder-children ${isOpen ? '' : 'collapsed'}">${children}</div>` : ''}
             </div>`;
         }).join('');
     document.getElementById('folderList').innerHTML = buildTree(null) || '<p style="padding:16px;font-size:.8rem;color:var(--text-muted);">Sin carpetas</p>';
+}
+
+function toggleFolder(id) {
+    if (openFolders.has(id)) openFolders.delete(id);
+    else openFolders.add(id);
+    renderArbol(window.__carpetasCache || []);
 }
 
 function navegarCarpeta(id, nombre, agregar = true) {
@@ -707,6 +723,7 @@ async function cargarArchivos() {
             <div class="file-actions">
                 <button class="file-action-btn" onclick="event.stopPropagation(); abrirModalMarcador(${f.id}, '${f.marcador || 'Ninguno'}')"><i class="fa-solid fa-tag"></i></button>
                 <button class="file-action-btn" onclick="abrirPreview('${escHtml(f.nombre_original).replace(/'/g,"\\\'")}', '${urlArchivo}', '${f.tipo_mime}', '${formatBytes(f.tamano_bytes)}', '${f.fecha}')"><i class="fa-solid fa-eye"></i></button>
+                <button class="file-action-btn" onclick="event.stopPropagation(); abrirRenombrar('archivo', ${f.id}, '${escHtml(f.nombre_original).replace(/'/g,"\\\'")}')"><i class="fa-solid fa-pencil"></i></button>
                 <button class="file-action-btn danger" onclick="eliminarArchivo(${f.id}, '${escHtml(f.nombre_original).replace(/'/g,"\\\'")}')"><i class="fa-solid fa-trash-can"></i></button>
             </div>
         </div>`;
@@ -749,6 +766,63 @@ async function eliminarArchivo(id, nombre) {
     fd.append('id', id);
     await fetch(API_REPO, {method: 'POST', body: fd});
     cargarArchivos();
+}
+
+async function eliminarCarpeta(id, nombre) {
+    if (!confirm(`¿Eliminar la carpeta "${nombre}" y todo su contenido?`)) return;
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF);
+    fd.append('accion', 'eliminar_carpeta');
+    fd.append('id', id);
+    const res = await fetch(API_REPO, {method: 'POST', body: fd});
+    const data = await res.json();
+    if (data.ok) {
+        if (carpetaActual == id) navegarCarpeta(1, 'General');
+        await cargarCarpetas();
+    } else {
+        alert("Error: " + data.error);
+    }
+}
+
+function abrirRenombrar(tipo, id, nombre) {
+    renombrarTipo = tipo;
+    renombrarId = id;
+    document.getElementById('renombrarInput').value = nombre;
+    document.getElementById('renombrarModal').classList.add('open');
+    setTimeout(() => document.getElementById('renombrarInput').select(), 100);
+}
+
+function cerrarRenombrar() {
+    document.getElementById('renombrarModal').classList.remove('open');
+}
+
+async function guardarRenombre() {
+    const nuevoNombre = document.getElementById('renombrarInput').value.trim();
+    if (!nuevoNombre) return;
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF);
+    fd.append('accion', 'renombrar');
+    fd.append('tipo', renombrarTipo);
+    fd.append('id', renombrarId);
+    fd.append('nombre', nuevoNombre);
+    const res = await fetch(API_REPO, {method: 'POST', body: fd});
+    const data = await res.json();
+    if (data.ok) {
+        cerrarRenombrar();
+        if (renombrarTipo === 'carpeta') {
+            await cargarCarpetas();
+            if (carpetaActual == renombrarId) {
+                carpetaActualNombre = nuevoNombre;
+                const bIdx = carpetasBreadcrumb.findIndex(b => b.id == renombrarId);
+                if (bIdx >= 0) carpetasBreadcrumb[bIdx].nombre = nuevoNombre;
+                renderBreadcrumb();
+            }
+        } else {
+            cargarArchivos();
+        }
+    } else {
+        alert("Error: " + data.error);
+    }
 }
 
 function abrirModalMarcador(id, actual) {

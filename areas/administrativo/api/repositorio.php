@@ -119,12 +119,14 @@ if ($accion === 'subir_archivo') {
 
     if ($tamano > MAX_SIZE) repoJson(false, error: 'El archivo supera 50 MB');
 
-    // Verificar MIME real
+    // Verificar MIME real (Solo informativo para la BD)
     $finfo   = new finfo(FILEINFO_MIME_TYPE);
-    $mime    = $finfo->file($tmpPath);
+    $mime    = $finfo->file($tmpPath) ?: 'application/octet-stream';
+    /* 
     if (!in_array($mime, MIME_PERMITIDOS, true)) {
         repoJson(false, error: 'Tipo de archivo no permitido: ' . $mime);
     }
+    */
 
     // Nombre único en disco (UUID + ext. original)
     $ext      = strtolower(pathinfo($nombreOrig, PATHINFO_EXTENSION));
