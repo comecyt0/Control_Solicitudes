@@ -41,7 +41,7 @@ function dgBuscarEspejo(PDO $pdo, int $dfId): ?int {
     return $row ? (int)$row['id'] : null;
 }
 
-function dgSincronizarPublico(PDO $pdo, int $dfId, string $titulo, string $descripcion, string $fi, string $ff, string $color, bool $requiereSala, string $areaSol, string $persSol): void {
+function dgSincronizarPublico(PDO $pdo, int $dfId, string $titulo, string $descripcion, string $fi, string $ff, string $color, bool $requiereSala, string $areaSol, string $persSol, int $creadoPorId, int $cveArea): void {
     $marcador   = '[DG:' . $dfId . ']';
     $descEspejo = trim($descripcion . ' ' . $marcador);
     $espejoId   = dgBuscarEspejo($pdo, $dfId);
@@ -50,14 +50,14 @@ function dgSincronizarPublico(PDO $pdo, int $dfId, string $titulo, string $descr
     if ($espejoId) {
         // Actualizar espejo existente
         $pdo->prepare(
-            "UPDATE eventos SET titulo=?, descripcion=?, fecha_inicio=?, fecha_fin=?, color=?, publico=TRUE, requiere_sala=?, area_solicitante=?, persona_solicitante=? WHERE id=?"
-        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $requiereSala ? 1 : 0, $areaSol, $persSol, $espejoId]);
+            "UPDATE eventos SET titulo=?, descripcion=?, fecha_inicio=?, fecha_fin=?, color=?, publico=TRUE, requiere_sala=?, area_solicitante=?, persona_solicitante=?, creado_por=?, cve_area=? WHERE id=?"
+        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $requiereSala ? 1 : 0, $areaSol, $persSol, $creadoPorId, $cveArea, $espejoId]);
     } else {
         // Crear espejo nuevo
         $pdo->prepare(
-            "INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, color, publico, requiere_sala, area_solicitante, persona_solicitante) 
-             VALUES (?,?,?,?,?,TRUE,?,?,?)"
-        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $requiereSala ? 1 : 0, $areaSol, $persSol]);
+            "INSERT INTO eventos (titulo, descripcion, fecha_inicio, fecha_fin, tipo_evento, color, publico, requiere_sala, area_solicitante, persona_solicitante, creado_por, cve_area) 
+             VALUES (?,?,?,?,'nota',?,TRUE,?,?,?,?,?)"
+        )->execute([$titulo, $descEspejo, $fi, $ff, $color, $requiereSala ? 1 : 0, $areaSol, $persSol, $creadoPorId, $cveArea]);
     }
 }
 
@@ -131,7 +131,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
                     if ($publico) {
                         $areaSol = $_SESSION['admin_area_nombre'] ?? 'Dirección General';
                         $persSol = $_SESSION['admin_nombre'] ?? 'Administrador';
-                        dgSincronizarPublico($pdo, $id, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, (bool)$requiereSala, $areaSol, $persSol);
+                        // v10.9.1: Recuperar el creador original si es posible, o usar el actual
+                        $stmtC = $pdo->prepare("SELECT creado_por, cve_area FROM df_eventos_editoriales WHERE id = ?");
+                        $stmtC->execute([$id]);
+                        $orig = $stmtC->fetch(PDO::FETCH_ASSOC);
+                        $cId = $orig['creado_por'] ?? $_SESSION['admin_id'];
+                        $cArea = $orig['cve_area'] ?? $cveAreaContexto;
+                        
+                        dgSincronizarPublico($pdo, $id, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, (bool)$requiereSala, $areaSol, $persSol, (int)$cId, (int)$cArea);
                     } else {
                         dgEliminarEspejo($pdo, $id); // Si se desmarca, quitar de calendarios de área
                     }
