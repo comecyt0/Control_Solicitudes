@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_accion'])) {
 
                 // Sincronizar con tabla `eventos` si es público
                 if ($publico && $nuevoId > 0) {
-                    dgSincronizarPublico($pdo, $nuevoId, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol);
+                    dgSincronizarPublico($pdo, $nuevoId, $titulo, $descripcion, $fechaInicio, $fechaFin, $color, $requiereSala, $areaSol, $persSol, (int)$adminId, (int)$cveAreaContexto);
                 }
 
                 header('Location: calendario_editorial.php?flash=evento_creado');
