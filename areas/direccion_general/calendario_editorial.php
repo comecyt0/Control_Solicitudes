@@ -254,7 +254,24 @@ if ($mes > 0 && $mes <= 12) {
         $diaCumple = (int) (new DateTime($cp['fecha_nacimiento']))->format('d');
         $nombreCompleto = trim($cp['nombre'] . ' ' . $cp['appat'] . ' ' . $cp['apmat']);
         $fotoUrl = !empty($cp['foto_perfil']) ? BASE_URL . 'public/uploads/avatares/' . $cp['foto_perfil'] : '';
-        $calendarioEventos[$diaCumple][] = ['id'=>null,'titulo'=>"🎂 ".$nombreCompleto,'descripcion'=>'Cumpleaños institucional','fecha_inicio'=>sprintf('%04d-%02d-%02d 00:00:00',$anio,$mes,$diaCumple),'fecha_fin'=>sprintf('%04d-%02d-%02d 23:59:59',$anio,$mes,$diaCumple),'color'=>'#B19A6D','publico'=>false,'es_cumple'=>true,'foto_perfil'=>$fotoUrl,'nombre_cumple'=>$nombreCompleto,'edad'=>'','hora_formateada'=>'Todo el día'];
+        $calendarioEventos[$diaCumple][] = [
+            'id' => null,
+            'titulo' => "🎂 ".$nombreCompleto,
+            'descripcion' => 'Cumpleaños institucional',
+            'fecha_inicio' => sprintf('%04d-%02d-%02d 00:00:00',$anio,$mes,$diaCumple),
+            'fecha_fin' => sprintf('%04d-%02d-%02d 23:59:59',$anio,$mes,$diaCumple),
+            'color' => '#B19A6D',
+            'publico' => false,
+            'es_cumple' => true,
+            'foto_perfil' => $fotoUrl,
+            'nombre_cumple' => $nombreCompleto,
+            'edad' => '',
+            'hora_formateada' => 'Todo el día',
+            'requiere_sala' => false,
+            'area_solicitante' => '',
+            'persona_solicitante' => '',
+            'es_institucional' => true
+        ];
     }
 }
 
@@ -352,19 +369,20 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                     $colorNota = $esCumple ? 'nota-dorado' : '';
                     $cStyle = (!$esCumple&&!empty($ev['color'])) ? 'style="border-top-color:'.$ev['color'].'; background-color:'.$ev['color'].'1a;"' : '';
                 ?>
-                    <div class="evento-pildora <?= $colorNota ?>" <?= $cStyle ?> onclick="abrirModalVerSeguro(this)" 
+                    <div class="evento-pildora <?= $colorNota ?>" <?= $cStyle ?> 
+                         onclick="<?= $esCumple ? '' : 'abrirModalVerSeguro(this)' ?>" 
                          data-titulo="<?= esc($ev['titulo']) ?>"
                          data-descripcion="<?= esc($ev['descripcion'] ?? '') ?>"
                          data-horario="<?= date('d/m/Y H:i',strtotime($ev['fecha_inicio'])) . ' a ' . date('d/m/Y H:i',strtotime($ev['fecha_fin'])) ?>"
-                         data-sala="<?= $ev['requiere_sala'] ? 1 : 0 ?>"
+                         data-sala="<?= ($ev['requiere_sala'] ?? false) ? 1 : 0 ?>"
                          data-area="<?= esc($ev['area_solicitante'] ?? 'General') ?>"
                          data-persona="<?= esc($ev['persona_solicitante'] ?? 'Admin') ?>"
-                         data-id="<?= $ev['id'] ?>"
+                         data-id="<?= $ev['id'] ?? '' ?>"
                          data-inicio="<?= date('Y-m-d\TH:i',strtotime($ev['fecha_inicio'])) ?>"
                          data-fin="<?= date('Y-m-d\TH:i',strtotime($ev['fecha_fin'])) ?>"
-                         data-color="<?= $ev['color'] ?>"
-                         data-pub="<?= ($ev['publico']?1:0) ?>"
-                         data-inst="<?= ($ev['es_institucional']?1:0) ?>"
+                         data-color="<?= $ev['color'] ?? '#662331' ?>"
+                         data-pub="<?= ($ev['publico'] ?? false) ? 1 : 0 ?>"
+                         data-inst="<?= ($ev['es_institucional'] ?? false) ? 1 : 0 ?>"
                          event-stop="true">
                         <div class="evento-titulo">
                             <?php if ($esCumple): ?>
