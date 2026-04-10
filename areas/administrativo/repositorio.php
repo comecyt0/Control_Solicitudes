@@ -819,6 +819,25 @@ function cerrarRenombrar() {
     document.getElementById('renombrarModal').classList.remove('open');
 }
 
+async function guardarCarpeta() {
+    const nombre = document.getElementById('carpetaNombreInput').value.trim();
+    if (!nombre) return;
+    const fd = new FormData();
+    fd.append('csrf_token', CSRF);
+    fd.append('accion', 'crear_carpeta');
+    fd.append('nombre', nombre);
+    fd.append('padre_id', carpetaActual);
+    const res = await fetch(API_REPO, {method: 'POST', body: fd});
+    const data = await res.json();
+    cerrarModalCarpeta();
+    if (data.ok) {
+        COMECyTUI.toast('Carpeta creada', 'success');
+        await cargarCarpetas();
+    } else {
+        COMECyTUI.alert("Error: " + data.error);
+    }
+}
+
 async function guardarRenombre() {
     const nuevoNombre = document.getElementById('renombrarInput').value.trim();
     if (!nuevoNombre) return;
@@ -844,7 +863,7 @@ async function guardarRenombre() {
             cargarArchivos();
         }
     } else {
-        alert("Error: " + data.error);
+        COMECyTUI.alert("Error: " + data.error);
     }
 }
 
