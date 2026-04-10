@@ -753,15 +753,16 @@ function editarUsuarioSS(id) {
         });
 }
 function toggleActivoSS(id, nuevoActivo) {
-    if (!confirm('¿Deseas cambiar el estado de este usuario?')) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF_ADMIN);
-    fd.append('accion', 'toggle_activo_ss');
-    fd.append('id', id);
-    fd.append('activo', nuevoActivo);
-    fetch(SS_ADMIN_API, { method:'POST', body:fd })
-        .then(r=>r.json())
-        .then(d => { if (d.ok) location.reload(); else alert(d.error); });
+    COMECyTUI.confirm('¿Deseas cambiar el estado de este usuario?', () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF_ADMIN);
+        fd.append('accion', 'toggle_activo_ss');
+        fd.append('id', id);
+        fd.append('activo', nuevoActivo);
+        fetch(SS_ADMIN_API, { method:'POST', body:fd })
+            .then(r=>r.json())
+            .then(d => { if (d.ok) location.reload(); else COMECyTUI.alert(d.error); });
+    });
 }
 
 // ── Modal Tarea SS ─────────────────────────────────────────────
@@ -813,14 +814,15 @@ function editarTareaSS(id) {
         });
 }
 function eliminarTareaSS(id) {
-    if (!confirm('¿Eliminar esta tarea permanentemente? Se eliminarán también sus evidencias.')) return;
-    const fd = new FormData();
-    fd.append('csrf_token', CSRF_ADMIN);
-    fd.append('accion', 'eliminar_tarea_ss');
-    fd.append('id', id);
-    fetch(SS_ADMIN_API, { method:'POST', body:fd })
-        .then(r=>r.json())
-        .then(d => { if (d.ok) location.reload(); else alert(d.error); });
+    COMECyTUI.confirm('¿Eliminar esta tarea permanentemente? Se eliminarán también sus evidencias.', () => {
+        const fd = new FormData();
+        fd.append('csrf_token', CSRF_ADMIN);
+        fd.append('accion', 'eliminar_tarea_ss');
+        fd.append('id', id);
+        fetch(SS_ADMIN_API, { method:'POST', body:fd })
+            .then(r=>r.json())
+            .then(d => { if (d.ok) location.reload(); else COMECyTUI.alert(d.error); });
+    });
 }
 
 // ── Modal Lista Evidencias ──────────────────────────────────────
